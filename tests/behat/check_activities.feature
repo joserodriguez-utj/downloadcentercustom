@@ -1,4 +1,4 @@
-@local @local_downloadcenter @_file_upload
+@local @local_downloadcentercustom @_file_upload
 Feature: Both students and teachers should be able to supported activities in the Download Center.
 
   Background:

@@ -20,13 +20,13 @@
  *
  */
 
-namespace local_downloadcenter;
+namespace local_downloadcentercustom;
 
 /**
  * Basic downloadcenter PHP Unit tests.
  *
  * @author     Simeon Naydenov (moniNaydenov@gmail.com)
- * @package    local_downloadcenter
+ * @package    local_downloadcentercustom
  * @subpackage phpunit
  * @copyright  2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -53,7 +53,7 @@ final class files_visible_test extends \advanced_testcase {
 
         $this->setUser($student1);
 
-        $downloadcenter = new \local_downloadcenter_factory($course1, null);
+        $downloadcenter = new \local_downloadcentercustom_factory($course1, null);
         $userresources = $downloadcenter->get_resources_for_user();
 
         foreach ($userresources as $resources) {
@@ -62,7 +62,7 @@ final class files_visible_test extends \advanced_testcase {
 
         $this->setUser($teacher1);
 
-        $downloadcenter = new \local_downloadcenter_factory($course1, null);
+        $downloadcenter = new \local_downloadcentercustom_factory($course1, null);
         $userresources = $downloadcenter->get_resources_for_user();
 
         foreach ($userresources as $resources) {
@@ -94,7 +94,7 @@ final class files_visible_test extends \advanced_testcase {
         $resources = $this->helper_add_resources_to_course($course1, $teacher1);
 
         // Test for student  - must not see not visible resources.
-        $downloadcenter = new \local_downloadcenter_factory($course1, $student1);
+        $downloadcenter = new \local_downloadcentercustom_factory($course1, $student1);
         $userresources = $downloadcenter->get_resources_for_user();
 
         $this->assertCount($resources->visiblefilecount, $userresources[$resources->filesection]->res);
@@ -124,7 +124,7 @@ final class files_visible_test extends \advanced_testcase {
 
         $this->setUser($teacher1);
 
-        $downloadcenter = new \local_downloadcenter_factory($course1, $teacher1);
+        $downloadcenter = new \local_downloadcentercustom_factory($course1, $teacher1);
         $userresources = $downloadcenter->get_resources_for_user();
 
         $this->assertCount($resources->filecount, $userresources[$resources->filesection]->res);

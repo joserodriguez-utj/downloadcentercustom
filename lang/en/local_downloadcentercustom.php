@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcenter for Moodle - http://moodle.org/
+// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcenter
+ * @package       local_downloadcentercustom
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -38,12 +38,15 @@ $string['eventDOWNLOADEDZIP'] = 'ZIP was downloaded';
 $string['eventVIEWED'] = 'Download center viewed';
 $string['infomessage_students'] = 'Here you can download single or all available contents of this course in a ZIP archive.';
 $string['infomessage_teachers'] = 'Here you can download single or all available contents of this course in a ZIP archive.<br>(Students will be able to download only visible/ not hidden activities and resources.)';
-$string['navigationlink'] = 'Download center';
-$string['pagetitle'] = 'Download center for ';
-$string['pluginname'] = 'Download center';
+$string['navigationlink'] = 'Download center custom';
+$string['pagetitle'] = 'Download center custom for ';
+$string['pluginname'] = 'Download center custom';
 $string['privacy:null_reason'] = 'This plugin does not store or process any personal information. It presents an interface to download all course files which are manipulated from within the course.';
 $string['search:hint'] = 'Type to filter activities and resources...';
 $string['search:results'] = 'Search results';
 $string['untitled'] = 'Untitled';
 $string['zipcreating'] = 'The ZIP archive is being created...';
 $string['zipready'] = 'The ZIP archive has been successfully created.';
+$string['groupfilter'] = 'Filter by groups';
+$string['groupfilter_help'] = 'This filter limits downloaded submissions to the selected groups.';
+$string['groupfilter_help_help'] = 'Select one or more groups to download only submissions from students in those groups. Leave empty to include all groups.';

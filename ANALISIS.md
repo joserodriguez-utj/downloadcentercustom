@@ -1,4 +1,4 @@
-# Análisis del Plugin `local_downloadcenter`
+# Análisis del Plugin `local_downloadcentercustom`
 
 ## Índice
 
@@ -14,7 +14,7 @@
    - [styles.css](#37-stylescss)
    - [classes/event/](#38-classesevent)
    - [classes/privacy/provider.php](#39-classesprivacyproviderphp)
-   - [lang/en/local_downloadcenter.php](#310-langenlocal_downloadcenterphp)
+   - [lang/en/local_downloadcentercustom.php](#310-langenlocal_downloadcentercustomphp)
    - [templates/searchbox.mustache](#311-templatessearchboxmustache)
    - [amd/src/](#312-amdsrc)
    - [tests/](#313-tests)
@@ -29,7 +29,7 @@
 
 | Dato | Valor |
 |------|-------|
-| **Componente** | `local_downloadcenter` |
+| **Componente** | `local_downloadcentercustom` |
 | **Versión** | 2025100600 |
 | **Requiere Moodle** | 2025100600 (Moodle 5.1) |
 | **Madurez** | `MATURITY_STABLE` |
@@ -56,7 +56,7 @@ downloadcenter/
 │   └── access.php                    ★ Capacidades/permisos
 ├── lang/
 │   └── en/
-│       └── local_downloadcenter.php  ★ Cadenas de idioma
+│       └── local_downloadcentercustom.php  ★ Cadenas de idioma
 ├── classes/
 │   ├── event/
 │   │   ├── plugin_viewed.php         Evento: plugin visto
@@ -97,14 +97,14 @@ downloadcenter/
 ```php
 $plugin->version   = 2025100600;
 $plugin->requires  = 2025100600;
-$plugin->component = 'local_downloadcenter';
+$plugin->component = 'local_downloadcentercustom';
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = "v5.1.0";
 ```
 
 - **`version`**: Sigue el estándar `YYYYMMDDXX`. Este plugin usa `2025100600` (6 Oct 2025, release 00).
 - **`requires`**: `2025100600` = versión de Moodle 5.1.0. Coincide con el version ID de Moodle 5.1 (sin decimal).
-- **`component`**: `local_downloadcenter` → por lo tanto el directorio debe ser `local/downloadcenter/`.
+- **`component`**: `local_downloadcentercustom` → por lo tanto el directorio debe ser `local/downloadcenter/`.
 - **`maturity`**: `MATURITY_STABLE` → listo para producción.
 - **`release`**: `v5.1.0` → versión legible, alineada con la versión de Moodle que soporta.
 
@@ -136,7 +136,7 @@ Usa el **sistema antiguo de callbacks** (no hooks). Dos funciones:
 
 ```php
 // 1. Añade enlace en la navegación del curso
-function local_downloadcenter_extend_navigation_course(
+function local_downloadcentercustom_extend_navigation_course(
     navigation_node $parentnode, stdClass $course, context_course $context
 ) {
     if (!has_capability('local/downloadcenter:view', $context)) {
@@ -147,15 +147,15 @@ function local_downloadcenter_extend_navigation_course(
     $beforekey = ...;
     
     // Crea el enlace con icono
-    $url = new moodle_url('/local/downloadcenter/index.php', ['courseid' => $course->id]);
+    $url = new moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $course->id]);
     $node = $parentnode->add_node(...);
     $node->add_class('downloadcenterlink');
 }
 
 // 2. Mapa de iconos FontAwesome
-function local_downloadcenter_get_fontawesome_icon_map() {
+function local_downloadcentercustom_get_fontawesome_icon_map() {
     return [
-        'local_downloadcenter:icon' => 'fa-arrow-circle-o-down',
+        'local_downloadcentercustom:icon' => 'fa-arrow-circle-o-down',
     ];
 }
 ```
@@ -167,10 +167,10 @@ function local_downloadcenter_get_fontawesome_icon_map() {
 Página principal del plugin. Flujo:
 
 1. **Inicialización**: sube timeouts, requiere login y capacidad.
-2. **Obtiene recursos**: crea un `local_downloadcenter_factory` con el curso y usuario.
+2. **Obtiene recursos**: crea un `local_downloadcentercustom_factory` con el curso y usuario.
 3. **Llama a `get_resources_for_user()`**: obtiene las actividades visibles para el usuario.
-4. **Carga JS**: `local_downloadcenter/modfilter` para filtros.
-5. **Crea formulario** de selección con `local_downloadcenter_download_form`.
+4. **Carga JS**: `local_downloadcentercustom/modfilter` para filtros.
+5. **Crea formulario** de selección con `local_downloadcentercustom_download_form`.
 6. **Lógica del formulario**:
    - Si enviado → dispara evento `zip_downloaded` y crea ZIP con `create_zip()`
    - Si cancelado → redirige al curso
@@ -178,7 +178,7 @@ Página principal del plugin. Flujo:
 
 ### 3.5 locallib.php
 
-**El corazón del plugin** (~1344 líneas). Contiene la clase `local_downloadcenter_factory`.
+**El corazón del plugin** (~1344 líneas). Contiene la clase `local_downloadcentercustom_factory`.
 
 #### Propiedades clave
 
@@ -279,7 +279,7 @@ class provider implements \core_privacy\local\metadata\null_provider {
 
 Esto indica que el plugin **no almacena ningún dato personal**. Es obligatorio desde Moodle 3.18+ para cumplir con GDPR. El string `privacy:null_reason` está definido en el archivo de idioma.
 
-### 3.10 lang/en/local_downloadcenter.php
+### 3.10 lang/en/local_downloadcentercustom.php
 
 49 cadenas de idioma. Las más importantes:
 
@@ -302,7 +302,7 @@ Template Mustache que renderiza:
 - Un input de búsqueda con id `#downloadcenter-search-input`
 - Un botón para limpiar la búsqueda
 - Un contenedor para resultados
-- **Incluye JS inline** al final (carga el módulo AMD `local_downloadcenter/search`)
+- **Incluye JS inline** al final (carga el módulo AMD `local_downloadcentercustom/search`)
 
 ### 3.12 amd/src/
 
@@ -347,7 +347,7 @@ Usuario navega a un curso
 Ve enlace "Download center" en la navegación del curso
         │  (añadido por lib.php → extend_navigation_course)
         ▼
-Hace clic → /local/downloadcenter/index.php?courseid=XX
+Hace clic → /local/downloadcentercustom/index.php?courseid=XX
         │
         ▼
 index.php:
@@ -402,7 +402,7 @@ index.php (post):
 ### 6.1 Organización del código
 
 - **Separación clara**: `index.php` (routing), `locallib.php` (lógica), `download_form.php` (UI)
-- **Una clase principal** `local_downloadcenter_factory` con métodos bien definidos
+- **Una clase principal** `local_downloadcentercustom_factory` con métodos bien definidos
 - **Eventos personalizados** para logging de actividad
 
 ### 6.2 Seguridad
@@ -444,7 +444,7 @@ index.php (post):
 
 ## 7. Lo que hace distinto a tu plugin de práctica
 
-| Aspecto | Tu plugin (`local_message`) | `local_downloadcenter` |
+| Aspecto | Tu plugin (`local_message`) | `local_downloadcentercustom` |
 |---------|----------------------------|------------------------|
 | **Hook API** | Usa hooks (moderno) | Usa callbacks antiguos |
 | **DB** | Tiene `install.xml` con tablas | Sin BD |

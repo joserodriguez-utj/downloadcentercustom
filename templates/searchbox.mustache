@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_downloadcenter/searchbox
+    @template local_downloadcentercustom/searchbox
 
     Search box for the download center.
 
@@ -35,19 +35,19 @@
 }}
 <div>
     <div class="input-group">
-        <input type="text" id="downloadcenter-search-input" class="form-control" placeholder="{{#str}}search:hint,local_downloadcenter{{/str}}" aria-label="{{#str}}search:hint,local_downloadcenter{{/str}}">
+        <input type="text" id="downloadcenter-search-input" class="form-control" placeholder="{{#str}}search:hint,local_downloadcentercustom{{/str}}" aria-label="{{#str}}search:hint,local_downloadcentercustom{{/str}}">
         <a href="#" class="btn border-0 d-none" style="" id="downloadcenter-search-clear">{{#pix}}i/window_close{{/pix}}</a>
         <div class="input-group-append">
             <span class="input-group-text">{{#pix}}i/search{{/pix}}</span>
         </div>
     </div>
     <div class="d-none ml-1 mt-2" id="downloadcenter-search-results">
-        <strong>{{#str}}search:results,local_downloadcenter{{/str}}: <span id="downloadcenter-search-results-count"></span></strong>
+        <strong>{{#str}}search:results,local_downloadcentercustom{{/str}}: <span id="downloadcenter-search-results-count"></span></strong>
     </div>
 </div>
 
 {{#js}}
-    require(['local_downloadcenter/search'], function(search) {
+    require(['local_downloadcentercustom/search'], function(search) {
         search.init();
     });
 {{/js}}

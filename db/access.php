@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcenter for Moodle - http://moodle.org/
+// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcenter
+ * @package       local_downloadcentercustom
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,13 +26,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-    'local/downloadcenter:view' => [
+    'local/downloadcentercustom:view' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
-            'student' => CAP_ALLOW,
-            'teacher' => CAP_ALLOW,
-            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,         // Non-editing teacher
+            'editingteacher' => CAP_ALLOW,  // Editing teacher 
             'manager' => CAP_ALLOW,
         ],
     ],

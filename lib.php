@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcenter for Moodle - http://moodle.org/
+// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcenter
+ * @package       local_downloadcentercustom
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -32,8 +32,8 @@
  * @throws coding_exception
  * @throws moodle_exception
  */
-function local_downloadcenter_extend_navigation_course(navigation_node $parentnode, stdClass $course, context_course $context) {
-    if (!has_capability('local/downloadcenter:view', $context)) {
+function local_downloadcentercustom_extend_navigation_course(navigation_node $parentnode, stdClass $course, context_course $context) {
+    if (!has_capability('local/downloadcentercustom:view', $context)) {
         return;
     }
 
@@ -51,9 +51,9 @@ function local_downloadcenter_extend_navigation_course(navigation_node $parentno
         }
     }
 
-    $url = new moodle_url('/local/downloadcenter/index.php', ['courseid' => $course->id]);
-    $title = get_string('navigationlink', 'local_downloadcenter');
-    $pix = new pix_icon('icon', $title, 'local_downloadcenter');
+    $url = new moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $course->id]);
+    $title = get_string('navigationlink', 'local_downloadcentercustom');
+    $pix = new pix_icon('icon', $title, 'local_downloadcentercustom');
     $childnode = navigation_node::create(
         $title,
         $url,
@@ -74,8 +74,8 @@ function local_downloadcenter_extend_navigation_course(navigation_node $parentno
  *
  * @return array
  */
-function local_downloadcenter_get_fontawesome_icon_map() {
+function local_downloadcentercustom_get_fontawesome_icon_map() {
     return [
-        'local_downloadcenter:icon' => 'fa-arrow-circle-o-down',
+        'local_downloadcentercustom:icon' => 'fa-arrow-circle-o-down',
     ];
 }

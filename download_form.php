@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcenter for Moodle - http://moodle.org/
+// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcenter
+ * @package       local_downloadcentercustom
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -29,9 +29,9 @@ require_once($CFG->libdir . '/formslib.php');
 require_once(__DIR__ . '/locallib.php');
 
 /**
- * Class local_downloadcenter_download_form
+ * Class local_downloadcentercustom_download_form
  */
-class local_downloadcenter_download_form extends moodleform {
+class local_downloadcentercustom_download_form extends moodleform {
     /**
      * Form definition
      *
@@ -48,8 +48,8 @@ class local_downloadcenter_download_form extends moodleform {
 
         $coursecontext = \context_course::instance($COURSE->id);
         $infomessagestring = has_capability('moodle/course:update', $coursecontext) ?
-            get_string('infomessage_teachers', 'local_downloadcenter') :
-            get_string('infomessage_students', 'local_downloadcenter');
+            get_string('infomessage_teachers', 'local_downloadcentercustom') :
+            get_string('infomessage_students', 'local_downloadcentercustom');
         $mform->addElement(
             'html',
             html_writer::tag(
@@ -58,8 +58,40 @@ class local_downloadcenter_download_form extends moodleform {
                 ['class' => 'alert alert-info alert-block']
             )
         );
-        $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcenter/searchbox', []));
+        $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcentercustom/searchbox', []));
         $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
+
+        $mform->addElement('header', 'contentoptions', 'Opciones de contenido');
+        $mform->setExpanded('contentoptions');
+        $mform->addElement('checkbox', 'includematerials', 'Incluir materiales (Archivos y Páginas)');
+        $mform->setDefault('includematerials', 1);
+        $mform->addElement('checkbox', 'includeinstructions', 'Incluir instrucciones');
+        $mform->setDefault('includeinstructions', 1);
+        $mform->addElement('checkbox', 'includeresources', 'Incluir recursos');
+        $mform->setDefault('includeresources', 1);
+        $mform->addElement('checkbox', 'includefeedback', 'Incluir retroalimentacion');
+        $mform->setDefault('includefeedback', 1);
+        $mform->addElement('checkbox', 'onlytasks', 'Solo tareas (Entregas de alumnos, sin nada más)');
+        $mform->setDefault('onlytasks', 0);
+
+        $mform->addElement('html', '
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var ot = document.getElementById("id_onlytasks");
+    var im = document.getElementById("id_includematerials");
+    var ii = document.getElementById("id_includeinstructions");
+    var ir = document.getElementById("id_includeresources");
+    var fi = document.getElementById("id_includefeedback");
+    if (!ot || !im) return;
+    ot.addEventListener("click", function() {
+        if (this.checked) { im.checked = false; ii.checked = false; ir.checked = false; fi.checked = false; }
+    });
+    im.addEventListener("click", function() { if (this.checked) ot.checked = false; });
+    ii.addEventListener("click", function() { if (this.checked) ot.checked = false; });
+    ir.addEventListener("click", function() { if (this.checked) ot.checked = false; });
+    fi.addEventListener("click", function() { if (this.checked) ot.checked = false; });
+});
+</script>');
 
         $firstbox = true;
         foreach ($resources as $sectionid => $sectioninfo) {
@@ -132,14 +164,33 @@ class local_downloadcenter_download_form extends moodleform {
         }
 
         // Create a new section for the download options!
-        $mform->addElement('header', 'downloadoptions', get_string('downloadoptions', 'local_downloadcenter'));
-        $mform->addElement('checkbox', 'filesrealnames', get_string('downloadoptions:filesrealnames', 'local_downloadcenter'));
+        $mform->addElement('header', 'downloadoptions', get_string('downloadoptions', 'local_downloadcentercustom'));
+        $mform->addElement('checkbox', 'filesrealnames', get_string('downloadoptions:filesrealnames', 'local_downloadcentercustom'));
         $mform->setDefault('filesrealnames', 0);
-        $mform->addHelpButton('filesrealnames', 'downloadoptions:filesrealnames', 'local_downloadcenter');
-        $mform->addElement('checkbox', 'addnumbering', get_string('downloadoptions:addnumbering', 'local_downloadcenter'));
+        $mform->addHelpButton('filesrealnames', 'downloadoptions:filesrealnames', 'local_downloadcentercustom');
+        $mform->addElement('checkbox', 'addnumbering', get_string('downloadoptions:addnumbering', 'local_downloadcentercustom'));
         $mform->setDefault('addnumbering', 0);
-        $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcenter');
+        $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcentercustom');
 
-        $this->add_action_buttons(true, get_string('createzip', 'local_downloadcenter'));
+        // Group filtering for teachers.
+        $coursecontext = \context_course::instance($COURSE->id);
+        if (has_capability('moodle/course:update', $coursecontext)) {
+            $groups = groups_get_all_groups($COURSE->id);
+            if (!empty($groups)) {
+                $groupoptions = [];
+                foreach ($groups as $group) {
+                    $groupoptions[$group->id] = $group->name;
+                }
+                $mform->addElement('header', 'groupfilter', get_string('groupfilter', 'local_downloadcentercustom'));
+                $mform->setExpanded('groupfilter');
+                $select = $mform->addElement('autocomplete', 'selectedgroups',
+                    get_string('groups'), $groupoptions);
+                $select->setMultiple(true);
+                $mform->addHelpButton('selectedgroups', 'groupfilter_help', 'local_downloadcentercustom');
+                $mform->setDefault('selectedgroups', []);
+            }
+        }
+
+        $this->add_action_buttons(true, get_string('createzip', 'local_downloadcentercustom'));
     }
 }

@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_downloadcenter; // Match plugin namespace recommendation.
+namespace local_downloadcentercustom; // Match plugin namespace recommendation.
 
 /**
  * Unit tests for locallib.php
  *
- * @package     local_downloadcenter
+ * @package     local_downloadcentercustom
  * @author      Clemens Marx
  * @copyright   2025 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -44,10 +44,10 @@ final class locallib_test extends \advanced_testcase {
     /**
      * Helper to create a factory instance with dummy course/user.
      */
-    private function make_factory(): \local_downloadcenter_factory {
+    private function make_factory(): \local_downloadcentercustom_factory {
         $course = (object)['id' => 1, 'format' => 'topics', 'shortname' => 'TST'];
         $user = (object)['id' => 2];
-        return new \local_downloadcenter_factory($course, $user);
+        return new \local_downloadcentercustom_factory($course, $user);
     }
 
     /**
@@ -59,7 +59,7 @@ final class locallib_test extends \advanced_testcase {
      */
     private function call_preprocess(array $resources, bool $addprefixnumbering): array {
         $factory = $this->make_factory();
-        $ref = new \ReflectionMethod(\local_downloadcenter_factory::class, 'preprocess_resource_names');
+        $ref = new \ReflectionMethod(\local_downloadcentercustom_factory::class, 'preprocess_resource_names');
         $ref->setAccessible(true);
         /** @var array $result */
         $result = $ref->invoke($factory, $resources, $addprefixnumbering);

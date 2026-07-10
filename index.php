@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcenter for Moodle - http://moodle.org/
+// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcenter
+ * @package       local_downloadcentercustom
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -39,20 +39,21 @@ require_course_login($course);
 
 $context = context_course::instance($course->id);
 
-require_capability('local/downloadcenter:view', $context);
+require_capability('local/downloadcentercustom:view', $context);
 
-$PAGE->set_url(new moodle_url('/local/downloadcenter/index.php', ['courseid' => $course->id]));
+$PAGE->set_url(new moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $course->id]));
 
 $PAGE->set_pagelayout('incourse');
 $PAGE->add_body_class('limitedwidth');
+$PAGE->requires->css('/local/downloadcentercustom/styles.css');
 
-$downloadcenter = new local_downloadcenter_factory($course, $USER);
+$downloadcenter = new local_downloadcentercustom_factory($course, $USER);
 
 $userresources = $downloadcenter->get_resources_for_user();
 
-$PAGE->requires->js_call_amd('local_downloadcenter/modfilter', 'init', $downloadcenter->get_js_modnames());
+$PAGE->requires->js_call_amd('local_downloadcentercustom/modfilter', 'init', $downloadcenter->get_js_modnames());
 
-$downloadform = new local_downloadcenter_download_form(
+$downloadform = new local_downloadcentercustom_download_form(
     null,
     ['res' => $userresources],
     'post',
@@ -60,11 +61,11 @@ $downloadform = new local_downloadcenter_download_form(
     ['data-double-submit-protection' => 'off']
 );
 
-$PAGE->set_title(get_string('navigationlink', 'local_downloadcenter') . ': ' . $course->fullname);
+$PAGE->set_title(get_string('navigationlink', 'local_downloadcentercustom') . ': ' . $course->fullname);
 $PAGE->set_heading($course->fullname);
 
 if ($data = $downloadform->get_data()) {
-    $event = \local_downloadcenter\event\zip_downloaded::create([
+    $event = \local_downloadcentercustom\event\zip_downloaded::create([
         'objectid' => $PAGE->course->id,
         'context' => $PAGE->context,
     ]);
@@ -77,7 +78,7 @@ if ($data = $downloadform->get_data()) {
     redirect(new moodle_url('/course/view.php', ['id' => $course->id]));
     die;
 } else {
-    $event = \local_downloadcenter\event\plugin_viewed::create([
+    $event = \local_downloadcentercustom\event\plugin_viewed::create([
         'objectid' => $PAGE->course->id,
         'context' => $PAGE->context,
     ]);
@@ -86,7 +87,7 @@ if ($data = $downloadform->get_data()) {
     echo $OUTPUT->header();
 }
 
-echo $OUTPUT->heading(get_string('navigationlink', 'local_downloadcenter'), 1);
+echo $OUTPUT->heading(get_string('navigationlink', 'local_downloadcentercustom'), 1);
 
 $downloadform->display();
 

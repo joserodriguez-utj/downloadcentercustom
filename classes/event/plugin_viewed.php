@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcenter for Moodle - http://moodle.org/
+// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_downloadcenter\event;
+namespace local_downloadcentercustom\event;
 
 /**
  * Class plugin_viewed
- * @package   local_downloadcenter
+ * @package   local_downloadcentercustom
  * @copyright 2015 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -39,7 +39,7 @@ class plugin_viewed extends \core\event\base {
      * @throws \coding_exception
      */
     public static function get_name() {
-        return get_string('eventVIEWED', 'local_downloadcenter');
+        return get_string('eventVIEWED', 'local_downloadcentercustom');
     }
 
     /**
@@ -58,6 +58,6 @@ class plugin_viewed extends \core\event\base {
      * @throws \moodle_exception
      */
     public function get_url() {
-        return new \moodle_url('/local/downloadcenter/index.php', ['courseid' => $this->objectid]);
+        return new \moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $this->objectid]);
     }
 }

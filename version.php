@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcenter for Moodle - http://moodle.org/
+// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Version details.
  *
- * @package   local_downloadcenter
+ * @package   local_downloadcentercustom
  * @author    Simeon Naydenov
  * @copyright 2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,8 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025100600;
+$plugin->version   = 2025070900;
 $plugin->requires  = 2025100600;
-$plugin->component = 'local_downloadcenter';
+$plugin->component = 'local_downloadcentercustom';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = "v5.1.0";
+$plugin->release   = "v5.1.1";
