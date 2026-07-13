@@ -61,20 +61,26 @@ class local_downloadcentercustom_download_form extends moodleform {
         $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcentercustom/searchbox', []));
         $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
 
-        $mform->addElement('header', 'contentoptions', 'Opciones de contenido');
-        $mform->setExpanded('contentoptions');
-        $mform->addElement('checkbox', 'includematerials', 'Incluir materiales (Archivos y Páginas)');
-        $mform->setDefault('includematerials', 1);
-        $mform->addElement('checkbox', 'includeinstructions', 'Incluir instrucciones');
-        $mform->setDefault('includeinstructions', 1);
-        $mform->addElement('checkbox', 'includeresources', 'Incluir recursos');
-        $mform->setDefault('includeresources', 1);
-        $mform->addElement('checkbox', 'includefeedback', 'Incluir retroalimentacion');
+        $mform->addElement('html', '<div id="opciones-container">');
+        $iseditingteacher = has_capability('moodle/course:update', $coursecontext);
+        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">CONTENIDO A DESCARGAR</span></div></div>');
+        if ($iseditingteacher) {
+            $mform->addElement('checkbox', 'includematerials', 'Materiales');
+            $mform->setDefault('includematerials', 1);
+        }
+        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>Tareas</strong></span></div></div>');
+        $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
+        $mform->addElement('checkbox', 'onlytasks', 'Entregas');
+        $mform->setDefault('onlytasks', 1);
+        $mform->addElement('checkbox', 'includefeedback', 'Retroalimentaci&oacute;n');
         $mform->setDefault('includefeedback', 1);
-        $mform->addElement('checkbox', 'onlytasks', 'Solo tareas (Entregas de alumnos, sin nada más)');
-        $mform->setDefault('onlytasks', 0);
-
-        $mform->addElement('html', '
+        $mform->addElement('checkbox', 'includeinstructions', 'Instrucciones');
+        $mform->setDefault('includeinstructions', 1);
+        $mform->addElement('checkbox', 'includeresources', 'Recursos');
+        $mform->setDefault('includeresources', 1);
+        $mform->addElement('html', '</div>');
+        $mform->addElement('html', '</div>');
+        $mform->addElement('html', <<<JS
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var ot = document.getElementById("id_onlytasks");
@@ -82,16 +88,37 @@ document.addEventListener("DOMContentLoaded", function() {
     var ii = document.getElementById("id_includeinstructions");
     var ir = document.getElementById("id_includeresources");
     var fi = document.getElementById("id_includefeedback");
-    if (!ot || !im) return;
+    if (!ot) return;
+
+    function toggleByModname(modname, checked) {
+        document.querySelectorAll('input[name^="item_' + modname + '_"]').forEach(function(el) {
+            el.checked = checked;
+        });
+    }
+
+    if (im) {
+        im.addEventListener("click", function() {
+            toggleByModname("resource", this.checked);
+            toggleByModname("page", this.checked);
+        });
+    }
     ot.addEventListener("click", function() {
-        if (this.checked) { im.checked = false; ii.checked = false; ir.checked = false; fi.checked = false; }
+        toggleByModname("assign", this.checked);
     });
-    im.addEventListener("click", function() { if (this.checked) ot.checked = false; });
-    ii.addEventListener("click", function() { if (this.checked) ot.checked = false; });
-    ir.addEventListener("click", function() { if (this.checked) ot.checked = false; });
-    fi.addEventListener("click", function() { if (this.checked) ot.checked = false; });
+    function moverOpciones() {
+        var card = document.querySelector(".grouped_settings.section_level.block.card");
+        var container = document.getElementById("opciones-container");
+        if (card && container) {
+            card.appendChild(container);
+        } else {
+            setTimeout(moverOpciones, 100);
+        }
+    }
+    moverOpciones();
 });
-</script>');
+</script>
+JS
+);
 
         $firstbox = true;
         foreach ($resources as $sectionid => $sectioninfo) {
@@ -154,8 +181,16 @@ document.addEventListener("DOMContentLoaded", function() {
                     );
                 }
                 $title = html_writer::tag('span', $title . $badge, ['class' => 'itemtitle']);
-                $mform->addElement('checkbox', $name, $title);
-                $mform->setDefault($name, 1);
+                $showcheckbox = true;
+                if (!$iseditingteacher && in_array($res->modname, ['page', 'resource'])) {
+                    $showcheckbox = false;
+                }
+                if ($showcheckbox) {
+                    $mform->addElement('checkbox', $name, $title);
+                    $mform->setDefault($name, 1);
+                } else {
+                    $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle">' . $title . '</span></div></div>');
+                }
             }
             if ($currentsubsectionitemid != -1) {
                 $mform->addElement('html', html_writer::end_tag('div'));
@@ -164,17 +199,18 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         // Create a new section for the download options!
-        $mform->addElement('header', 'downloadoptions', get_string('downloadoptions', 'local_downloadcentercustom'));
-        $mform->addElement('checkbox', 'filesrealnames', get_string('downloadoptions:filesrealnames', 'local_downloadcentercustom'));
-        $mform->setDefault('filesrealnames', 0);
-        $mform->addHelpButton('filesrealnames', 'downloadoptions:filesrealnames', 'local_downloadcentercustom');
-        $mform->addElement('checkbox', 'addnumbering', get_string('downloadoptions:addnumbering', 'local_downloadcentercustom'));
-        $mform->setDefault('addnumbering', 0);
-        $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcentercustom');
+        // Opciones deshabilitadas - ya no se usan.
+        // $mform->addElement('header', 'downloadoptions', get_string('downloadoptions', 'local_downloadcentercustom'));
+        // $mform->addElement('checkbox', 'filesrealnames', get_string('downloadoptions:filesrealnames', 'local_downloadcentercustom'));
+        // $mform->setDefault('filesrealnames', 0);
+        // $mform->addHelpButton('filesrealnames', 'downloadoptions:filesrealnames', 'local_downloadcentercustom');
+        // $mform->addElement('checkbox', 'addnumbering', get_string('downloadoptions:addnumbering', 'local_downloadcentercustom'));
+        // $mform->setDefault('addnumbering', 0);
+        // $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcentercustom');
 
         // Group filtering for teachers.
         $coursecontext = \context_course::instance($COURSE->id);
-        if (has_capability('moodle/course:update', $coursecontext)) {
+        if (has_capability('local/downloadcentercustom:view', $coursecontext)) {
             $groups = groups_get_all_groups($COURSE->id);
             if (!empty($groups)) {
                 $groupoptions = [];
@@ -183,11 +219,46 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 $mform->addElement('header', 'groupfilter', get_string('groupfilter', 'local_downloadcentercustom'));
                 $mform->setExpanded('groupfilter');
+                $mform->addElement('checkbox', 'selectallgroups', 'Todos los grupos');
+                $mform->setDefault('selectallgroups', 0);
                 $select = $mform->addElement('autocomplete', 'selectedgroups',
                     get_string('groups'), $groupoptions);
                 $select->setMultiple(true);
                 $mform->addHelpButton('selectedgroups', 'groupfilter_help', 'local_downloadcentercustom');
                 $mform->setDefault('selectedgroups', []);
+                $mform->addElement('html', '
+<script>
+document.getElementById("id_selectallgroups").onclick = function() {
+    var checked = this.checked;
+    var sel = document.getElementById("id_selectedgroups");
+    var container = sel.parentElement.querySelector(".form-autocomplete-selection");
+    if (!container) return;
+    container.innerHTML = "";
+    if (checked) {
+        for (var i = 0; i < sel.options.length; i++) {
+            var opt = sel.options[i];
+            opt.selected = true;
+            var tag = document.createElement("span");
+            tag.className = "badge bg-secondary text-dark m-1";
+            tag.style.fontSize = "100%";
+            tag.setAttribute("role", "option");
+            tag.setAttribute("data-value", opt.value);
+            tag.setAttribute("aria-selected", "true");
+            var removeBtn = document.createElement("span");
+            removeBtn.setAttribute("aria-hidden", "true");
+            removeBtn.textContent = "\u00d7 ";
+            tag.appendChild(removeBtn);
+            tag.appendChild(document.createTextNode(" "));
+            tag.appendChild(document.createTextNode(opt.text));
+            container.appendChild(tag);
+        }
+    } else {
+        for (var i = 0; i < sel.options.length; i++) {
+            sel.options[i].selected = false;
+        }
+    }
+};
+</script>');
             }
         }
 

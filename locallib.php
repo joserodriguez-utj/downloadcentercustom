@@ -358,7 +358,7 @@ class local_downloadcentercustom_factory {
                 continue;
             }
             $title = html_entity_decode($section->title);
-            $basedir = clean_filename($title);
+            $basedir = self::clean_filename_ascii($title);
             if (!isset($titlecounts[$basedir])) {
                 $titlecounts[$basedir] = 0;
             }
@@ -389,7 +389,7 @@ class local_downloadcentercustom_factory {
         $topicprefixformat = '%0' . strlen($topicscount) . 'd';
         foreach ($sections as $section) {
             $title = html_entity_decode($section->title);
-            $basedir = clean_filename($title);
+            $basedir = self::clean_filename_ascii($title);
             if ($addnumbering) {
                 $basedir = sprintf($topicprefixformat, $topicprefixid) . '_' . $basedir;
                 $topicprefixid++;
@@ -507,9 +507,9 @@ class local_downloadcentercustom_factory {
             }
             if ($this->is_subsection_resource($resource)) {
                 $filename = $basedir . '/' . $resource->subsectionname . '/' .
-                    self::shorten_filename(clean_filename($realfilename));
+                    self::shorten_filename(self::clean_filename_ascii($realfilename));
             } else {
-                $filename = $basedir . '/' . self::shorten_filename(clean_filename($realfilename));
+                $filename = $basedir . '/' . self::shorten_filename(self::clean_filename_ascii($realfilename));
             }
         } else {
             $filename = $resdir;
@@ -665,9 +665,9 @@ class local_downloadcentercustom_factory {
                     // Get files new name.
                     $fileext = strstr($file->get_filename(), '.');
                     $fileoriginal = str_replace($fileext, '', $file->get_filename());
-                    $fileforzipname = clean_filename(($viewfullnames ? (fullname($auser) . '_') : '') .
+                    $fileforzipname = self::clean_filename_ascii(($viewfullnames ? (fullname($auser) . '_') : '') .
                         $fileoriginal . '_' . $auserid . $fileext);
-                    $fileforzipname = $resdir . '/evidencia/' . self::shorten_filename($fileforzipname);
+                    $fileforzipname = $resdir . '/Evidencias/' . self::shorten_filename($fileforzipname);
                     // Save file name to array for zipping.
                     $filelist[$fileforzipname] = $file;
                 }
@@ -827,7 +827,7 @@ class local_downloadcentercustom_factory {
             if (!empty($introcontent)) {
                 $introcontent = str_replace('@@PLUGINFILE@@', 'files', $introcontent);
                 $introcontent = self::convert_content_to_html_doc($resource->name, $introcontent);
-                $filelist[$instruccionesdir . '/' . self::shorten_filename(clean_filename($resource->name)) . '.html'] = [$introcontent];
+                $filelist[$instruccionesdir . '/' . self::shorten_filename(self::clean_filename_ascii($resource->name)) . '.html'] = [$introcontent];
             }
         }
         // Archivos adjuntos de la descripción van a recursos/.
@@ -860,21 +860,22 @@ class local_downloadcentercustom_factory {
                 });
             }
         }
-        $evidenciadir = $onlytasks ? $resdir : $resdir . '/Evidencia';
+        $evidenciadir = $resdir . '/Evidencias';
         $filelist[$evidenciadir] = null;
+        $soloevidencias = $onlytasks && !$includefeedback && !$includeinstructions && !$includeresources;
         foreach ($submissions as $submission) {
             $user = null;
             $group = null;
             if ($submission->userid != 0) {
                 $user = $DB->get_record('user', ['id' => $submission->userid]);
-                $fullname = $onlytasks ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename(fullname($user));
+                $fullname = $soloevidencias ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename(fullname($user));
             } else if ($submission->groupid != 0) {
                 $group = $DB->get_record('groups', ['id' => $submission->groupid]);
                 $groupname = get_string('group', 'group') . ': ' . $group->name;
-                $fullname = $onlytasks ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
+                $fullname = $soloevidencias ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
             } else {
                 $groupname = get_string('group', 'group') . ': ' . get_string('defaultteam', 'assign');
-                $fullname = $onlytasks ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
+                $fullname = $soloevidencias ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
             }
 
             // Submission!
@@ -932,7 +933,7 @@ class local_downloadcentercustom_factory {
             }
             $feedback = $assign->get_assign_feedback_status_renderable($user);
             if ($feedback && $feedback->grade) {
-                $fullname .= '/Retroalimentacion';
+                $fullname .= '/Retroalimentaci' . "\xC3\xB3n";
 
                 foreach ($feedbackplugins as $feedbackplugin) {
                     if (!$feedbackplugin->is_enabled() || !$feedbackplugin->is_visible()) {
@@ -952,7 +953,8 @@ class local_downloadcentercustom_factory {
                         if ($areafiles) {
                             foreach ($areafiles as $file) {
                                 $fname = $file->get_filename();
-                                if (in_array($fname, ['cross.png', 'sad.png', 'smile.png', 'tick.png'])) {
+                                $ext = strtolower(pathinfo($fname, PATHINFO_EXTENSION));
+                                if ($ext !== 'pdf') {
                                     continue;
                                 }
                                 $filename = $fullname . $file->get_filepath() .
@@ -1159,7 +1161,7 @@ class local_downloadcentercustom_factory {
 
         $fs = get_file_storage();
         $filelist = [];
-        $coursename = self::shorten_filename(clean_filename(format_string($this->course->shortname)));
+        $coursename = self::shorten_filename(self::clean_filename_ascii(format_string($this->course->shortname)));
         $addnumbering = $this->downloadoptions['addnumbering'];
 
         // Flatten all resources (ignore sections).
@@ -1169,9 +1171,9 @@ class local_downloadcentercustom_factory {
             $allresources = array_merge($allresources, $sectionresources);
         }
         $allresources = $this->preprocess_resource_names($allresources, $addnumbering);
-        $fileprefix = self::shorten_filename(clean_filename(format_string($this->course->shortname)));
+        $fileprefix = self::shorten_filename(self::clean_filename_ascii(format_string($this->course->shortname)));
         $onlytasks = $this->downloadoptions['onlytasks'] ?? false;
-        $includematerials = $this->downloadoptions['includematerials'] ?? true;
+        $includematerials = $this->downloadoptions['includematerials'] ?? false;
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $includefeedback = $this->downloadoptions['includefeedback'] ?? true;
@@ -1183,7 +1185,7 @@ class local_downloadcentercustom_factory {
                 if (!$group) {
                     continue;
                 }
-                $groupname = self::shorten_filename(clean_filename($group->name));
+                $groupname = self::shorten_filename(self::clean_filename_ascii($group->name));
                 $filelist[$coursename] = null;
                 $filelist[$coursename . '/' . $groupname] = null;
 
@@ -1193,7 +1195,7 @@ class local_downloadcentercustom_factory {
                     }
 
                     $res->name = html_entity_decode($res->name);
-                    $activityname = self::shorten_filename(clean_filename($res->name));
+                    $activityname = self::shorten_filename(self::clean_filename_ascii($res->name));
                     $resdir = $coursename . '/' . $groupname . '/' . $activityname;
                     $filelist[$resdir] = null;
 
@@ -1202,27 +1204,27 @@ class local_downloadcentercustom_factory {
                     } else if ($res->modname == 'publication') {
                         $this->handle_publication($res, $resdir, $filelist, $groupid);
                     } else {
-                        if ($includematerials || $includeinstructions || $includeresources) {
-                            if ($includeresources && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
-                                $filelist[$resdir . '/Recursos'] = null;
+                        if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
+                                $matdir = $coursename . '/' . $groupname . '/Materiales';
+                                $filelist[$coursename . '/' . $groupname] = null;
+                                $filelist[$matdir] = null;
                                 if ($res->modname == 'resource') {
-                                    $this->handle_resource($res, $resdir . '/Recursos', $filelist, $coursename . '/' . $groupname);
+                                    $this->handle_resource($res, $matdir, $filelist, $matdir);
                                 } else if ($res->modname == 'folder') {
                                     $folder = $fs->get_area_tree($res->context->id, 'mod_folder', 'content', 0);
-                                    $this->add_folder_contents($filelist, $folder, $resdir . '/Recursos');
+                                    $this->add_folder_contents($filelist, $folder, $matdir);
                                 } else if ($res->modname == 'page') {
-                                    $this->handle_page($res, $resdir . '/Recursos', $filelist);
+                                    $this->handle_page($res, $matdir, $filelist);
                                 } else if ($res->modname == 'book' && !$modbookmissing) {
-                                    $this->handle_book($res, $resdir . '/Recursos', $filelist);
+                                    $this->handle_book($res, $matdir, $filelist);
                                 } else if ($res->modname == 'lightboxgallery') {
-                                    $this->handle_lightboxgallery($res, $resdir . '/Recursos', $filelist);
+                                    $this->handle_lightboxgallery($res, $matdir, $filelist);
                                 } else if ($res->modname == 'glossary') {
-                                    $this->handle_glossary($res, $resdir . '/Recursos', $filelist);
+                                    $this->handle_glossary($res, $matdir, $filelist);
                                 } else if ($res->modname == 'etherpadlite') {
-                                    $this->handle_etherpadlite($res, $resdir . '/Recursos', $filelist);
+                                    $this->handle_etherpadlite($res, $matdir, $filelist);
                                 }
                             }
-                        }
                     }
                 }
             }
@@ -1234,7 +1236,7 @@ class local_downloadcentercustom_factory {
                 }
 
                 $res->name = html_entity_decode($res->name);
-                $activityname = self::shorten_filename(clean_filename($res->name));
+                $activityname = self::shorten_filename(self::clean_filename_ascii($res->name));
                 $resdir = $coursename . '/' . $activityname;
                 $filelist[$coursename] = null;
                 $filelist[$resdir] = null;
@@ -1244,23 +1246,24 @@ class local_downloadcentercustom_factory {
                 } else if ($res->modname == 'publication') {
                     $this->handle_publication($res, $resdir, $filelist);
                 } else {
-                    if ($includeresources && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
-                        $filelist[$resdir . '/Recursos'] = null;
+                    if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
+                        $matdir = $coursename . '/Materiales';
+                        $filelist[$matdir] = null;
                         if ($res->modname == 'resource') {
-                            $this->handle_resource($res, $resdir . '/Recursos', $filelist, $coursename);
+                            $this->handle_resource($res, $matdir, $filelist, $coursename);
                         } else if ($res->modname == 'folder') {
                             $folder = $fs->get_area_tree($res->context->id, 'mod_folder', 'content', 0);
-                            $this->add_folder_contents($filelist, $folder, $resdir . '/Recursos');
+                            $this->add_folder_contents($filelist, $folder, $matdir);
                         } else if ($res->modname == 'page') {
-                            $this->handle_page($res, $resdir . '/Recursos', $filelist);
+                            $this->handle_page($res, $matdir, $filelist);
                         } else if ($res->modname == 'book' && !$modbookmissing) {
-                            $this->handle_book($res, $resdir . '/Recursos', $filelist);
+                            $this->handle_book($res, $matdir, $filelist);
                         } else if ($res->modname == 'lightboxgallery') {
-                            $this->handle_lightboxgallery($res, $resdir . '/Recursos', $filelist);
+                            $this->handle_lightboxgallery($res, $matdir, $filelist);
                         } else if ($res->modname == 'glossary') {
-                            $this->handle_glossary($res, $resdir . '/Recursos', $filelist);
+                            $this->handle_glossary($res, $matdir, $filelist);
                         } else if ($res->modname == 'etherpadlite') {
-                            $this->handle_etherpadlite($res, $resdir . '/Recursos', $filelist);
+                            $this->handle_etherpadlite($res, $matdir, $filelist);
                         }
                     }
                 }
@@ -1349,7 +1352,14 @@ class local_downloadcentercustom_factory {
         $filtered = [];
 
         if (!empty($data['selectedgroups'])) {
+            // selectedgroups tiene prioridad: refleja lo que el usuario dejó seleccionado.
             $this->selectedgroups = $data['selectedgroups'];
+        } else if (!empty($data['selectallgroups'])) {
+            global $DB;
+            $allgroups = $DB->get_records_menu('groups', ['courseid' => $data['courseid'] ?? $this->course->id], '', 'id,id');
+            $this->selectedgroups = array_keys($allgroups);
+        } else {
+            $this->selectedgroups = [];
         }
 
         $sortedresources = $this->get_resources_for_user();
@@ -1387,6 +1397,14 @@ class local_downloadcentercustom_factory {
      * @param int $maxlength
      * @return string
      */
+    public static function clean_filename_ascii($filename) {
+        $filename = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $filename);
+        if ($filename === false || $filename === '') {
+            $filename = preg_replace('/[^a-zA-Z0-9_\-. \/]/', '_', $filename);
+        }
+        return clean_filename($filename);
+    }
+
     public static function shorten_filename($filename, $maxlength = 64) {
         $filename = (string)$filename;
         $filename = str_replace('/', '_', $filename);
