@@ -61,6 +61,7 @@ class local_downloadcentercustom_factory {
         'glossary',
         'etherpadlite',
         'subsection',
+        'url',
     ];
     /**
      * @var array
@@ -1136,6 +1137,18 @@ class local_downloadcentercustom_factory {
         }
     }
 
+    private function handle_url($resource, $resdir, &$filelist) {
+        $url = $resource->resource->externalurl;
+        $name = $resource->name;
+        $content = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . $name . '</title></head><body>';
+        $content .= '<h1>' . $name . '</h1>';
+        $content .= '<p><a href="' . $url . '" target="_blank">' . $url . '</a></p>';
+        $content .= '<p>Enlace al recurso externo.</p>';
+        $content .= '</body></html>';
+        $filename = $resdir . '/' . self::shorten_filename(clean_filename($name)) . '.html';
+        $filelist[$filename] = [$content];
+    }
+
     /**
      * Creates a zip file with all the resources that the user wants to download and downloads it.
      *
@@ -1204,7 +1217,7 @@ class local_downloadcentercustom_factory {
                     } else if ($res->modname == 'publication') {
                         $this->handle_publication($res, $resdir, $filelist, $groupid);
                     } else {
-                        if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
+                        if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite', 'url'])) {
                                 $matdir = $coursename . '/' . $groupname . '/Materiales';
                                 $filelist[$coursename . '/' . $groupname] = null;
                                 $filelist[$matdir] = null;
@@ -1223,6 +1236,8 @@ class local_downloadcentercustom_factory {
                                     $this->handle_glossary($res, $matdir, $filelist);
                                 } else if ($res->modname == 'etherpadlite') {
                                     $this->handle_etherpadlite($res, $matdir, $filelist);
+                                } else if ($res->modname == 'url') {
+                                    $this->handle_url($res, $matdir, $filelist);
                                 }
                             }
                     }
@@ -1246,7 +1261,7 @@ class local_downloadcentercustom_factory {
                 } else if ($res->modname == 'publication') {
                     $this->handle_publication($res, $resdir, $filelist);
                 } else {
-                    if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
+                    if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite', 'url'])) {
                         $matdir = $coursename . '/Materiales';
                         $filelist[$matdir] = null;
                         if ($res->modname == 'resource') {
@@ -1264,6 +1279,8 @@ class local_downloadcentercustom_factory {
                             $this->handle_glossary($res, $matdir, $filelist);
                         } else if ($res->modname == 'etherpadlite') {
                             $this->handle_etherpadlite($res, $matdir, $filelist);
+                        } else if ($res->modname == 'url') {
+                            $this->handle_url($res, $matdir, $filelist);
                         }
                     }
                 }
