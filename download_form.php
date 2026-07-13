@@ -63,13 +63,17 @@ class local_downloadcentercustom_download_form extends moodleform {
 
         $mform->addElement('html', '<div id="opciones-container">');
         $iseditingteacher = has_capability('moodle/course:update', $coursecontext);
-        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">CONTENIDO A DESCARGAR</span></div></div>');
+        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">CONTENIDO A DESCARGAR</span></div></div>');
         if ($iseditingteacher) {
+            $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
+            $mform->addElement('html', '<div class="separator"></div>');
             $mform->addElement('checkbox', 'includematerials', 'Materiales');
             $mform->setDefault('includematerials', 1);
+            $mform->addElement('html', '</div>');
         }
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>Tareas</strong></span></div></div>');
         $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
+        $mform->addElement('html', '<div class="separator"></div>');
         $mform->addElement('checkbox', 'onlytasks', 'Entregas');
         $mform->setDefault('onlytasks', 1);
         $mform->addElement('checkbox', 'includefeedback', 'Retroalimentaci&oacute;n');
@@ -105,10 +109,25 @@ document.addEventListener("DOMContentLoaded", function() {
     ot.addEventListener("click", function() {
         toggleByModname("assign", this.checked);
     });
+
+    // Select All/None tambien controla checkboxes de contenido.
+    document.addEventListener("click", function(e) {
+        var target = e.target;
+        if (target.id === "downloadcenter-all-included") {
+            if (im) im.checked = true;
+            ot.checked = true; ii.checked = true; ir.checked = true; fi.checked = true;
+        }
+        if (target.id === "downloadcenter-none-included") {
+            if (im) im.checked = false;
+            ot.checked = false; ii.checked = false; ir.checked = false; fi.checked = false;
+        }
+    });
     function moverOpciones() {
         var card = document.querySelector(".grouped_settings.section_level.block.card");
         var container = document.getElementById("opciones-container");
-        if (card && container) {
+        var title = document.getElementById("opciones-title");
+        if (card && container && title) {
+            card.insertBefore(title, card.firstChild);
             card.appendChild(container);
         } else {
             setTimeout(moverOpciones, 100);
@@ -137,11 +156,13 @@ JS
                     ['class' => 'badge bg-info text-white ml-1 sectiontitlebadge']
                 );
             }
-            $mform->addElement('checkbox', $sectionname, $sectiontitle, '', ['class' => 'mt-2']);
-
-            $mform->setDefault($sectionname, 1);
-
             $currentsubsectionitemid = -1;
+            if (empty($sectioninfo->res)) {
+                $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-12"></div><div class="col-md-9"><span class="itemtitle"><strong>' . $sectiontitle . '</strong></span><br><em>Sin contenido</em></div></div>');
+            } else {
+                $mform->addElement('checkbox', $sectionname, $sectiontitle, '', ['class' => 'mt-2']);
+                $mform->setDefault($sectionname, 1);
+            }
             foreach ($sectioninfo->res as $res) {
                 if (!empty($res->issubresource)) {
                     if ($currentsubsectionitemid != -1 && $currentsubsectionitemid != $res->subsectioncmid) {
