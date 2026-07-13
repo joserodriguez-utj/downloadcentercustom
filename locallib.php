@@ -1171,7 +1171,7 @@ class local_downloadcentercustom_factory {
         $allresources = $this->preprocess_resource_names($allresources, $addnumbering);
         $fileprefix = self::shorten_filename(clean_filename(format_string($this->course->shortname)));
         $onlytasks = $this->downloadoptions['onlytasks'] ?? false;
-        $includematerials = $this->downloadoptions['includematerials'] ?? true;
+        $includematerials = $this->downloadoptions['includematerials'] ?? false;
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $includefeedback = $this->downloadoptions['includefeedback'] ?? true;
@@ -1202,8 +1202,7 @@ class local_downloadcentercustom_factory {
                     } else if ($res->modname == 'publication') {
                         $this->handle_publication($res, $resdir, $filelist, $groupid);
                     } else {
-                        if ($includematerials || $includeinstructions || $includeresources) {
-                            if ($includeresources && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
+                        if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
                                 $filelist[$resdir . '/Recursos'] = null;
                                 if ($res->modname == 'resource') {
                                     $this->handle_resource($res, $resdir . '/Recursos', $filelist, $coursename . '/' . $groupname);
@@ -1222,7 +1221,6 @@ class local_downloadcentercustom_factory {
                                     $this->handle_etherpadlite($res, $resdir . '/Recursos', $filelist);
                                 }
                             }
-                        }
                     }
                 }
             }
@@ -1244,7 +1242,7 @@ class local_downloadcentercustom_factory {
                 } else if ($res->modname == 'publication') {
                     $this->handle_publication($res, $resdir, $filelist);
                 } else {
-                    if ($includeresources && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
+                    if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite'])) {
                         $filelist[$resdir . '/Recursos'] = null;
                         if ($res->modname == 'resource') {
                             $this->handle_resource($res, $resdir . '/Recursos', $filelist, $coursename);
@@ -1349,7 +1347,14 @@ class local_downloadcentercustom_factory {
         $filtered = [];
 
         if (!empty($data['selectedgroups'])) {
+            // selectedgroups tiene prioridad: refleja lo que el usuario dejó seleccionado.
             $this->selectedgroups = $data['selectedgroups'];
+        } else if (!empty($data['selectallgroups'])) {
+            global $DB;
+            $allgroups = $DB->get_records_menu('groups', ['courseid' => $data['courseid'] ?? $this->course->id], '', 'id,id');
+            $this->selectedgroups = array_keys($allgroups);
+        } else {
+            $this->selectedgroups = [];
         }
 
         $sortedresources = $this->get_resources_for_user();

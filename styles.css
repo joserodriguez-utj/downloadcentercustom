@@ -233,3 +233,9 @@
 .path-local-downloadcentercustom #fgroup_id_buttonar .felement input[type="submit"] {
     margin-right: 24px !important;
 }
+
+.path-local-downloadcentercustom #downloadcenter-bytype,
+.path-local-downloadcentercustom #mod_select_links,
+.path-local-downloadcentercustom .grouped_settings .downloadcenter_selector .col-md-9 .font-weight-bold.ml-3.text-nowrap {
+    display: none !important;
+}
