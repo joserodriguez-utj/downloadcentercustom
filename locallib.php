@@ -1186,7 +1186,9 @@ class local_downloadcentercustom_factory {
         $allresources = $this->preprocess_resource_names($allresources, $addnumbering);
         $fileprefix = self::shorten_filename(self::clean_filename_ascii(format_string($this->course->shortname)));
         $onlytasks = $this->downloadoptions['onlytasks'] ?? false;
-        $includematerials = $this->downloadoptions['includematerials'] ?? false;
+        $includefiles = $this->downloadoptions['includefiles'] ?? true;
+        $includefolders = $this->downloadoptions['includefolders'] ?? true;
+        $includeurls = $this->downloadoptions['includeurls'] ?? true;
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $includefeedback = $this->downloadoptions['includefeedback'] ?? true;
@@ -1217,29 +1219,27 @@ class local_downloadcentercustom_factory {
                     } else if ($res->modname == 'publication') {
                         $this->handle_publication($res, $resdir, $filelist, $groupid);
                     } else {
-                        if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite', 'url'])) {
-                                $matdir = $coursename . '/' . $groupname . '/Materiales';
-                                $filelist[$coursename . '/' . $groupname] = null;
-                                $filelist[$matdir] = null;
-                                if ($res->modname == 'resource') {
-                                    $this->handle_resource($res, $matdir, $filelist, $matdir);
-                                } else if ($res->modname == 'folder') {
-                                    $folder = $fs->get_area_tree($res->context->id, 'mod_folder', 'content', 0);
-                                    $this->add_folder_contents($filelist, $folder, $matdir);
-                                } else if ($res->modname == 'page') {
-                                    $this->handle_page($res, $matdir, $filelist);
-                                } else if ($res->modname == 'book' && !$modbookmissing) {
-                                    $this->handle_book($res, $matdir, $filelist);
-                                } else if ($res->modname == 'lightboxgallery') {
-                                    $this->handle_lightboxgallery($res, $matdir, $filelist);
-                                } else if ($res->modname == 'glossary') {
-                                    $this->handle_glossary($res, $matdir, $filelist);
-                                } else if ($res->modname == 'etherpadlite') {
-                                    $this->handle_etherpadlite($res, $matdir, $filelist);
-                                } else if ($res->modname == 'url') {
-                                    $this->handle_url($res, $matdir, $filelist);
-                                }
-                            }
+                        $matdir = $coursename . '/' . $groupname . '/Materiales';
+                        $filelist[$coursename . '/' . $groupname] = null;
+                        $filelist[$matdir] = null;
+                        if ($res->modname == 'resource' && $includefiles) {
+                            $this->handle_resource($res, $matdir, $filelist, $matdir);
+                        } else if ($res->modname == 'folder' && $includefolders) {
+                            $folder = $fs->get_area_tree($res->context->id, 'mod_folder', 'content', 0);
+                            $this->add_folder_contents($filelist, $folder, $matdir);
+                        } else if ($res->modname == 'page') {
+                            $this->handle_page($res, $matdir, $filelist);
+                        } else if ($res->modname == 'book' && !$modbookmissing) {
+                            $this->handle_book($res, $matdir, $filelist);
+                        } else if ($res->modname == 'lightboxgallery') {
+                            $this->handle_lightboxgallery($res, $matdir, $filelist);
+                        } else if ($res->modname == 'glossary') {
+                            $this->handle_glossary($res, $matdir, $filelist);
+                        } else if ($res->modname == 'etherpadlite') {
+                            $this->handle_etherpadlite($res, $matdir, $filelist);
+                        } else if ($res->modname == 'url' && $includeurls) {
+                            $this->handle_url($res, $matdir, $filelist);
+                        }
                     }
                 }
             }
@@ -1261,27 +1261,25 @@ class local_downloadcentercustom_factory {
                 } else if ($res->modname == 'publication') {
                     $this->handle_publication($res, $resdir, $filelist);
                 } else {
-                    if ($includematerials && in_array($res->modname, ['resource', 'folder', 'page', 'book', 'lightboxgallery', 'glossary', 'etherpadlite', 'url'])) {
-                        $matdir = $coursename . '/Materiales';
-                        $filelist[$matdir] = null;
-                        if ($res->modname == 'resource') {
-                            $this->handle_resource($res, $matdir, $filelist, $coursename);
-                        } else if ($res->modname == 'folder') {
-                            $folder = $fs->get_area_tree($res->context->id, 'mod_folder', 'content', 0);
-                            $this->add_folder_contents($filelist, $folder, $matdir);
-                        } else if ($res->modname == 'page') {
-                            $this->handle_page($res, $matdir, $filelist);
-                        } else if ($res->modname == 'book' && !$modbookmissing) {
-                            $this->handle_book($res, $matdir, $filelist);
-                        } else if ($res->modname == 'lightboxgallery') {
-                            $this->handle_lightboxgallery($res, $matdir, $filelist);
-                        } else if ($res->modname == 'glossary') {
-                            $this->handle_glossary($res, $matdir, $filelist);
-                        } else if ($res->modname == 'etherpadlite') {
-                            $this->handle_etherpadlite($res, $matdir, $filelist);
-                        } else if ($res->modname == 'url') {
-                            $this->handle_url($res, $matdir, $filelist);
-                        }
+                    $matdir = $coursename . '/Materiales';
+                    $filelist[$matdir] = null;
+                    if ($res->modname == 'resource' && $includefiles) {
+                        $this->handle_resource($res, $matdir, $filelist, $coursename);
+                    } else if ($res->modname == 'folder' && $includefolders) {
+                        $folder = $fs->get_area_tree($res->context->id, 'mod_folder', 'content', 0);
+                        $this->add_folder_contents($filelist, $folder, $matdir);
+                    } else if ($res->modname == 'page') {
+                        $this->handle_page($res, $matdir, $filelist);
+                    } else if ($res->modname == 'book' && !$modbookmissing) {
+                        $this->handle_book($res, $matdir, $filelist);
+                    } else if ($res->modname == 'lightboxgallery') {
+                        $this->handle_lightboxgallery($res, $matdir, $filelist);
+                    } else if ($res->modname == 'glossary') {
+                        $this->handle_glossary($res, $matdir, $filelist);
+                    } else if ($res->modname == 'etherpadlite') {
+                        $this->handle_etherpadlite($res, $matdir, $filelist);
+                    } else if ($res->modname == 'url' && $includeurls) {
+                        $this->handle_url($res, $matdir, $filelist);
                     }
                 }
             }
@@ -1397,7 +1395,9 @@ class local_downloadcentercustom_factory {
             }
         }
 
-        $this->downloadoptions['includematerials'] = !empty($data['includematerials']);
+        $this->downloadoptions['includefiles'] = !empty($data['includefiles']);
+        $this->downloadoptions['includefolders'] = !empty($data['includefolders']);
+        $this->downloadoptions['includeurls'] = !empty($data['includeurls']);
         $this->downloadoptions['includeinstructions'] = !empty($data['includeinstructions']);
         $this->downloadoptions['includeresources'] = !empty($data['includeresources']);
         $this->downloadoptions['includefeedback'] = !empty($data['includefeedback']);
