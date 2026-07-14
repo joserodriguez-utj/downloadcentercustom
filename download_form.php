@@ -65,10 +65,15 @@ class local_downloadcentercustom_download_form extends moodleform {
         $iseditingteacher = has_capability('moodle/course:update', $coursecontext);
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">CONTENIDO A DESCARGAR</span></div></div>');
         if ($iseditingteacher) {
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>Materiales</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
-            $mform->addElement('checkbox', 'includematerials', 'Materiales');
-            $mform->setDefault('includematerials', 1);
+            $mform->addElement('checkbox', 'includefiles', 'Archivos');
+            $mform->setDefault('includefiles', 1);
+            $mform->addElement('checkbox', 'includefolders', 'Carpetas');
+            $mform->setDefault('includefolders', 1);
+            $mform->addElement('checkbox', 'includeurls', 'URLs');
+            $mform->setDefault('includeurls', 1);
             $mform->addElement('html', '</div>');
         }
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>Tareas</strong></span></div></div>');
@@ -88,7 +93,9 @@ class local_downloadcentercustom_download_form extends moodleform {
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var ot = document.getElementById("id_onlytasks");
-    var im = document.getElementById("id_includematerials");
+    var ifiles = document.getElementById("id_includefiles");
+    var ifolders = document.getElementById("id_includefolders");
+    var iurls = document.getElementById("id_includeurls");
     var ii = document.getElementById("id_includeinstructions");
     var ir = document.getElementById("id_includeresources");
     var fi = document.getElementById("id_includefeedback");
@@ -100,10 +107,19 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    if (im) {
-        im.addEventListener("click", function() {
+    if (ifiles) {
+        ifiles.addEventListener("click", function() {
             toggleByModname("resource", this.checked);
-            toggleByModname("page", this.checked);
+        });
+    }
+    if (ifolders) {
+        ifolders.addEventListener("click", function() {
+            toggleByModname("folder", this.checked);
+        });
+    }
+    if (iurls) {
+        iurls.addEventListener("click", function() {
+            toggleByModname("url", this.checked);
         });
     }
     ot.addEventListener("click", function() {
@@ -114,11 +130,15 @@ document.addEventListener("DOMContentLoaded", function() {
     document.addEventListener("click", function(e) {
         var target = e.target;
         if (target.id === "downloadcenter-all-included") {
-            if (im) im.checked = true;
+            if (ifiles) ifiles.checked = true;
+            if (ifolders) ifolders.checked = true;
+            if (iurls) iurls.checked = true;
             ot.checked = true; ii.checked = true; ir.checked = true; fi.checked = true;
         }
         if (target.id === "downloadcenter-none-included") {
-            if (im) im.checked = false;
+            if (ifiles) ifiles.checked = false;
+            if (ifolders) ifolders.checked = false;
+            if (iurls) iurls.checked = false;
             ot.checked = false; ii.checked = false; ir.checked = false; fi.checked = false;
         }
     });
