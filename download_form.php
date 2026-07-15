@@ -85,7 +85,7 @@ class local_downloadcentercustom_download_form extends moodleform {
         $mform->setDefault('includefeedback', 1);
         $mform->addElement('checkbox', 'includeinstructions', get_string('instructions', 'local_downloadcentercustom'));
         $mform->setDefault('includeinstructions', 1);
-        $mform->addElement('checkbox', 'includeresources', get_string('recursos_item', 'local_downloadcentercustom'));
+        $mform->addElement('checkbox', 'includeresources', get_string('resources_item', 'local_downloadcentercustom'));
         $mform->setDefault('includeresources', 1);
         $mform->addElement('html', '</div>');
         $mform->addElement('html', '</div>');
