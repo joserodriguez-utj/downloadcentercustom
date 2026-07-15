@@ -63,29 +63,29 @@ class local_downloadcentercustom_download_form extends moodleform {
 
         $mform->addElement('html', '<div id="opciones-container">');
         $iseditingteacher = has_capability('moodle/course:update', $coursecontext);
-        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">CONTENIDO A DESCARGAR</span></div></div>');
+        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
         if ($iseditingteacher) {
-            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>Materiales</strong></span></div></div>');
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('materiales', 'local_downloadcentercustom') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
-            $mform->addElement('checkbox', 'includefiles', 'Archivos');
+            $mform->addElement('checkbox', 'includefiles', get_string('archivos', 'local_downloadcentercustom'));
             $mform->setDefault('includefiles', 1);
-            $mform->addElement('checkbox', 'includefolders', 'Carpetas');
+            $mform->addElement('checkbox', 'includefolders', get_string('carpetas', 'local_downloadcentercustom'));
             $mform->setDefault('includefolders', 1);
-            $mform->addElement('checkbox', 'includeurls', 'URLs');
+            $mform->addElement('checkbox', 'includeurls', get_string('urls', 'local_downloadcentercustom'));
             $mform->setDefault('includeurls', 1);
             $mform->addElement('html', '</div>');
         }
-        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>Tareas</strong></span></div></div>');
+        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('tareas', 'local_downloadcentercustom') . '</strong></span></div></div>');
         $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
         $mform->addElement('html', '<div class="separator"></div>');
-        $mform->addElement('checkbox', 'onlytasks', 'Entregas');
+        $mform->addElement('checkbox', 'onlytasks', get_string('entregas', 'local_downloadcentercustom'));
         $mform->setDefault('onlytasks', 1);
-        $mform->addElement('checkbox', 'includefeedback', 'Retroalimentaci&oacute;n');
+        $mform->addElement('checkbox', 'includefeedback', get_string('retroalimentacion', 'local_downloadcentercustom'));
         $mform->setDefault('includefeedback', 1);
-        $mform->addElement('checkbox', 'includeinstructions', 'Instrucciones');
+        $mform->addElement('checkbox', 'includeinstructions', get_string('instrucciones', 'local_downloadcentercustom'));
         $mform->setDefault('includeinstructions', 1);
-        $mform->addElement('checkbox', 'includeresources', 'Recursos');
+        $mform->addElement('checkbox', 'includeresources', get_string('recursos_item', 'local_downloadcentercustom'));
         $mform->setDefault('includeresources', 1);
         $mform->addElement('html', '</div>');
         $mform->addElement('html', '</div>');
@@ -110,6 +110,9 @@ document.addEventListener("DOMContentLoaded", function() {
     if (ifiles) {
         ifiles.addEventListener("click", function() {
             toggleByModname("resource", this.checked);
+            toggleByModname("page", this.checked);
+            toggleByModname("label", this.checked);
+            toggleByModname("book", this.checked);
         });
     }
     if (ifolders) {
@@ -178,7 +181,7 @@ JS
             }
             $currentsubsectionitemid = -1;
             if (empty($sectioninfo->res)) {
-                $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-12"></div><div class="col-md-9"><span class="itemtitle"><strong>' . $sectiontitle . '</strong></span><br><em>Sin contenido</em></div></div>');
+                $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-12"></div><div class="col-md-9"><span class="itemtitle"><strong>' . $sectiontitle . '</strong></span><br><em>' . get_string('sin_contenido', 'local_downloadcentercustom') . '</em></div></div>');
             } else {
                 $mform->addElement('checkbox', $sectionname, $sectiontitle, '', ['class' => 'mt-2']);
                 $mform->setDefault($sectionname, 1);
@@ -260,10 +263,10 @@ JS
                 }
                 $mform->addElement('header', 'groupfilter', get_string('groupfilter', 'local_downloadcentercustom'));
                 $mform->setExpanded('groupfilter');
-                $mform->addElement('checkbox', 'selectallgroups', 'Todos los grupos');
+                $mform->addElement('checkbox', 'selectallgroups', get_string('todos_los_grupos', 'local_downloadcentercustom'));
                 $mform->setDefault('selectallgroups', 0);
                 $select = $mform->addElement('autocomplete', 'selectedgroups',
-                    get_string('groups'), $groupoptions);
+                    get_string('select_groups_one_by_one', 'local_downloadcentercustom'), $groupoptions);
                 $select->setMultiple(true);
                 $mform->addHelpButton('selectedgroups', 'groupfilter_help', 'local_downloadcentercustom');
                 $mform->setDefault('selectedgroups', []);
