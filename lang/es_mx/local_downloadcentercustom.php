@@ -52,10 +52,11 @@ $string['groupfilter_help'] = 'Este filtro limita las entregas descargadas a los
 $string['groupfilter_help_help'] = 'Selecciona uno o más grupos para descargar únicamente las entregas de los estudiantes de esos grupos.';
 $string['all_groups'] = 'Todos los grupos';
 $string['content_to_download'] = 'CONTENIDO A DESCARGAR';
-$string['materials'] = 'Materiales';
+$string['materials'] = 'Materiales disponibles para descargar';
 $string['files'] = 'Archivos';
 $string['folders'] = 'Carpetas';
 $string['urls'] = 'URLs';
+$string['pages'] = 'Páginas';
 $string['tasks'] = 'Tareas';
 $string['assignments'] = 'Entregas';
 $string['feedback'] = 'Retroalimentación';
@@ -66,3 +67,4 @@ $string['select_groups_one_by_one'] = 'Seleccionar grupo uno por uno';
 $string['all_grups'] = 'Todos los grupos';
 $string['selectallgroups_help'] = 'Seleccionar todos los grupos';
 $string['selectallgroups_help_help'] = 'Selecciona esta opción para marcar todos los grupos disponibles.';
+

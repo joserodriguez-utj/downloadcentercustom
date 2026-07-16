@@ -64,16 +64,27 @@ class local_downloadcentercustom_download_form extends moodleform {
         $mform->addElement('html', '<div id="opciones-container">');
         $iseditingteacher = has_capability('moodle/course:update', $coursecontext);
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
-        if ($iseditingteacher) {
+        // Detectar que modnames existen en el curso.
+        $modnamesincourse = [];
+        foreach ($resources as $sec) {
+            foreach ($sec->res as $r) {
+                $modnamesincourse[$r->modname] = true;
+            }
+        }
+        $showfiles = isset($modnamesincourse['resource']);
+        $showfolders = isset($modnamesincourse['folder']);
+        $showurls = isset($modnamesincourse['url']);
+        $showpages = isset($modnamesincourse['page']);
+        $tienealgomaterial = $showfiles || $showfolders || $showurls || $showpages;
+
+        if ($iseditingteacher && $tienealgomaterial) {
             $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('materials', 'local_downloadcentercustom') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
-            $mform->addElement('checkbox', 'includefiles', get_string('files', 'local_downloadcentercustom'));
-            $mform->setDefault('includefiles', 1);
-            $mform->addElement('checkbox', 'includefolders', get_string('folders', 'local_downloadcentercustom'));
-            $mform->setDefault('includefolders', 1);
-            $mform->addElement('checkbox', 'includeurls', get_string('urls', 'local_downloadcentercustom'));
-            $mform->setDefault('includeurls', 1);
+            if ($showfiles) { $mform->addElement('checkbox', 'includefiles', get_string('files', 'local_downloadcentercustom')); $mform->setDefault('includefiles', 1); }
+            if ($showfolders) { $mform->addElement('checkbox', 'includefolders', get_string('folders', 'local_downloadcentercustom')); $mform->setDefault('includefolders', 1); }
+            if ($showurls) { $mform->addElement('checkbox', 'includeurls', get_string('urls', 'local_downloadcentercustom')); $mform->setDefault('includeurls', 1); }
+            if ($showpages) { $mform->addElement('checkbox', 'includepages', get_string('pages', 'local_downloadcentercustom')); $mform->setDefault('includepages', 1); }
             $mform->addElement('html', '</div>');
         }
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('tasks', 'local_downloadcentercustom') . '</strong></span></div></div>');
@@ -96,6 +107,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var ifiles = document.getElementById("id_includefiles");
     var ifolders = document.getElementById("id_includefolders");
     var iurls = document.getElementById("id_includeurls");
+    var ipages = document.getElementById("id_includepages");
     var ii = document.getElementById("id_includeinstructions");
     var ir = document.getElementById("id_includeresources");
     var fi = document.getElementById("id_includefeedback");
@@ -110,9 +122,13 @@ document.addEventListener("DOMContentLoaded", function() {
     if (ifiles) {
         ifiles.addEventListener("click", function() {
             toggleByModname("resource", this.checked);
-            toggleByModname("page", this.checked);
             toggleByModname("label", this.checked);
             toggleByModname("book", this.checked);
+        });
+    }
+    if (ipages) {
+        ipages.addEventListener("click", function() {
+            toggleByModname("page", this.checked);
         });
     }
     if (ifolders) {
@@ -130,19 +146,24 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // Select All/None tambien controla checkboxes de contenido.
+    function triggerChange(id) { var e = document.getElementById(id); if (e) e.dispatchEvent(new Event("change", {bubbles:true})); }
     document.addEventListener("click", function(e) {
         var target = e.target;
         if (target.id === "downloadcenter-all-included") {
             if (ifiles) ifiles.checked = true;
             if (ifolders) ifolders.checked = true;
             if (iurls) iurls.checked = true;
+            if (ipages) ipages.checked = true;
             ot.checked = true; ii.checked = true; ir.checked = true; fi.checked = true;
+            ["includefiles","includefolders","includeurls","includepages","onlytasks","includefeedback","includeinstructions","includeresources"].forEach(triggerChange);
         }
         if (target.id === "downloadcenter-none-included") {
             if (ifiles) ifiles.checked = false;
             if (ifolders) ifolders.checked = false;
             if (iurls) iurls.checked = false;
+            if (ipages) ipages.checked = false;
             ot.checked = false; ii.checked = false; ir.checked = false; fi.checked = false;
+            ["includefiles","includefolders","includeurls","includepages","onlytasks","includefeedback","includeinstructions","includeresources"].forEach(triggerChange);
         }
     });
     function moverOpciones() {
@@ -307,5 +328,52 @@ document.getElementById("id_selectallgroups").onclick = function() {
         }
 
         $this->add_action_buttons(true, get_string('createzip', 'local_downloadcentercustom'));
+        $mform->addElement('html', <<<JS
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var mats = ["id_includefiles","id_includefolders","id_includeurls","id_includepages"];
+    var sel = document.getElementById("id_selectedgroups");
+    var allgrp = document.getElementById("id_selectallgroups");
+    var btn = document.querySelector("input[name='buttonar[submitbutton]']");
+    function hasmat() { return mats.some(function(id) { var e = document.getElementById(id); return e && e.checked; }); }
+    function hastask() {
+        var ids = ["id_onlytasks","id_includefeedback","id_includeinstructions","id_includeresources"];
+        return ids.some(function(id) { var e = document.getElementById(id); return e && e.checked; });
+    }
+    function hasgroups() { return (allgrp && allgrp.checked) || (sel && Array.from(sel.options).some(function(o) { return o.selected; })); }
+    function check() {
+        if (!btn) return;
+        btn.disabled = !(hasmat() || hasgroups()) || (hastask() && !hasgroups());
+    }
+    mats.forEach(function(id) { var e = document.getElementById(id); if (e) e.addEventListener("change", check); });
+    var e = document.getElementById("id_onlytasks"); if (e) e.addEventListener("change", check);
+    if (allgrp) allgrp.addEventListener("change", check);
+    if (sel) sel.addEventListener("change", check);
+    // Bloquear envio si condiciones no se cumplen.
+    var form = document.querySelector("form.mform");
+    if (form) {
+        form.addEventListener("submit", function(e) {
+            if (!(hasmat() || hasgroups()) || (hastask() && !hasgroups())) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+    check();
+});
+</script>
+JS
+);
+    }
+
+    function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        $hasmat = !empty($data['includefiles']) || !empty($data['includefolders']) || !empty($data['includeurls']) || !empty($data['includepages']);
+        $hastask = !empty($data['onlytasks']) || !empty($data['includefeedback']) || !empty($data['includeinstructions']) || !empty($data['includeresources']);
+        $hasgroups = !empty($data['selectallgroups']) || !empty($data['selectedgroups']);
+        if ($hastask && !$hasgroups) {
+            $errors['selectedgroups'] = 'Debes seleccionar al menos un grupo para descargar tareas.';
+        }
+        return $errors;
     }
 }
