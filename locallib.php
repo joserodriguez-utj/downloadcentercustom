@@ -835,7 +835,7 @@ class local_downloadcentercustom_factory {
             $filelist[$instruccionesdir] = null;
             $introcontent = $resource->resource->intro;
             $introfiles = $fs->get_area_files($context->id, 'mod_assign', 'intro', 0, 'id', false);
-            $guardarhuerfanos = ($this->downloadoptions['includefiles'] ?? false) || ($this->downloadoptions['includefolders'] ?? false);
+            $guardarhuerfanos = ($this->downloadoptions['includefiles'] ?? false) || ($this->downloadoptions['includefolders'] ?? false) || ($this->downloadoptions['includepages'] ?? false);
             $referenciasdir = $resdir . '/Materiales/Referencias';
             $hastareferencias = false;
             foreach ($introfiles as $file) {
@@ -1243,11 +1243,12 @@ class local_downloadcentercustom_factory {
         $includefiles = $this->downloadoptions['includefiles'] ?? true;
         $includefolders = $this->downloadoptions['includefolders'] ?? true;
         $includeurls = $this->downloadoptions['includeurls'] ?? true;
+        $includepages = $this->downloadoptions['includepages'] ?? true;
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $includefeedback = $this->downloadoptions['includefeedback'] ?? true;
         $solomateriales = $includefiles || $includefolders || $includeurls;
-        $haymateriales = $includefiles || $includefolders;
+        $haymateriales = $includefiles || $includefolders || $includepages;
 
         // Obtener recursos organizados por seccion.
         $pathlist = $this->section_pathnames();
@@ -1304,11 +1305,20 @@ class local_downloadcentercustom_factory {
                                 $this->add_folder_contents($filelist, $folder, $itempath);
                             } else if ($m->modname == 'page') {
                                 $pagedir2 = $itempath; $filelist[$pagedir2] = null;
-                                $pcontent2 = str_replace('@@PLUGINFILE@@', '.', $m->resource->content);
-                                $pcontent2 = self::convert_content_to_html_doc($m->name, $pcontent2);
+                                $pintro2 = $m->resource->intro ?? '';
+                                $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
                                 $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
+                                $filelist[$pagedir2 . '/Recursos'] = null;
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                             } else if ($m->modname == 'book' && !$modbookmissing)  {
                                 $this->handle_book($m, $itempath, $filelist);
                             } else if ($m->modname == 'lightboxgallery') {
@@ -1340,11 +1350,20 @@ class local_downloadcentercustom_factory {
                                 $this->add_folder_contents($filelist, $folder, $itempath);
                             } else if ($m->modname == 'page') {
                                 $pagedir2 = $itempath; $filelist[$pagedir2] = null;
-                                $pcontent2 = str_replace('@@PLUGINFILE@@', '.', $m->resource->content);
-                                $pcontent2 = self::convert_content_to_html_doc($m->name, $pcontent2);
+                                $pintro2 = $m->resource->intro ?? '';
+                                $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
                                 $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
+                                $filelist[$pagedir2 . '/Recursos'] = null;
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                             } else if ($m->modname == 'book' && !$modbookmissing)  {
                                 $this->handle_book($m, $itempath, $filelist);
                             } else if ($m->modname == 'lightboxgallery') {
@@ -1391,18 +1410,32 @@ class local_downloadcentercustom_factory {
                     }
                     foreach ($materialitems as $m) {
                         $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
-                        $itempath = $resdir . '/Materiales/' . $itemname;
-                        $filelist[$resdir . '/Materiales'] = null;
-                        if ($m->modname == 'resource' && $includefiles) {
-                            $this->handle_resource($m, $itempath, $filelist, $resdir . '/Materiales');
-                        } else if ($m->modname == 'folder' && $includefolders) {
-                            $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
-                            $this->add_folder_contents($filelist, $folder, $itempath);
-                        } else if ($m->modname == 'page') {
-                            $this->handle_page($m, $itempath, $filelist);
-                        } else if ($m->modname == 'book' && !$modbookmissing)  {
-                            $this->handle_book($m, $itempath, $filelist);
-                        } else if ($m->modname == 'lightboxgallery') {
+                         $itempath = $resdir . '/Materiales/' . $itemname;
+                         $filelist[$resdir . '/Materiales'] = null;
+                         if ($m->modname == 'resource' && $includefiles) {
+                             $this->handle_resource($m, $itempath, $filelist, $resdir . '/Materiales');
+                         } else if ($m->modname == 'folder' && $includefolders) {
+                             $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
+                             $this->add_folder_contents($filelist, $folder, $itempath);
+                         } else if ($m->modname == 'page') {
+                                $pagedir2 = $itempath; $filelist[$pagedir2] = null;
+                                $pintro2 = $m->resource->intro ?? '';
+                                $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
+                                $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
+                                $filelist[$pagedir2 . '/Recursos'] = null;
+                                $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                         } else if ($m->modname == 'book' && !$modbookmissing)  {
+                             $this->handle_book($m, $itempath, $filelist);
+                         } else if ($m->modname == 'lightboxgallery') {
                             $this->handle_lightboxgallery($m, $itempath, $filelist);
                         } else if ($m->modname == 'glossary') {
                             $this->handle_glossary($m, $itempath, $filelist);
@@ -1417,20 +1450,34 @@ class local_downloadcentercustom_factory {
                 }
                 if (empty($assignitems)) {
                     foreach ($materialitems as $m) {
-                        $matdir = $coursename . '/Materiales';
-                        $filelist[$matdir] = null;
-                        $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
-                        $itempath = $matdir . '/' . $itemname;
-                        if ($m->modname == 'resource' && $includefiles) {
-                            $this->handle_resource($m, $itempath, $filelist, $matdir);
-                        } else if ($m->modname == 'folder' && $includefolders) {
-                            $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
-                            $this->add_folder_contents($filelist, $folder, $itempath);
-                        } else if ($m->modname == 'page') {
-                            $this->handle_page($m, $itempath, $filelist);
-                        } else if ($m->modname == 'book' && !$modbookmissing)  {
-                            $this->handle_book($m, $itempath, $filelist);
-                        } else if ($m->modname == 'lightboxgallery') {
+                         $matdir = $coursename . '/Materiales';
+                         $filelist[$matdir] = null;
+                         $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
+                         $itempath = $matdir . '/' . $itemname;
+                         if ($m->modname == 'resource' && $includefiles) {
+                             $this->handle_resource($m, $itempath, $filelist, $matdir);
+                         } else if ($m->modname == 'folder' && $includefolders) {
+                             $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
+                             $this->add_folder_contents($filelist, $folder, $itempath);
+                         } else if ($m->modname == 'page') {
+                                $pagedir2 = $itempath; $filelist[$pagedir2] = null;
+                                $pintro2 = $m->resource->intro ?? '';
+                                $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
+                                $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
+                                $filelist[$pagedir2 . '/Recursos'] = null;
+                                $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                         } else if ($m->modname == 'book' && !$modbookmissing)  {
+                             $this->handle_book($m, $itempath, $filelist);
+                         } else if ($m->modname == 'lightboxgallery') {
                             $this->handle_lightboxgallery($m, $itempath, $filelist);
                         } else if ($m->modname == 'glossary') {
                             $this->handle_glossary($m, $itempath, $filelist);
@@ -1560,6 +1607,7 @@ class local_downloadcentercustom_factory {
 
         $this->downloadoptions['includefiles'] = !empty($data['includefiles']);
         $this->downloadoptions['includefolders'] = !empty($data['includefolders']);
+        $this->downloadoptions['includepages'] = !empty($data['includepages']);
         $this->downloadoptions['includeurls'] = !empty($data['includeurls']);
         $this->downloadoptions['includeinstructions'] = !empty($data['includeinstructions']);
         $this->downloadoptions['includeresources'] = !empty($data['includeresources']);

@@ -52,10 +52,11 @@ $string['groupfilter_help'] = 'This filter limits downloaded submissions to the 
 $string['groupfilter_help_help'] = 'Select one or more groups to download only submissions from students in those groups. Leave empty to include all groups.';
 $string['all_groups'] = 'All groups';
 $string['content_to_download'] = 'CONTENT TO DOWNLOAD';
-$string['materials'] = 'Materials';
+$string['materials'] = 'Materials Available for Download';
 $string['files'] = 'Files';
 $string['folders'] = 'Folders';
 $string['urls'] = 'URLs';
+$string['pages'] = 'Pages';
 $string['tasks'] = 'Tasks';
 $string['assignments'] = 'Assignments';
 $string['feedback'] = 'Feedback';
@@ -66,3 +67,4 @@ $string['select_groups_one_by_one'] = 'Select groups one by one';
 $string['all_grups'] = 'All groups';
 $string['selectallgroups_help'] = 'Select all groups';
 $string['selectallgroups_help_help'] = 'Check this option to select all available groups.';
+
