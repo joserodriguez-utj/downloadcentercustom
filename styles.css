@@ -102,13 +102,32 @@
     background-color: #fff;
 }
 
-.path-local-downloadcentercustom #region-main .card.block .row.fitem.downloadcenter_selector label span,
+/* .path-local-downloadcentercustom #region-main .card.block .row.fitem.downloadcenter_selector label span,
 .path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child label span,
 .path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child label,
 .path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child {
     font-weight: bold;
     margin-top: 10px !important;
     margin-bottom: 10px !important;
+} */
+
+.path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child {
+    display: flex;
+    align-items: center;
+    margin: 10px 0 !important;
+}
+
+.path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child .fitemtitle,
+.path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child label {
+    display: flex;
+    align-items: center;
+    margin: 0 !important;
+    font-weight: bold;
+}
+
+.path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child input[type="checkbox"] {
+    margin-top: 0 !important;
+    margin-right: .6rem;
 }
 
 .path-local-downloadcentercustom #region-main .card.block .row.fitem {
@@ -262,4 +281,3 @@
     row-gap: 4px !important;
     column-gap: 4px !important;
 }
-

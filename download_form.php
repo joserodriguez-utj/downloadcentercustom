@@ -340,30 +340,107 @@ document.addEventListener("DOMContentLoaded", function() {
     var sel = document.getElementById("id_selectedgroups");
     var allgrp = document.getElementById("id_selectallgroups");
     var btn = document.querySelector("input[name='buttonar[submitbutton]']");
-    function hasmat() { return mats.some(function(id) { var e = document.getElementById(id); return e && e.checked; }); }
+    var form = document.querySelector("form.mform");
+
+    function hasmat() {
+        return mats.some(function(id) {
+            var el = document.getElementById(id);
+            return el && el.checked;
+        });
+    }
     function hastask() {
         var ids = ["id_onlytasks","id_includefeedback","id_includeinstructions","id_includeresources"];
-        return ids.some(function(id) { var e = document.getElementById(id); return e && e.checked; });
+        return ids.some(function(id) {
+            var el = document.getElementById(id);
+            return el && el.checked;
+        });
     }
-    function hasgroups() { return (allgrp && allgrp.checked) || (sel && Array.from(sel.options).some(function(o) { return o.selected; })); }
+    function hasgroups() {
+        return (allgrp && allgrp.checked) || (sel && Array.from(sel.options).some(function(o) { return o.selected; }));
+    }
+    function hasSelectedItems() {
+        return Array.from(document.querySelectorAll('input[name^="item_"]:checked')).some(function(el) {
+            return el.name.indexOf('item_topic_') !== 0;
+        });
+    }
+    function syncMaterialFiltersFromItems() {
+        var checkedMods = {};
+        document.querySelectorAll('input[name^="item_"]:checked').forEach(function(el) {
+            var match = el.name.match(/^item_([a-z]+)_\d+$/);
+            if (match) {
+                checkedMods[match[1]] = true;
+            }
+        });
+        var files = document.getElementById('id_includefiles');
+        if (files) { files.checked = !!(checkedMods.resource || checkedMods.label || checkedMods.book); }
+        var folders = document.getElementById('id_includefolders');
+        if (folders) { folders.checked = !!checkedMods.folder; }
+        var urls = document.getElementById('id_includeurls');
+        if (urls) { urls.checked = !!checkedMods.url; }
+        var pages = document.getElementById('id_includepages');
+        if (pages) { pages.checked = !!checkedMods.page; }
+        var tasks = document.getElementById('id_onlytasks');
+        if (tasks) { tasks.checked = !!checkedMods.assign; }
+        // Sincronizar checkboxes de seccion.
+        document.querySelectorAll('input[name^="item_topic_"]').forEach(function(el) {
+            var section = el.closest('.card.block');
+            if (!section) return;
+            var items = section.querySelectorAll('input[name^="item_"]:not([name^="item_topic_"]):checked');
+            el.checked = items.length > 0;
+        });
+    }
+    function canSubmit() {
+        if (hastask() && !hasgroups()) {
+            return false;
+        }
+        return hasmat() || hasSelectedItems() || (hastask() && hasgroups());
+    }
     function check() {
-        if (!btn) return;
-        btn.disabled = !(hasmat() || (hastask() && hasgroups()));
+        if (!btn) {
+            return;
+        }
+        btn.disabled = !canSubmit();
     }
-    mats.forEach(function(id) { var e = document.getElementById(id); if (e) e.addEventListener("change", check); });
-    var e = document.getElementById("id_onlytasks"); if (e) e.addEventListener("change", check);
-    if (allgrp) allgrp.addEventListener("change", check);
-    if (sel) sel.addEventListener("change", check);
-    // Bloquear envio si condiciones no se cumplen.
-    var form = document.querySelector("form.mform");
+    function onSelectionChanged() {
+        syncMaterialFiltersFromItems();
+        check();
+    }
+
+    mats.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("change", check);
+        }
+    });
+    var onlytasks = document.getElementById("id_onlytasks");
+    if (onlytasks) {
+        onlytasks.addEventListener("change", check);
+    }
+    if (allgrp) {
+        allgrp.addEventListener("change", check);
+    }
+    if (sel) {
+        sel.addEventListener("change", check);
+    }
     if (form) {
+        form.addEventListener("change", function(e) {
+            if (e.target && e.target.name && e.target.name.indexOf('item_') === 0) {
+                onSelectionChanged();
+            }
+        });
         form.addEventListener("submit", function(e) {
-            if (!(hasmat() || hasgroups()) || (hastask() && !hasgroups())) {
+            if (!canSubmit()) {
                 e.preventDefault();
                 return false;
             }
         });
     }
+    document.addEventListener('downloadcenter:itemselectionchanged', onSelectionChanged);
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'downloadcenter-none-included' || e.target.id === 'downloadcenter-all-included') {
+            setTimeout(onSelectionChanged, 0);
+        }
+    });
     check();
 });
 </script>

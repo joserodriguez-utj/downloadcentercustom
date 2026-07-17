@@ -90,23 +90,25 @@ define(['jquery', 'core/str', 'core/url'], function($, Str, url) {
     };
 
     ModFilter.prototype.checkboxhandler = function($checkbox) {
-        const prefix = 'item_topic';
-        const shortprefix = 'item_';
+        const topicprefix = 'item_topic';
+        const itemprefix = 'item_';
         const name = $checkbox.prop('name');
         const checked = $checkbox.prop('checked');
-        if (name.substring(0, shortprefix.length) === shortprefix) {
-            let $parent = $checkbox.parentsUntil('form', '.card');
-            if ($parent.length > 1) {
-                $parent = $parent.first();
-            }
-            if (name.substring(0, prefix.length) === prefix) {
-                $parent.find('input.form-check-input').prop('checked', checked);
-            } else {
-                if (checked) {
-                    $parent.find('input.form-check-input[name^="item_topic"]').prop('checked', true);
-                }
-            }
+
+        if (name.substring(0, itemprefix.length) !== itemprefix) {
+            return;
         }
+
+        if (name.substring(0, topicprefix.length) === topicprefix) {
+            // Section/subsection checkbox: toggle all items inside this card.
+            $checkbox.closest('.card.block').find('input.form-check-input').prop('checked', checked);
+        } else if (checked) {
+            // Individual item checked: also check every parent section/subsection header.
+            $checkbox.parents('.card.block').each(function() {
+                $(this).find('input.form-check-input[name^="item_topic"]').first().prop('checked', true);
+            });
+        }
+        document.dispatchEvent(new CustomEvent('downloadcenter:itemselectionchanged'));
     };
 
     ModFilter.prototype.updateFormState = function() {
