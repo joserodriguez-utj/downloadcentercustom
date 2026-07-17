@@ -107,6 +107,8 @@
 .path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child label,
 .path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child {
     font-weight: bold;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
 }
 
 .path-local-downloadcentercustom #region-main .card.block .row.fitem {
@@ -238,5 +240,26 @@
 .path-local-downloadcentercustom #mod_select_links,
 .path-local-downloadcentercustom .grouped_settings .downloadcenter_selector .col-md-9 .font-weight-bold.ml-3.text-nowrap {
     display: none !important;
+}
+
+.path-local-downloadcentercustom #opciones-container .fitem:not(.downloadcenter_selector) {
+    min-width: 160px !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.path-local-downloadcentercustom #opciones-title {
+    margin-bottom: 18px !important;
+}
+
+.path-local-downloadcentercustom #opciones-container .downloadcenter_selector {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+}
+
+.path-local-downloadcentercustom #opciones-container > div[style*="display:flex"] {
+    row-gap: 4px !important;
+    column-gap: 4px !important;
 }
 

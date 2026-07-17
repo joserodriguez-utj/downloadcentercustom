@@ -327,6 +327,11 @@ document.getElementById("id_selectallgroups").onclick = function() {
             }
         }
 
+        $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
+        $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
+        $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;"><li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
+        $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li></ul>');
+        $mform->addElement('html', '</div>');
         $this->add_action_buttons(true, get_string('createzip', 'local_downloadcentercustom'));
         $mform->addElement('html', <<<JS
 <script>
@@ -343,7 +348,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function hasgroups() { return (allgrp && allgrp.checked) || (sel && Array.from(sel.options).some(function(o) { return o.selected; })); }
     function check() {
         if (!btn) return;
-        btn.disabled = !(hasmat() || hasgroups()) || (hastask() && !hasgroups());
+        btn.disabled = !(hasmat() || (hastask() && hasgroups()));
     }
     mats.forEach(function(id) { var e = document.getElementById(id); if (e) e.addEventListener("change", check); });
     var e = document.getElementById("id_onlytasks"); if (e) e.addEventListener("change", check);
