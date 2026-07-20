@@ -254,7 +254,7 @@ JS
                     $mform->addElement('checkbox', $name, $title);
                     $mform->setDefault($name, 1);
                 } else {
-                    $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle">' . $title . '</span></div></div>');
+                    $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-12"><span class="itemtitle">' . $title . '</span></div></div>');
                 }
             }
             if ($currentsubsectionitemid != -1) {

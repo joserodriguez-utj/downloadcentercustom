@@ -116,8 +116,9 @@
 }
 
 .path-local-downloadcentercustom #region-main .card.block .row.fitem {
+    margin-left: -2rem !important;
     margin-top: 0 !important; /* stylelint-disable-line declaration-no-important */
-    margin-bottom: 0 !important; /* stylelint-disable-line declaration-no-important */
+    margin-bottom: 0.75rem !important; /* stylelint-disable-line declaration-no-important */
 }
 
 /* delete first empty row used in hack :) */
@@ -265,4 +266,21 @@
 .path-local-downloadcentercustom #opciones-container > div[style*="display:flex"] {
     row-gap: 4px !important;
     column-gap: 4px !important;
+    margin-left: 3rem !important;
+}
+
+.path-local-downloadcentercustom .card.block .fitem {
+    padding-left: 2rem !important;
+    margin-bottom: 6px !important;
+    text-align: left !important;
+}
+
+.path-local-downloadcentercustom .card.block .fitem:first-child {
+    padding-left: 0 !important;
+    margin-bottom: 10px !important;
+}
+
+.path-local-downloadcentercustom .card.block .fitem .itemtitle {
+    text-align: left !important;
+    display: block !important;
 }
