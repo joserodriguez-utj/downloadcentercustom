@@ -829,28 +829,24 @@ class local_downloadcentercustom_factory {
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $onlytasks = $this->downloadoptions['onlytasks'] ?? false;
 
-        // instrucciones/ - archivos referenciados. Huerfanos a Materiales/Referencias/.
+        // instrucciones/ - contenido HTML + archivos del area intro.
         if ($includeinstructions) {
             $instruccionesdir = $resdir . '/Instrucciones';
             $filelist[$instruccionesdir] = null;
             $introcontent = $resource->resource->intro;
+            if (!empty(trim($introcontent))) {
+                $introcontent = str_replace('@@PLUGINFILE@@', 'Instrucciones', $introcontent);
+                $introcontent = self::convert_content_to_html_doc(
+                    get_string('instructions', 'local_downloadcentercustom'),
+                    $introcontent
+                );
+                $filelist[$instruccionesdir . '/instrucciones.html'] = [$introcontent];
+            }
             $introfiles = $fs->get_area_files($context->id, 'mod_assign', 'intro', 0, 'id', false);
-            $guardarhuerfanos = ($this->downloadoptions['includefiles'] ?? false) || ($this->downloadoptions['includefolders'] ?? false) || ($this->downloadoptions['includepages'] ?? false);
-            $referenciasdir = $resdir . '/Materiales/Referencias';
-            $hastareferencias = false;
             foreach ($introfiles as $file) {
                 if ($file->get_filesize() == 0) { continue; }
-                $fname = $file->get_filename();
-                if (strpos($introcontent, $fname) === false) {
-                    if ($guardarhuerfanos) {
-                        $filelist[$referenciasdir . '/' . self::shorten_filename($fname)] = $file;
-                        $hastareferencias = true;
-                    }
-                } else {
-                    $filelist[$instruccionesdir . '/' . self::shorten_filename($fname)] = $file;
-                }
+                $filelist[$instruccionesdir . '/' . self::shorten_filename($file->get_filename())] = $file;
             }
-            if ($hastareferencias) { $filelist[$referenciasdir] = null; }
         }
         // Archivos adjuntos de la descripción van a recursos/.
         if ($includeresources) {
@@ -1185,7 +1181,7 @@ class local_downloadcentercustom_factory {
         $context = $resource->context;
         $fs = get_file_storage();
         if (!empty($content)) {
-            $content = str_replace('@@PLUGINFILE@@', 'files', $content);
+            $content = str_replace('@@PLUGINFILE@@', 'Archivos', $content);
             $content = self::convert_content_to_html_doc($name, $content);
             $filename = $resdir . '/' . self::shorten_filename(self::clean_filename_ascii($name)) . '.html';
             $filelist[$filename] = [$content];
@@ -1205,7 +1201,7 @@ class local_downloadcentercustom_factory {
                 continue;
             }
             $this->filehashes[$hash] = true;
-            $filename = $resdir . '/files/' . self::shorten_filename($file->get_filename());
+            $filename = $resdir . '/Archivos/' . self::shorten_filename($file->get_filename());
             $filelist[$filename] = $file;
         }
     }
@@ -1291,14 +1287,15 @@ class local_downloadcentercustom_factory {
                             $this->handle_publication($res, $resdir, $filelist, $groupid);
                         }
 
-                        // Materiales de esta actividad van dentro de Actividad/Materiales/.
+                        // Materiales van a nivel del curso, no dentro de la actividad ni del grupo.
+                        $matdir = $coursename . '/Materiales';
                         foreach ($materialitems as $m) {
                             $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
-                            $itempath = $resdir . '/Materiales/' . $itemname;
-                            $filelist[$resdir . '/Materiales'] = null;
+                            $itempath = $matdir . '/' . $itemname;
+                            $filelist[$matdir] = null;
 
                             if ($m->modname == 'resource') {
-                                $this->handle_resource($m, $itempath, $filelist, $resdir . '/Materiales');
+                                $this->handle_resource($m, $itempath, $filelist, $matdir);
                             } else if ($m->modname == 'folder') {
                                 $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
                                 $this->add_folder_contents($filelist, $folder, $itempath);
@@ -1335,17 +1332,17 @@ class local_downloadcentercustom_factory {
                             } else if ($m->modname == 'etherpadlite') {
                                 $this->handle_etherpadlite($m, $itempath, $filelist);
                             } else if ($m->modname == 'url') {
-                                $this->handle_url($m, $resdir . '/Materiales', $filelist);
+                                $this->handle_url($m, $matdir, $filelist);
                             } else if ($m->modname == 'label') {
-                                $this->handle_label($m, $resdir . '/Materiales', $filelist);
+                                $this->handle_label($m, $matdir, $filelist);
                             }
                         }
                     }
 
-                    // Si la seccion NO tiene assignment, los materiales van a grupo/Materiales/.
+                    // Si la seccion NO tiene assignment, los materiales van a curso/Materiales/.
                     if (empty($assignitems)) {
                         foreach ($materialitems as $m) {
-                            $matdir = $coursename . '/' . $groupname . '/Materiales';
+                            $matdir = $coursename . '/Materiales';
                             $filelist[$matdir] = null;
                             $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
                             $itempath = $matdir . '/' . $itemname;
@@ -1425,10 +1422,11 @@ class local_downloadcentercustom_factory {
                     }
                     foreach ($materialitems as $m) {
                         $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
-                         $itempath = $resdir . '/Materiales/' . $itemname;
-                         $filelist[$resdir . '/Materiales'] = null;
+                         $matdir = $coursename . '/Materiales';
+                         $itempath = $matdir . '/' . $itemname;
+                         $filelist[$matdir] = null;
                          if ($m->modname == 'resource') {
-                             $this->handle_resource($m, $itempath, $filelist, $resdir . '/Materiales');
+                             $this->handle_resource($m, $itempath, $filelist, $matdir);
                          } else if ($m->modname == 'folder') {
                              $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
                              $this->add_folder_contents($filelist, $folder, $itempath);
@@ -1459,17 +1457,17 @@ class local_downloadcentercustom_factory {
                          } else if ($m->modname == 'book' && !$modbookmissing)  {
                              $this->handle_book($m, $itempath, $filelist);
                          } else if ($m->modname == 'lightboxgallery') {
-                            $this->handle_lightboxgallery($m, $itempath, $filelist);
-                        } else if ($m->modname == 'glossary') {
-                            $this->handle_glossary($m, $itempath, $filelist);
-                        } else if ($m->modname == 'etherpadlite') {
-                            $this->handle_etherpadlite($m, $itempath, $filelist);
-                        } else if ($m->modname == 'url') {
-                            $this->handle_url($m, $resdir . '/Materiales', $filelist);
-                        } else if ($m->modname == 'label') {
-                            $this->handle_label($m, $resdir . '/Materiales', $filelist);
-                        }
-                    }
+                             $this->handle_lightboxgallery($m, $itempath, $filelist);
+                         } else if ($m->modname == 'glossary') {
+                             $this->handle_glossary($m, $itempath, $filelist);
+                         } else if ($m->modname == 'etherpadlite') {
+                             $this->handle_etherpadlite($m, $itempath, $filelist);
+                         } else if ($m->modname == 'url') {
+                             $this->handle_url($m, $matdir, $filelist);
+                         } else if ($m->modname == 'label') {
+                             $this->handle_label($m, $matdir, $filelist);
+                         }
+                     }
                 }
                 if (empty($assignitems)) {
                     foreach ($materialitems as $m) {
