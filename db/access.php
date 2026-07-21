@@ -31,7 +31,23 @@ $capabilities = [
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
             'teacher' => CAP_ALLOW,         // Non-editing teacher
-            'editingteacher' => CAP_ALLOW,  // Editing teacher 
+            'editingteacher' => CAP_ALLOW,  // Editing teacher
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+    'local/downloadcentercustom:downloadMaterials' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+    'local/downloadcentercustom:downloadAssingments' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
             'manager' => CAP_ALLOW,
         ],
     ],

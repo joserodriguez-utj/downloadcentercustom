@@ -38,7 +38,7 @@ class local_downloadcentercustom_download_form extends moodleform {
      * @throws coding_exception
      */
     public function definition() {
-        global $COURSE, $OUTPUT;
+        global $COURSE, $OUTPUT, $USER;
         $mform = $this->_form;
 
         $resources = $this->_customdata['res'];
@@ -62,7 +62,7 @@ class local_downloadcentercustom_download_form extends moodleform {
         $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
 
         $mform->addElement('html', '<div id="opciones-container">');
-        $iseditingteacher = has_capability('moodle/course:update', $coursecontext);
+        $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
         // Detectar que modnames existen en el curso.
         $modnamesincourse = [];
@@ -77,7 +77,7 @@ class local_downloadcentercustom_download_form extends moodleform {
         $showpages = isset($modnamesincourse['page']);
         $tienealgomaterial = $showfiles || $showfolders || $showurls || $showpages;
 
-        if ($iseditingteacher && $tienealgomaterial) {
+        if ($candownloadmaterials && $tienealgomaterial) {
             $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('materials', 'local_downloadcentercustom') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
@@ -185,6 +185,15 @@ JS
 
         $firstbox = true;
         foreach ($resources as $sectionid => $sectioninfo) {
+            // Si no puede descargar materiales, filtrar solo tareas visibles.
+            if (!$candownloadmaterials) {
+                $sectioninfo->res = array_filter($sectioninfo->res, function($r) {
+                    return in_array($r->modname, ['assign', 'publication']);
+                });
+                if (empty($sectioninfo->res)) {
+                    continue;
+                }
+            }
             $sectionname = 'item_topic_' . $sectionid;
             $class = 'card block mb-3';
             // Small margin for the first box for better separation.
@@ -228,26 +237,17 @@ JS
                     $currentsubsectionitemid = -1;
                 }
 
+                // Saltar materiales si no tiene permiso de descargarlos.
+                if (!$candownloadmaterials && !in_array($res->modname, ['assign', 'publication'])) {
+                    continue;
+                }
+
                 $name = 'item_' . $res->modname . '_' . $res->instanceid;
                 $title = html_writer::span($res->name) . ' ' . $res->icon;
                 $badge = '';
-                if (!$res->visible) {
-                    $badge = html_writer::tag(
-                        'span',
-                        get_string('hiddenfromstudents'),
-                        ['class' => 'badge bg-info text-white mb-1']
-                    );
-                }
-                if ($res->isstealth) {
-                    $badge = html_writer::tag(
-                        'span',
-                        get_string('hiddenoncoursepage'),
-                        ['class' => 'badge bg-info text-white mb-1']
-                    );
-                }
                 $title = html_writer::tag('span', $title . $badge, ['class' => 'itemtitle']);
                 $showcheckbox = true;
-                if (!$iseditingteacher && in_array($res->modname, ['page', 'resource'])) {
+                if (!$candownloadmaterials && in_array($res->modname, ['page', 'resource'])) {
                     $showcheckbox = false;
                 }
                 if ($showcheckbox) {
@@ -276,7 +276,21 @@ JS
         // Group filtering for teachers.
         $coursecontext = \context_course::instance($COURSE->id);
         if (has_capability('local/downloadcentercustom:view', $coursecontext)) {
-            $groups = groups_get_all_groups($COURSE->id);
+            $canaccessallgroups = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
+            if ($canaccessallgroups) {
+                $groups = groups_get_all_groups($COURSE->id);
+            } else {
+                $usergroups = groups_get_user_groups($COURSE->id, $USER->id);
+                $groups = [];
+                if (!empty($usergroups[0])) {
+                    foreach ($usergroups[0] as $gid) {
+                        $group = groups_get_group($gid);
+                        if ($group) {
+                            $groups[$gid] = $group;
+                        }
+                    }
+                }
+            }
             if (!empty($groups)) {
                 $groupoptions = [];
                 foreach ($groups as $group) {

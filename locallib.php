@@ -823,7 +823,8 @@ class local_downloadcentercustom_factory {
         $fs = get_file_storage();
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
         require_once($CFG->dirroot . '/mod/assign/externallib.php');
-        $isstudent = !has_capability('mod/assign:viewgrades', $context);
+        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context());
+        $isstudent = !$candownloadassign;
 
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
