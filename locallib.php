@@ -571,6 +571,10 @@ class local_downloadcentercustom_factory {
         global $DB, $USER, $CFG;
         $userfields = \core_user\fields::for_userpic();
         $context = $resource->context;
+        // Portón: si no tiene permiso, no procesa nada de esta publicación.
+        if (!has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context())) {
+            return;
+        }
         $fs = get_file_storage();
 
         $cm = $resource->cm;
@@ -820,11 +824,13 @@ class local_downloadcentercustom_factory {
     private function handle_assign($resource, $resdir, &$filelist, $groupid = null, $fileprefix = '', $includefeedback = true) {
         global $CFG, $DB, $USER;
         $context = $resource->context;
+        // Portón: si no tiene permiso, no procesa nada de esta tarea.
+        if (!has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context())) {
+            return;
+        }
         $fs = get_file_storage();
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
         require_once($CFG->dirroot . '/mod/assign/externallib.php');
-        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context());
-        $isstudent = !$candownloadassign;
 
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
@@ -836,7 +842,7 @@ class local_downloadcentercustom_factory {
             $filelist[$instruccionesdir] = null;
             $introcontent = $resource->resource->intro;
             if (!empty(trim($introcontent))) {
-                $introcontent = str_replace('@@PLUGINFILE@@', 'Instrucciones', $introcontent);
+                $introcontent = str_replace('@@PLUGINFILE@@', '.', $introcontent);
                 $introcontent = self::convert_content_to_html_doc(
                     get_string('instructions', 'local_downloadcentercustom'),
                     $introcontent
@@ -846,7 +852,11 @@ class local_downloadcentercustom_factory {
             $introfiles = $fs->get_area_files($context->id, 'mod_assign', 'intro', 0, 'id', false);
             foreach ($introfiles as $file) {
                 if ($file->get_filesize() == 0) { continue; }
-                $filelist[$instruccionesdir . '/' . self::shorten_filename($file->get_filename())] = $file;
+                $fname = $file->get_filename();
+                // Solo archivos referenciados en el HTML; huerfanos se omiten.
+                if (strpos($introcontent ?? '', $fname) !== false) {
+                    $filelist[$instruccionesdir . '/' . self::shorten_filename($fname)] = $file;
+                }
             }
         }
         // Archivos adjuntos de la descripción van a recursos/.
@@ -867,17 +877,13 @@ class local_downloadcentercustom_factory {
         $feedbackplugins = $assign->get_feedback_plugins();
 
         $params = ['assignment' => $resource->instanceid];
-        if ($isstudent) {
-            $submissions = $assign->get_all_submissions($USER->id);
-        } else {
-            $submissions = $DB->get_records('assign_submission', $params, 'attemptnumber ASC');
-            if ($groupid) {
-                $members = groups_get_members($groupid);
-                $memberids = $members ? array_keys($members) : [];
-                $submissions = array_filter($submissions, function($sub) use ($memberids) {
-                    return $sub->userid != 0 && in_array($sub->userid, $memberids);
-                });
-            }
+        $submissions = $DB->get_records('assign_submission', $params, 'attemptnumber ASC');
+        if ($groupid) {
+            $members = groups_get_members($groupid);
+            $memberids = $members ? array_keys($members) : [];
+            $submissions = array_filter($submissions, function($sub) use ($memberids) {
+                return $sub->userid != 0 && in_array($sub->userid, $memberids);
+            });
         }
         $evidenciadir = $resdir . '/Evidencias';
         $filelist[$evidenciadir] = null;
@@ -944,11 +950,7 @@ class local_downloadcentercustom_factory {
                 continue;
             }
             if (empty($user)) {
-                if ($isstudent) {
-                    $user = $USER;
-                } else {
-                    continue;
-                }
+                continue;
             }
             $feedback = $assign->get_assign_feedback_status_renderable($user);
             if ($feedback && $feedback->grade) {

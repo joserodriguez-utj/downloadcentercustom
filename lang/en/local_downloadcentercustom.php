@@ -41,6 +41,7 @@ $string['infomessage_teachers'] = 'Here you can download the evidence submitted 
 $string['infomessage_download'] = 'If you only download <strong>course materials</strong>, you can skip the group selection.';
 $string['infomessage_download_assignment'] = 'If you need to download <strong>student evidence</strong>, make sure to select at least one group.';
 $string['note'] = 'Important note:';
+$string['no_download_permission'] = 'You do not have permission to download content in this course.';
 $string['navigationlink'] = 'Download center custom';
 $string['pagetitle'] = 'Download center custom for ';
 $string['pluginname'] = 'Download center custom';

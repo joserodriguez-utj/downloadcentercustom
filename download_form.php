@@ -47,23 +47,39 @@ class local_downloadcentercustom_download_form extends moodleform {
         $mform->setType('courseid', PARAM_INT);
 
         $coursecontext = \context_course::instance($COURSE->id);
-        $infomessagestring = has_capability('moodle/course:update', $coursecontext) ?
-            get_string('infomessage_teachers', 'local_downloadcentercustom') :
-            get_string('infomessage_students', 'local_downloadcentercustom');
-        $mform->addElement(
-            'html',
-            html_writer::tag(
-                'div',
-                $infomessagestring,
-                ['class' => 'alert alert-info alert-block']
-            )
-        );
+        $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
+        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssingments', $coursecontext);
+        $candownloadanything = $candownloadmaterials || $candownloadassign;
+
+        if ($candownloadanything) {
+            $infomessagestring = has_capability('moodle/course:update', $coursecontext) ?
+                get_string('infomessage_teachers', 'local_downloadcentercustom') :
+                get_string('infomessage_students', 'local_downloadcentercustom');
+            $mform->addElement(
+                'html',
+                html_writer::tag(
+                    'div',
+                    $infomessagestring,
+                    ['class' => 'alert alert-info alert-block']
+                )
+            );
+        } else {
+            $mform->addElement(
+                'html',
+                html_writer::tag(
+                    'div',
+                    get_string('no_download_permission', 'local_downloadcentercustom'),
+                    ['class' => 'alert alert-warning alert-block']
+                )
+            );
+        }
         $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcentercustom/searchbox', []));
         $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
 
         $mform->addElement('html', '<div id="opciones-container">');
-        $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
-        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
+        if ($candownloadanything) {
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
+        }
         // Detectar que modnames existen en el curso.
         $modnamesincourse = [];
         foreach ($resources as $sec) {
@@ -87,18 +103,20 @@ class local_downloadcentercustom_download_form extends moodleform {
             if ($showpages) { $mform->addElement('checkbox', 'includepages', get_string('pages', 'local_downloadcentercustom')); $mform->setDefault('includepages', 1); }
             $mform->addElement('html', '</div>');
         }
-        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('tasks', 'local_downloadcentercustom') . '</strong></span></div></div>');
-        $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
-        $mform->addElement('html', '<div class="separator"></div>');
-        $mform->addElement('checkbox', 'onlytasks', get_string('assignments', 'local_downloadcentercustom'));
-        $mform->setDefault('onlytasks', 1);
-        $mform->addElement('checkbox', 'includefeedback', get_string('feedback', 'local_downloadcentercustom'));
-        $mform->setDefault('includefeedback', 1);
-        $mform->addElement('checkbox', 'includeinstructions', get_string('instructions', 'local_downloadcentercustom'));
-        $mform->setDefault('includeinstructions', 1);
-        $mform->addElement('checkbox', 'includeresources', get_string('resources_item', 'local_downloadcentercustom'));
-        $mform->setDefault('includeresources', 1);
-        $mform->addElement('html', '</div>');
+        if ($candownloadassign) {
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('tasks', 'local_downloadcentercustom') . '</strong></span></div></div>');
+            $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
+            $mform->addElement('html', '<div class="separator"></div>');
+            $mform->addElement('checkbox', 'onlytasks', get_string('assignments', 'local_downloadcentercustom'));
+            $mform->setDefault('onlytasks', 1);
+            $mform->addElement('checkbox', 'includefeedback', get_string('feedback', 'local_downloadcentercustom'));
+            $mform->setDefault('includefeedback', 1);
+            $mform->addElement('checkbox', 'includeinstructions', get_string('instructions', 'local_downloadcentercustom'));
+            $mform->setDefault('includeinstructions', 1);
+            $mform->addElement('checkbox', 'includeresources', get_string('resources_item', 'local_downloadcentercustom'));
+            $mform->setDefault('includeresources', 1);
+            $mform->addElement('html', '</div>');
+        }
         $mform->addElement('html', '</div>');
         $mform->addElement('html', <<<JS
 <script>
@@ -194,6 +212,15 @@ JS
                     continue;
                 }
             }
+            // Si no puede descargar tareas, filtrar solo materiales visibles.
+            if (!$candownloadassign) {
+                $sectioninfo->res = array_filter($sectioninfo->res, function($r) {
+                    return !in_array($r->modname, ['assign', 'publication']);
+                });
+                if (empty($sectioninfo->res)) {
+                    continue;
+                }
+            }
             $sectionname = 'item_topic_' . $sectionid;
             $class = 'card block mb-3';
             // Small margin for the first box for better separation.
@@ -241,6 +268,10 @@ JS
                 if (!$candownloadmaterials && !in_array($res->modname, ['assign', 'publication'])) {
                     continue;
                 }
+                // Saltar tareas si no tiene permiso de descargarlas.
+                if (!$candownloadassign && in_array($res->modname, ['assign', 'publication'])) {
+                    continue;
+                }
 
                 $name = 'item_' . $res->modname . '_' . $res->instanceid;
                 $title = html_writer::span($res->name) . ' ' . $res->icon;
@@ -273,9 +304,8 @@ JS
         // $mform->setDefault('addnumbering', 0);
         // $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcentercustom');
 
-        // Group filtering for teachers.
-        $coursecontext = \context_course::instance($COURSE->id);
-        if (has_capability('local/downloadcentercustom:view', $coursecontext)) {
+        // Group filtering (solo si tiene permiso de descargar tareas).
+        if ($candownloadassign) {
             $canaccessallgroups = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
             if ($canaccessallgroups) {
                 $groups = groups_get_all_groups($COURSE->id);
@@ -306,46 +336,48 @@ JS
                 $mform->addHelpButton('selectedgroups', 'groupfilter_help', 'local_downloadcentercustom');
                 $mform->setDefault('selectedgroups', []);
                 $mform->addElement('html', '
-<script>
-document.getElementById("id_selectallgroups").onclick = function() {
-    var checked = this.checked;
-    var sel = document.getElementById("id_selectedgroups");
-    var container = sel.parentElement.querySelector(".form-autocomplete-selection");
-    if (!container) return;
-    container.innerHTML = "";
-    if (checked) {
-        for (var i = 0; i < sel.options.length; i++) {
-            var opt = sel.options[i];
-            opt.selected = true;
-            var tag = document.createElement("span");
-            tag.className = "badge bg-secondary text-dark m-1";
-            tag.style.fontSize = "100%";
-            tag.setAttribute("role", "option");
-            tag.setAttribute("data-value", opt.value);
-            tag.setAttribute("aria-selected", "true");
-            var removeBtn = document.createElement("span");
-            removeBtn.setAttribute("aria-hidden", "true");
-            removeBtn.textContent = "\u00d7 ";
-            tag.appendChild(removeBtn);
-            tag.appendChild(document.createTextNode(" "));
-            tag.appendChild(document.createTextNode(opt.text));
-            container.appendChild(tag);
-        }
-    } else {
-        for (var i = 0; i < sel.options.length; i++) {
-            sel.options[i].selected = false;
-        }
-    }
-};
-</script>');
+                <script>
+                    document.getElementById("id_selectallgroups").onclick = function() {
+                        var checked = this.checked;
+                        var sel = document.getElementById("id_selectedgroups");
+                        var container = sel.parentElement.querySelector(".form-autocomplete-selection");
+                        if (!container) return;
+                        container.innerHTML = "";
+                        if (checked) {
+                            for (var i = 0; i < sel.options.length; i++) {
+                                var opt = sel.options[i];
+                                opt.selected = true;
+                                var tag = document.createElement("span");
+                                tag.className = "badge bg-secondary text-dark m-1";
+                                tag.style.fontSize = "100%";
+                                tag.setAttribute("role", "option");
+                                tag.setAttribute("data-value", opt.value);
+                                tag.setAttribute("aria-selected", "true");
+                                var removeBtn = document.createElement("span");
+                                removeBtn.setAttribute("aria-hidden", "true");
+                                removeBtn.textContent = "\u00d7 ";
+                                tag.appendChild(removeBtn);
+                                tag.appendChild(document.createTextNode(" "));
+                                tag.appendChild(document.createTextNode(opt.text));
+                                container.appendChild(tag);
+                            }
+                        } else {
+                            for (var i = 0; i < sel.options.length; i++) {
+                                sel.options[i].selected = false;
+                            }
+                        }
+                    };
+                </script>');
             }
         }
 
-        $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
-        $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
-        $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;"><li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
-        $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li></ul>');
-        $mform->addElement('html', '</div>');
+        if ($candownloadassign) {
+            $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
+            $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
+            $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;"><li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
+            $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li></ul>');
+            $mform->addElement('html', '</div>');
+        }
         $this->add_action_buttons(true, get_string('createzip', 'local_downloadcentercustom'));
         $mform->addElement('html', <<<JS
 <script>

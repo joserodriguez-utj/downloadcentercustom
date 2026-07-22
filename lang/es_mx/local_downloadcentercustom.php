@@ -41,6 +41,7 @@ $string['infomessage_students'] = 'Aquí puedes descargar uno o todos los conten
 $string['infomessage_download'] = 'Si solo vas a descargar los <strong>materiales del curso</strong>, puedes omitir la selección de grupo.';
 $string['infomessage_download_assignment'] = 'Si necesitas descargar las <strong>evidencias de tus estudiantes</strong>, asegúrate de seleccionar al menos un grupo.';
 $string['note'] = 'Nota importante:';
+$string['no_download_permission'] = 'No tienes permiso para descargar contenido en este curso.';
 $string['navigationlink'] = 'Centro de descargas personalizado';
 $string['pagetitle'] = 'Centro de descargas personalizado para';
 $string['pluginname'] = 'Centro de descargas personalizado';
