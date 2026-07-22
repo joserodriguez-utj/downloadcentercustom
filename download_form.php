@@ -129,6 +129,20 @@ document.addEventListener("DOMContentLoaded", function() {
     var ii = document.getElementById("id_includeinstructions");
     var ir = document.getElementById("id_includeresources");
     var fi = document.getElementById("id_includefeedback");
+
+    function moverOpciones() {
+        var card = document.querySelector(".grouped_settings.section_level.block.card");
+        var container = document.getElementById("opciones-container");
+        var title = document.getElementById("opciones-title");
+        if (card && container && title) {
+            card.insertBefore(title, card.firstChild);
+            card.appendChild(container);
+        } else {
+            setTimeout(moverOpciones, 100);
+        }
+    }
+    moverOpciones();
+
     if (!ot) return;
 
     function toggleByModname(modname, checked) {
@@ -184,18 +198,6 @@ document.addEventListener("DOMContentLoaded", function() {
             ["includefiles","includefolders","includeurls","includepages","onlytasks","includefeedback","includeinstructions","includeresources"].forEach(triggerChange);
         }
     });
-    function moverOpciones() {
-        var card = document.querySelector(".grouped_settings.section_level.block.card");
-        var container = document.getElementById("opciones-container");
-        var title = document.getElementById("opciones-title");
-        if (card && container && title) {
-            card.insertBefore(title, card.firstChild);
-            card.appendChild(container);
-        } else {
-            setTimeout(moverOpciones, 100);
-        }
-    }
-    moverOpciones();
 });
 </script>
 JS
