@@ -73,12 +73,14 @@ class local_downloadcentercustom_download_form extends moodleform {
                 )
             );
         }
-        $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcentercustom/searchbox', []));
-        $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
+        if ($candownloadanything) {
+            $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcentercustom/searchbox', []));
+            $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
+        }
 
         $mform->addElement('html', '<div id="opciones-container">');
         if ($candownloadanything) {
-            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold; ">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
         }
         // Detectar que modnames existen en el curso.
         $modnamesincourse = [];
@@ -95,7 +97,7 @@ class local_downloadcentercustom_download_form extends moodleform {
 
         if ($candownloadmaterials && $tienealgomaterial) {
             $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('materials', 'local_downloadcentercustom') . '</strong></span></div></div>');
-            $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
+            $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
             if ($showfiles) { $mform->addElement('checkbox', 'includefiles', get_string('files', 'local_downloadcentercustom')); $mform->setDefault('includefiles', 1); }
             if ($showfolders) { $mform->addElement('checkbox', 'includefolders', get_string('folders', 'local_downloadcentercustom')); $mform->setDefault('includefolders', 1); }
@@ -105,7 +107,7 @@ class local_downloadcentercustom_download_form extends moodleform {
         }
         if ($candownloadassign) {
             $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('tasks', 'local_downloadcentercustom') . '</strong></span></div></div>');
-            $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:10px;padding-left:1rem;">');
+            $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
             $mform->addElement('checkbox', 'onlytasks', get_string('assignments', 'local_downloadcentercustom'));
             $mform->setDefault('onlytasks', 1);
@@ -229,7 +231,7 @@ JS
             $class .= $firstbox ? ' mt-3' : '';
             $firstbox = false;
             $mform->addElement('html', html_writer::start_tag('div', ['class' => $class]));
-            $sectiontitle = html_writer::span($sectioninfo->title, 'sectiontitle mt-1');
+            $sectiontitle = html_writer::span($sectioninfo->title, 'sectiontitle');
 
             if (!$sectioninfo->visible) {
                 $sectiontitle .= html_writer::tag(
@@ -253,7 +255,7 @@ JS
                     if ($currentsubsectionitemid != $res->subsectioncmid) {
                         $mform->addElement('html', html_writer::start_tag('div', ['class' => 'card block subsection mb-3 mr-3']));
 
-                        $sectiontitle = html_writer::span($res->subsectionname, 'sectiontitle mt-1');
+                        $sectiontitle = html_writer::span($res->subsectionname, 'sectiontitle');
                         $sectionname = 'item_topic_' . $res->subsectioncmid;
                         $mform->addElement('checkbox', $sectionname, $sectiontitle, '', ['class' => 'mt-2']);
                         $mform->setDefault($sectionname, 1);
