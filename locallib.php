@@ -572,7 +572,7 @@ class local_downloadcentercustom_factory {
         $userfields = \core_user\fields::for_userpic();
         $context = $resource->context;
         // Portón: si no tiene permiso, no procesa nada de esta publicación.
-        if (!has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context())) {
+        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
             return;
         }
         $fs = get_file_storage();
@@ -825,7 +825,7 @@ class local_downloadcentercustom_factory {
         global $CFG, $DB, $USER;
         $context = $resource->context;
         // Portón: si no tiene permiso, no procesa nada de esta tarea.
-        if (!has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context())) {
+        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
             return;
         }
         $fs = get_file_storage();

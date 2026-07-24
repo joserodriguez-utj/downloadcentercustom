@@ -48,7 +48,7 @@ class local_downloadcentercustom_download_form extends moodleform {
 
         $coursecontext = \context_course::instance($COURSE->id);
         $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
-        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssingments', $coursecontext);
+        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssignments', $coursecontext);
         $candownloadanything = $candownloadmaterials || $candownloadassign;
 
         if ($candownloadanything) {
@@ -376,10 +376,16 @@ JS
         }
 
         if ($candownloadassign) {
-            $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
-            $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
-            $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;"><li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
-            $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li></ul>');
+            $groups = groups_get_all_groups($COURSE->id);
+            if (!empty($groups)) {
+                $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
+                $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
+                $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
+                $mform->addElement('html', '<li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
+                $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li>');
+                $mform->addElement('html', '</ul>');
+                $mform->addElement('html', '</div>');
+            }
             $mform->addElement('html', '</div>');
         }
         $this->add_action_buttons(true, get_string('createzip', 'local_downloadcentercustom'));
@@ -406,7 +412,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     function hasgroups() {
-        return (allgrp && allgrp.checked) || (sel && Array.from(sel.options).some(function(o) { return o.selected; }));
+        return !sel || (allgrp && allgrp.checked) || (sel && Array.from(sel.options).some(function(o) { return o.selected; }));
     }
     function hasSelectedItems() {
         return Array.from(document.querySelectorAll('input[name^="item_"]:checked')).some(function(el) {
@@ -503,7 +509,9 @@ JS
         $hasmat = !empty($data['includefiles']) || !empty($data['includefolders']) || !empty($data['includeurls']) || !empty($data['includepages']);
         $hastask = !empty($data['onlytasks']) || !empty($data['includefeedback']) || !empty($data['includeinstructions']) || !empty($data['includeresources']);
         $hasgroups = !empty($data['selectallgroups']) || !empty($data['selectedgroups']);
-        if ($hastask && !$hasgroups) {
+        global $COURSE;
+        $groups = groups_get_all_groups($COURSE->id);
+        if ($hastask && !$hasgroups && !empty($groups)) {
             $errors['selectedgroups'] = 'Debes seleccionar al menos un grupo para descargar tareas.';
         }
         return $errors;
