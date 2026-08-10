@@ -42,7 +42,7 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
-    'local/downloadcentercustom:downloadAssignments' => [
+    'local/downloadcentercustom:downloadAssingments' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
