@@ -351,6 +351,7 @@ JS
                         if (checked) {
                             for (var i = 0; i < sel.options.length; i++) {
                                 var opt = sel.options[i];
+                                if (!opt.value) continue;
                                 opt.selected = true;
                                 var tag = document.createElement("span");
                                 tag.className = "badge bg-secondary text-dark m-1";
@@ -372,6 +373,19 @@ JS
                             }
                         }
                     };
+                    // Sincronizar checkbox de "Todos" cuando se deseleccionan grupos manualmente
+                    var sel = document.getElementById("id_selectedgroups");
+                    if (sel) {
+                        sel.addEventListener("change", function() {
+                            var allgrp = document.getElementById("id_selectallgroups");
+                            if (!allgrp) return;
+                            allgrp.checked = Array.from(sel.options).filter(function(o) {
+                                return o.value;
+                            }).every(function(o) {
+                                return o.selected;
+                            });
+                        });
+                    }
                 </script>');
             }
         }
