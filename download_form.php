@@ -48,7 +48,7 @@ class local_downloadcentercustom_download_form extends moodleform {
 
         $coursecontext = \context_course::instance($COURSE->id);
         $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
-        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssignments', $coursecontext);
+        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssingments', $coursecontext);
         $candownloadanything = $candownloadmaterials || $candownloadassign;
 
         if ($candownloadanything) {
@@ -376,18 +376,16 @@ JS
             }
         }
 
-        if ($candownloadassign) {
-            $groups = groups_get_all_groups($COURSE->id);
-            if (!empty($groups)) {
+        if ($candownloadassign && count($groups) >= 2) {
                 $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
                 $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
                 $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
-                $mform->addElement('html', '<li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
+                if ($candownloadmaterials) {
+                    $mform->addElement('html', '<li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
+                }
                 $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li>');
                 $mform->addElement('html', '</ul>');
                 $mform->addElement('html', '</div>');
-            }
-            $mform->addElement('html', '</div>');
         }
         $this->add_action_buttons(true, get_string('createzip', 'local_downloadcentercustom'));
         $mform->addElement('html', <<<JS
