@@ -48,6 +48,10 @@ class local_downloadcentercustom_factory {
      */
     private $selectedgroups = [];
     /**
+     * @var bool
+     */
+    private $onlyungrouped = false;
+    /**
      * @var array
      */
     private $filehashes = [];
@@ -630,7 +634,16 @@ class local_downloadcentercustom_factory {
         }
 
         // Filter by selected groups if any.
-        if (!empty($this->selectedgroups) && !empty($users)) {
+        if ($this->onlyungrouped && !empty($users)) {
+            // Solo usuarios que NO pertenecen a ningún grupo del curso.
+            global $DB;
+            $allgroupmemberids = $DB->get_fieldset_sql(
+                "SELECT DISTINCT gm.userid FROM {groups_members} gm
+                  JOIN {groups} g ON g.id = gm.groupid
+                 WHERE g.courseid = ?", [$this->course->id]
+            );
+            $users = array_diff($users, $allgroupmemberids);
+        } else if (!empty($this->selectedgroups) && !empty($users)) {
             $groupmemberids = $this->get_group_member_ids();
             $users = array_intersect($users, $groupmemberids);
         }
@@ -878,7 +891,17 @@ class local_downloadcentercustom_factory {
 
         $params = ['assignment' => $resource->instanceid];
         $submissions = $DB->get_records('assign_submission', $params, 'attemptnumber ASC');
-        if ($groupid) {
+        if ($this->onlyungrouped) {
+            // Solo entregas de usuarios que NO pertenecen a ningún grupo del curso.
+            $allgroupmemberids = $DB->get_fieldset_sql(
+                "SELECT DISTINCT gm.userid FROM {groups_members} gm
+                  JOIN {groups} g ON g.id = gm.groupid
+                 WHERE g.courseid = ?", [$this->course->id]
+            );
+            $submissions = array_filter($submissions, function($sub) use ($allgroupmemberids) {
+                return $sub->userid != 0 && !in_array($sub->userid, $allgroupmemberids);
+            });
+        } else if ($groupid) {
             $members = groups_get_members($groupid);
             $memberids = $members ? array_keys($members) : [];
             $submissions = array_filter($submissions, function($sub) use ($memberids) {
@@ -1606,15 +1629,41 @@ class local_downloadcentercustom_factory {
         $data = (array)$data;
         $filtered = [];
 
-        if (!empty($data['selectedgroups'])) {
-            // selectedgroups tiene prioridad: refleja lo que el usuario dejó seleccionado.
-            $this->selectedgroups = $data['selectedgroups'];
-        } else if (!empty($data['selectallgroups'])) {
-            global $DB;
-            $allgroups = $DB->get_records_menu('groups', ['courseid' => $data['courseid'] ?? $this->course->id], '', 'id,id');
-            $this->selectedgroups = array_keys($allgroups);
-        } else {
+        // Determinar cuántos grupos tiene el usuario en el curso.
+        $usergroups = groups_get_user_groups($this->course->id, $this->user->id);
+        $usergroupids = $usergroups[0] ?? [];
+        // Quien tiene downloadMaterials (manager) o accessallgroups ve todos los grupos.
+        $coursecontext = \context_course::instance($this->course->id);
+        $canaccessall = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext)
+            || has_capability('moodle/site:accessallgroups', $coursecontext);
+
+        if ($canaccessall) {
+            // Admins/managers: usan la selección del formulario directamente.
+            if (!empty($data['selectedgroups'])) {
+                $this->selectedgroups = $data['selectedgroups'];
+            } else if (!empty($data['selectallgroups'])) {
+                global $DB;
+                $allgroups = $DB->get_records_menu('groups', ['courseid' => $data['courseid'] ?? $this->course->id], '', 'id,id');
+                $this->selectedgroups = array_keys($allgroups);
+            } else {
+                $this->selectedgroups = [];
+            }
+        } else if (count($usergroupids) === 0) {
+            // 0 grupos: solo alumnos sin grupo.
             $this->selectedgroups = [];
+            $this->onlyungrouped = true;
+        } else if (count($usergroupids) === 1) {
+            // 1 grupo: auto-asignado a ese único grupo.
+            $this->selectedgroups = [$usergroupids[0]];
+        } else {
+            // 2+ grupos: usa la selección del formulario (o vacío si deseleccionó todos).
+            if (!empty($data['selectedgroups'])) {
+                $this->selectedgroups = $data['selectedgroups'];
+            } else if (!empty($data['selectallgroups'])) {
+                $this->selectedgroups = $usergroupids;
+            } else {
+                $this->selectedgroups = [];
+            }
         }
 
         $sortedresources = $this->get_resources_for_user();

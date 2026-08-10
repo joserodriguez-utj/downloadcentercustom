@@ -74,4 +74,5 @@ $string['select_groups_one_by_one'] = 'Seleccionar grupo uno por uno';
 $string['all_grups'] = 'Todos los grupos';
 $string['selectallgroups_help'] = 'Seleccionar todos los grupos';
 $string['selectallgroups_help_help'] = 'Selecciona esta opción para marcar todos los grupos disponibles.';
+$string['selectgroup_required'] = 'Debes seleccionar al menos un grupo para descargar tareas.';
 

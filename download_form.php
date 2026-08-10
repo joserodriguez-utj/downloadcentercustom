@@ -325,7 +325,8 @@ JS
                     }
                 }
             }
-            if (!empty($groups)) {
+            // Mostrar el filtro solo cuando el usuario tiene 2+ grupos asignados.
+            if (count($groups) >= 2) {
                 $groupoptions = [];
                 foreach ($groups as $group) {
                     $groupoptions[$group->id] = $group->name;
@@ -509,10 +510,13 @@ JS
         $hasmat = !empty($data['includefiles']) || !empty($data['includefolders']) || !empty($data['includeurls']) || !empty($data['includepages']);
         $hastask = !empty($data['onlytasks']) || !empty($data['includefeedback']) || !empty($data['includeinstructions']) || !empty($data['includeresources']);
         $hasgroups = !empty($data['selectallgroups']) || !empty($data['selectedgroups']);
-        global $COURSE;
-        $groups = groups_get_all_groups($COURSE->id);
-        if ($hastask && !$hasgroups && !empty($groups)) {
-            $errors['selectedgroups'] = 'Debes seleccionar al menos un grupo para descargar tareas.';
+        global $COURSE, $USER;
+        // Solo exigir selección de grupos si el usuario tiene 2+ grupos asignados
+        // (0 grupos → alumnos sin grupo; 1 grupo → auto-asignado).
+        $usergroups = groups_get_user_groups($COURSE->id, $USER->id);
+        $usergroupcount = count($usergroups[0] ?? []);
+        if ($hastask && !$hasgroups && $usergroupcount >= 2) {
+            $errors['selectedgroups'] = get_string('selectgroup_required', 'local_downloadcentercustom');
         }
         return $errors;
     }
