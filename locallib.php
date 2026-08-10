@@ -48,6 +48,10 @@ class local_downloadcentercustom_factory {
      */
     private $selectedgroups = [];
     /**
+     * @var bool
+     */
+    private $onlyungrouped = false;
+    /**
      * @var array
      */
     private $filehashes = [];
@@ -571,6 +575,10 @@ class local_downloadcentercustom_factory {
         global $DB, $USER, $CFG;
         $userfields = \core_user\fields::for_userpic();
         $context = $resource->context;
+        // Portón: si no tiene permiso, no procesa nada de esta publicación.
+        if (!has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context())) {
+            return;
+        }
         $fs = get_file_storage();
 
         $cm = $resource->cm;
@@ -626,7 +634,16 @@ class local_downloadcentercustom_factory {
         }
 
         // Filter by selected groups if any.
-        if (!empty($this->selectedgroups) && !empty($users)) {
+        if ($this->onlyungrouped && !empty($users)) {
+            // Solo usuarios que NO pertenecen a ningún grupo del curso.
+            global $DB;
+            $allgroupmemberids = $DB->get_fieldset_sql(
+                "SELECT DISTINCT gm.userid FROM {groups_members} gm
+                  JOIN {groups} g ON g.id = gm.groupid
+                 WHERE g.courseid = ?", [$this->course->id]
+            );
+            $users = array_diff($users, $allgroupmemberids);
+        } else if (!empty($this->selectedgroups) && !empty($users)) {
             $groupmemberids = $this->get_group_member_ids();
             $users = array_intersect($users, $groupmemberids);
         }
@@ -820,37 +837,40 @@ class local_downloadcentercustom_factory {
     private function handle_assign($resource, $resdir, &$filelist, $groupid = null, $fileprefix = '', $includefeedback = true) {
         global $CFG, $DB, $USER;
         $context = $resource->context;
+        // Portón: si no tiene permiso, no procesa nada de esta tarea.
+        if (!has_capability('local/downloadcentercustom:downloadAssingments', $context->get_course_context())) {
+            return;
+        }
         $fs = get_file_storage();
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
         require_once($CFG->dirroot . '/mod/assign/externallib.php');
-        $isstudent = !has_capability('mod/assign:viewgrades', $context);
 
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $onlytasks = $this->downloadoptions['onlytasks'] ?? false;
 
-        // instrucciones/ - archivos referenciados. Huerfanos a Materiales/Referencias/.
+        // instrucciones/ - contenido HTML + archivos del area intro.
         if ($includeinstructions) {
             $instruccionesdir = $resdir . '/Instrucciones';
             $filelist[$instruccionesdir] = null;
             $introcontent = $resource->resource->intro;
+            if (!empty(trim($introcontent))) {
+                $introcontent = str_replace('@@PLUGINFILE@@', '.', $introcontent);
+                $introcontent = self::convert_content_to_html_doc(
+                    get_string('instructions', 'local_downloadcentercustom'),
+                    $introcontent
+                );
+                $filelist[$instruccionesdir . '/instrucciones.html'] = [$introcontent];
+            }
             $introfiles = $fs->get_area_files($context->id, 'mod_assign', 'intro', 0, 'id', false);
-            $guardarhuerfanos = ($this->downloadoptions['includefiles'] ?? false) || ($this->downloadoptions['includefolders'] ?? false) || ($this->downloadoptions['includepages'] ?? false);
-            $referenciasdir = $resdir . '/Materiales/Referencias';
-            $hastareferencias = false;
             foreach ($introfiles as $file) {
                 if ($file->get_filesize() == 0) { continue; }
                 $fname = $file->get_filename();
-                if (strpos($introcontent, $fname) === false) {
-                    if ($guardarhuerfanos) {
-                        $filelist[$referenciasdir . '/' . self::shorten_filename($fname)] = $file;
-                        $hastareferencias = true;
-                    }
-                } else {
+                // Solo archivos referenciados en el HTML; huerfanos se omiten.
+                if (strpos($introcontent ?? '', $fname) !== false) {
                     $filelist[$instruccionesdir . '/' . self::shorten_filename($fname)] = $file;
                 }
             }
-            if ($hastareferencias) { $filelist[$referenciasdir] = null; }
         }
         // Archivos adjuntos de la descripción van a recursos/.
         if ($includeresources) {
@@ -870,17 +890,23 @@ class local_downloadcentercustom_factory {
         $feedbackplugins = $assign->get_feedback_plugins();
 
         $params = ['assignment' => $resource->instanceid];
-        if ($isstudent) {
-            $submissions = $assign->get_all_submissions($USER->id);
-        } else {
-            $submissions = $DB->get_records('assign_submission', $params, 'attemptnumber ASC');
-            if ($groupid) {
-                $members = groups_get_members($groupid);
-                $memberids = $members ? array_keys($members) : [];
-                $submissions = array_filter($submissions, function($sub) use ($memberids) {
-                    return $sub->userid != 0 && in_array($sub->userid, $memberids);
-                });
-            }
+        $submissions = $DB->get_records('assign_submission', $params, 'attemptnumber ASC');
+        if ($this->onlyungrouped) {
+            // Solo entregas de usuarios que NO pertenecen a ningún grupo del curso.
+            $allgroupmemberids = $DB->get_fieldset_sql(
+                "SELECT DISTINCT gm.userid FROM {groups_members} gm
+                  JOIN {groups} g ON g.id = gm.groupid
+                 WHERE g.courseid = ?", [$this->course->id]
+            );
+            $submissions = array_filter($submissions, function($sub) use ($allgroupmemberids) {
+                return $sub->userid != 0 && !in_array($sub->userid, $allgroupmemberids);
+            });
+        } else if ($groupid) {
+            $members = groups_get_members($groupid);
+            $memberids = $members ? array_keys($members) : [];
+            $submissions = array_filter($submissions, function($sub) use ($memberids) {
+                return $sub->userid != 0 && in_array($sub->userid, $memberids);
+            });
         }
         $evidenciadir = $resdir . '/Evidencias';
         $filelist[$evidenciadir] = null;
@@ -947,11 +973,7 @@ class local_downloadcentercustom_factory {
                 continue;
             }
             if (empty($user)) {
-                if ($isstudent) {
-                    $user = $USER;
-                } else {
-                    continue;
-                }
+                continue;
             }
             $feedback = $assign->get_assign_feedback_status_renderable($user);
             if ($feedback && $feedback->grade) {
@@ -1164,7 +1186,6 @@ class local_downloadcentercustom_factory {
         $content = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . $name . '</title></head><body>';
         $content .= '<h1>' . $name . '</h1>';
         $content .= '<p><a href="' . $url . '" target="_blank">' . $url . '</a></p>';
-        $content .= '<p>Enlace al recurso externo.</p>';
         $content .= '</body></html>';
         $filename = $resdir . '/' . self::shorten_filename(clean_filename($name)) . '.html';
         $filelist[$filename] = [$content];
@@ -1186,7 +1207,7 @@ class local_downloadcentercustom_factory {
         $context = $resource->context;
         $fs = get_file_storage();
         if (!empty($content)) {
-            $content = str_replace('@@PLUGINFILE@@', 'files', $content);
+            $content = str_replace('@@PLUGINFILE@@', 'Archivos', $content);
             $content = self::convert_content_to_html_doc($name, $content);
             $filename = $resdir . '/' . self::shorten_filename(self::clean_filename_ascii($name)) . '.html';
             $filelist[$filename] = [$content];
@@ -1206,7 +1227,7 @@ class local_downloadcentercustom_factory {
                 continue;
             }
             $this->filehashes[$hash] = true;
-            $filename = $resdir . '/files/' . self::shorten_filename($file->get_filename());
+            $filename = $resdir . '/Archivos/' . self::shorten_filename($file->get_filename());
             $filelist[$filename] = $file;
         }
     }
@@ -1292,33 +1313,42 @@ class local_downloadcentercustom_factory {
                             $this->handle_publication($res, $resdir, $filelist, $groupid);
                         }
 
-                        // Materiales de esta actividad van dentro de Actividad/Materiales/.
+                        // Materiales van a nivel del curso, no dentro de la actividad ni del grupo.
+                        $matdir = $coursename . '/Materiales';
                         foreach ($materialitems as $m) {
                             $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
-                            $itempath = $resdir . '/Materiales/' . $itemname;
-                            $filelist[$resdir . '/Materiales'] = null;
+                            $itempath = $matdir . '/' . $itemname;
+                            $filelist[$matdir] = null;
 
-                            if ($m->modname == 'resource' && $includefiles) {
-                                $this->handle_resource($m, $itempath, $filelist, $resdir . '/Materiales');
-                            } else if ($m->modname == 'folder' && $includefolders) {
+                            if ($m->modname == 'resource') {
+                                $this->handle_resource($m, $itempath, $filelist, $matdir);
+                            } else if ($m->modname == 'folder') {
                                 $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
                                 $this->add_folder_contents($filelist, $folder, $itempath);
                             } else if ($m->modname == 'page') {
                                 $pagedir2 = $itempath; $filelist[$pagedir2] = null;
                                 $pintro2 = $m->resource->intro ?? '';
                                 $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pintro2);
+                                $pintro2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('/view?embed', '', $pintro2);
                                 $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
-                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = str_replace('/view?embed', '', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
                                 $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
                                 $filelist[$pagedir2 . '/Recursos'] = null;
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                             } else if ($m->modname == 'book' && !$modbookmissing)  {
                                 $this->handle_book($m, $itempath, $filelist);
                             } else if ($m->modname == 'lightboxgallery') {
@@ -1327,43 +1357,51 @@ class local_downloadcentercustom_factory {
                                 $this->handle_glossary($m, $itempath, $filelist);
                             } else if ($m->modname == 'etherpadlite') {
                                 $this->handle_etherpadlite($m, $itempath, $filelist);
-                            } else if ($m->modname == 'url' && $includeurls) {
-                                $this->handle_url($m, $resdir . '/Materiales', $filelist);
+                            } else if ($m->modname == 'url') {
+                                $this->handle_url($m, $matdir, $filelist);
                             } else if ($m->modname == 'label') {
-                                $this->handle_label($m, $resdir . '/Materiales', $filelist);
+                                $this->handle_label($m, $matdir, $filelist);
                             }
                         }
                     }
 
-                    // Si la seccion NO tiene assignment, los materiales van a grupo/Materiales/.
+                    // Si la seccion NO tiene assignment, los materiales van a curso/Materiales/.
                     if (empty($assignitems)) {
                         foreach ($materialitems as $m) {
-                            $matdir = $coursename . '/' . $groupname . '/Materiales';
+                            $matdir = $coursename . '/Materiales';
                             $filelist[$matdir] = null;
                             $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
                             $itempath = $matdir . '/' . $itemname;
 
-                            if ($m->modname == 'resource' && $includefiles) {
+                            if ($m->modname == 'resource') {
                                 $this->handle_resource($m, $itempath, $filelist, $matdir);
-                            } else if ($m->modname == 'folder' && $includefolders) {
+                            } else if ($m->modname == 'folder') {
                                 $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
                                 $this->add_folder_contents($filelist, $folder, $itempath);
                             } else if ($m->modname == 'page') {
                                 $pagedir2 = $itempath; $filelist[$pagedir2] = null;
                                 $pintro2 = $m->resource->intro ?? '';
                                 $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pintro2);
+                                $pintro2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('/view?embed', '', $pintro2);
                                 $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
-                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = str_replace('/view?embed', '', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
                                 $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
                                 $filelist[$pagedir2 . '/Recursos'] = null;
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                             } else if ($m->modname == 'book' && !$modbookmissing)  {
                                 $this->handle_book($m, $itempath, $filelist);
                             } else if ($m->modname == 'lightboxgallery') {
@@ -1372,7 +1410,7 @@ class local_downloadcentercustom_factory {
                                 $this->handle_glossary($m, $itempath, $filelist);
                             } else if ($m->modname == 'etherpadlite') {
                                 $this->handle_etherpadlite($m, $itempath, $filelist);
-                            } else if ($m->modname == 'url' && $includeurls) {
+                            } else if ($m->modname == 'url') {
                                 $this->handle_url($m, $matdir, $filelist);
                             } else if ($m->modname == 'label') {
                                 $this->handle_label($m, $matdir, $filelist);
@@ -1410,43 +1448,52 @@ class local_downloadcentercustom_factory {
                     }
                     foreach ($materialitems as $m) {
                         $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
-                         $itempath = $resdir . '/Materiales/' . $itemname;
-                         $filelist[$resdir . '/Materiales'] = null;
-                         if ($m->modname == 'resource' && $includefiles) {
-                             $this->handle_resource($m, $itempath, $filelist, $resdir . '/Materiales');
-                         } else if ($m->modname == 'folder' && $includefolders) {
+                         $matdir = $coursename . '/Materiales';
+                         $itempath = $matdir . '/' . $itemname;
+                         $filelist[$matdir] = null;
+                         if ($m->modname == 'resource') {
+                             $this->handle_resource($m, $itempath, $filelist, $matdir);
+                         } else if ($m->modname == 'folder') {
                              $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
                              $this->add_folder_contents($filelist, $folder, $itempath);
                          } else if ($m->modname == 'page') {
                                 $pagedir2 = $itempath; $filelist[$pagedir2] = null;
                                 $pintro2 = $m->resource->intro ?? '';
                                 $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pintro2);
+                                $pintro2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('/view?embed', '', $pintro2);
                                 $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
-                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = str_replace('/view?embed', '', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
                                 $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
                                 $filelist[$pagedir2 . '/Recursos'] = null;
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                          } else if ($m->modname == 'book' && !$modbookmissing)  {
                              $this->handle_book($m, $itempath, $filelist);
                          } else if ($m->modname == 'lightboxgallery') {
-                            $this->handle_lightboxgallery($m, $itempath, $filelist);
-                        } else if ($m->modname == 'glossary') {
-                            $this->handle_glossary($m, $itempath, $filelist);
-                        } else if ($m->modname == 'etherpadlite') {
-                            $this->handle_etherpadlite($m, $itempath, $filelist);
-                        } else if ($m->modname == 'url' && $includeurls) {
-                            $this->handle_url($m, $resdir . '/Materiales', $filelist);
-                        } else if ($m->modname == 'label') {
-                            $this->handle_label($m, $resdir . '/Materiales', $filelist);
-                        }
-                    }
+                             $this->handle_lightboxgallery($m, $itempath, $filelist);
+                         } else if ($m->modname == 'glossary') {
+                             $this->handle_glossary($m, $itempath, $filelist);
+                         } else if ($m->modname == 'etherpadlite') {
+                             $this->handle_etherpadlite($m, $itempath, $filelist);
+                         } else if ($m->modname == 'url') {
+                             $this->handle_url($m, $matdir, $filelist);
+                         } else if ($m->modname == 'label') {
+                             $this->handle_label($m, $matdir, $filelist);
+                         }
+                     }
                 }
                 if (empty($assignitems)) {
                     foreach ($materialitems as $m) {
@@ -1454,27 +1501,35 @@ class local_downloadcentercustom_factory {
                          $filelist[$matdir] = null;
                          $itemname = self::shorten_filename(self::clean_filename_ascii($m->name));
                          $itempath = $matdir . '/' . $itemname;
-                         if ($m->modname == 'resource' && $includefiles) {
+                         if ($m->modname == 'resource') {
                              $this->handle_resource($m, $itempath, $filelist, $matdir);
-                         } else if ($m->modname == 'folder' && $includefolders) {
+                         } else if ($m->modname == 'folder') {
                              $folder = $fs->get_area_tree($m->context->id, 'mod_folder', 'content', 0);
                              $this->add_folder_contents($filelist, $folder, $itempath);
                          } else if ($m->modname == 'page') {
                                 $pagedir2 = $itempath; $filelist[$pagedir2] = null;
                                 $pintro2 = $m->resource->intro ?? '';
                                 $pintro2 = str_replace('@@PLUGINFILE@@', 'Recursos', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pintro2);
+                                $pintro2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pintro2);
+                                $pintro2 = str_replace('/view?embed', '', $pintro2);
                                 $pcontent2 = str_replace('@@PLUGINFILE@@', 'Recursos', $m->resource->content);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*><\/iframe>/i', '<p><a href="$1" target="_blank">Ver video en YouTube</a></p>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?youtube\.com\/embed\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = str_replace('https://www.youtube.com/embed/', 'https://www.youtube.com/watch?v=', $pcontent2);
-                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>[\s\S]*?<\/div>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
-                                $pcontent2 = preg_replace('/<iframe[^>]+src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*><\/iframe>/i', '<p><strong>DISCLAIMER</strong></p><p>"Enlace configurado en el material"</p>', $pcontent2);
+                                $pcontent2 = str_replace('/view?embed', '', $pcontent2);
+                                $pcontent2 = preg_replace('/<div[^>]*>[\s\S]*?<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>[\s\S]*?<\/div>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/(www\.)?canva\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
+                                $pcontent2 = preg_replace('/<iframe[^>]*?src="(https:\/\/[^\/]*genially\.com\/[^"]+)"[^>]*>[\s\S]*?<\/iframe>/i', '<p><strong>Nota importante sobre el enlace:</strong></p><p>Este enlace ha sido integrado por el creador del recurso. Si experimentas problemas para acceder, por favor contacta directamente con la persona que configuró la actividad, ya que la plataforma no gestiona los permisos de este sitio externo.</p><span class="nolink">$1</span>', $pcontent2);
                                 $pcontent2 = self::convert_content_to_html_doc($m->name, $pintro2 . $pcontent2);
                                 $filelist[$pagedir2 . '/' . basename($itempath) . '.html'] = [$pcontent2];
                                 $filelist[$pagedir2 . '/Recursos'] = null;
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'content');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                                 $pfs2 = $fs->get_area_files($m->context->id, 'mod_page', 'intro');
-                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
+                                foreach ($pfs2 as $pf2) { if ($pf2->get_filesize() == 0) continue; if (strpos($pintro2 . $pcontent2, 'Recursos/' . rawurlencode($pf2->get_filename())) === false && strpos($pintro2 . $pcontent2, 'Recursos/' . $pf2->get_filename()) === false) continue; $filelist[$pagedir2 . '/Recursos/' . self::shorten_filename($pf2->get_filename())] = $pf2; }
                          } else if ($m->modname == 'book' && !$modbookmissing)  {
                              $this->handle_book($m, $itempath, $filelist);
                          } else if ($m->modname == 'lightboxgallery') {
@@ -1483,7 +1538,7 @@ class local_downloadcentercustom_factory {
                             $this->handle_glossary($m, $itempath, $filelist);
                         } else if ($m->modname == 'etherpadlite') {
                             $this->handle_etherpadlite($m, $itempath, $filelist);
-                        } else if ($m->modname == 'url' && $includeurls) {
+                        } else if ($m->modname == 'url') {
                             $this->handle_url($m, $matdir, $filelist);
                         } else if ($m->modname == 'label') {
                             $this->handle_label($m, $matdir, $filelist);
@@ -1574,15 +1629,41 @@ class local_downloadcentercustom_factory {
         $data = (array)$data;
         $filtered = [];
 
-        if (!empty($data['selectedgroups'])) {
-            // selectedgroups tiene prioridad: refleja lo que el usuario dejó seleccionado.
-            $this->selectedgroups = $data['selectedgroups'];
-        } else if (!empty($data['selectallgroups'])) {
-            global $DB;
-            $allgroups = $DB->get_records_menu('groups', ['courseid' => $data['courseid'] ?? $this->course->id], '', 'id,id');
-            $this->selectedgroups = array_keys($allgroups);
-        } else {
+        // Determinar cuántos grupos tiene el usuario en el curso.
+        $usergroups = groups_get_user_groups($this->course->id, $this->user->id);
+        $usergroupids = $usergroups[0] ?? [];
+        // Quien tiene downloadMaterials (manager) o accessallgroups ve todos los grupos.
+        $coursecontext = \context_course::instance($this->course->id);
+        $canaccessall = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext)
+            || has_capability('moodle/site:accessallgroups', $coursecontext);
+
+        if ($canaccessall) {
+            // Admins/managers: usan la selección del formulario directamente.
+            if (!empty($data['selectedgroups'])) {
+                $this->selectedgroups = $data['selectedgroups'];
+            } else if (!empty($data['selectallgroups'])) {
+                global $DB;
+                $allgroups = $DB->get_records_menu('groups', ['courseid' => $data['courseid'] ?? $this->course->id], '', 'id,id');
+                $this->selectedgroups = array_keys($allgroups);
+            } else {
+                $this->selectedgroups = [];
+            }
+        } else if (count($usergroupids) === 0) {
+            // 0 grupos: solo alumnos sin grupo.
             $this->selectedgroups = [];
+            $this->onlyungrouped = true;
+        } else if (count($usergroupids) === 1) {
+            // 1 grupo: auto-asignado a ese único grupo.
+            $this->selectedgroups = [$usergroupids[0]];
+        } else {
+            // 2+ grupos: usa la selección del formulario (o vacío si deseleccionó todos).
+            if (!empty($data['selectedgroups'])) {
+                $this->selectedgroups = $data['selectedgroups'];
+            } else if (!empty($data['selectallgroups'])) {
+                $this->selectedgroups = $usergroupids;
+            } else {
+                $this->selectedgroups = [];
+            }
         }
 
         $sortedresources = $this->get_resources_for_user();
