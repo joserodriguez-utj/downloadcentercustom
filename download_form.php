@@ -52,9 +52,9 @@ class local_downloadcentercustom_download_form extends moodleform {
         $candownloadanything = $candownloadmaterials || $candownloadassign;
 
         if ($candownloadanything) {
-            $infomessagestring = has_capability('moodle/course:update', $coursecontext) ?
+            $infomessagestring = $candownloadmaterials ?
                 get_string('infomessage_teachers', 'local_downloadcentercustom') :
-                get_string('infomessage_students', 'local_downloadcentercustom');
+                get_string('infomessage_teachers_nomat', 'local_downloadcentercustom');
             $mform->addElement(
                 'html',
                 html_writer::tag(
@@ -114,9 +114,9 @@ class local_downloadcentercustom_download_form extends moodleform {
             $mform->addElement('checkbox', 'includefeedback', get_string('feedback', 'local_downloadcentercustom'));
             $mform->setDefault('includefeedback', 1);
             $mform->addElement('checkbox', 'includeinstructions', get_string('instructions', 'local_downloadcentercustom'));
-            $mform->setDefault('includeinstructions', 1);
+            $mform->setDefault('includeinstructions', 0);
             $mform->addElement('checkbox', 'includeresources', get_string('resources_item', 'local_downloadcentercustom'));
-            $mform->setDefault('includeresources', 1);
+            $mform->setDefault('includeresources', 0);
             $mform->addElement('html', '</div>');
         }
         $mform->addElement('html', '</div>');
@@ -145,12 +145,39 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     moverOpciones();
 
+    // Retro, Instrucciones y Recursos dependen de Entregas.
+    if (ot) {
+        function updateDependents() {
+            var ena = ot.checked;
+            var fb = document.getElementById("id_includefeedback");
+            var ins = document.getElementById("id_includeinstructions");
+            var rec = document.getElementById("id_includeresources");
+            if (fb) { fb.disabled = !ena; if (!ena) fb.checked = false; }
+            if (ins) { ins.disabled = !ena; if (!ena) ins.checked = false; }
+            if (rec) { rec.disabled = !ena; if (!ena) rec.checked = false; }
+        }
+        ot.addEventListener("change", updateDependents);
+        updateDependents();
+    }
+
     if (!ot) return;
 
     function toggleByModname(modname, checked) {
         document.querySelectorAll('input[name^="item_' + modname + '_"]').forEach(function(el) {
             el.checked = checked;
+            el.dispatchEvent(new Event("change", {bubbles: true}));
         });
+        // Actualizar checkboxes de sección
+        document.querySelectorAll('.card.block').forEach(function(card) {
+            var sec = card.querySelector('input[name^="item_topic_"]');
+            if (!sec) return;
+            var items = card.querySelectorAll('input.form-check-input[name^="item_"][name!="' + sec.name + '"]');
+            if (items.length === 0) return;
+            sec.checked = Array.from(items).some(function(it) { return it.checked; });
+        });
+        if (form && M.form && M.form.updateFormState) {
+            M.form.updateFormState(form.id);
+        }
     }
 
     if (ifiles) {
