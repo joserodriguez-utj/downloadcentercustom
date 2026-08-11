@@ -293,3 +293,9 @@
     text-align: left !important;
     display: block !important;
 }
+
+.path-local-downloadcentercustom .alert.alert-danger {
+    width: 46.57rem !important;
+    max-width: none !important;
+    margin-left: .98rem;
+}
