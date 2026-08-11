@@ -53,6 +53,7 @@ $string['privacy:null_reason'] = 'This plugin does not store or process any pers
 $string['search:hint'] = 'Type to filter activities and resources...';
 $string['search:results'] = 'Search results';
 $string['untitled'] = 'Untitled';
+$string['zipinprogress'] = 'A download is already in progress. Please wait for it to finish.';
 $string['zipcreating'] = 'The ZIP archive is being created...';
 $string['zipready'] = 'The ZIP archive has been successfully created.';
 $string['groupfilter'] = 'Filter by groups';

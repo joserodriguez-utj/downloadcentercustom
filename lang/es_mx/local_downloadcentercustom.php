@@ -53,6 +53,7 @@ $string['privacy:null_reason'] = 'Este complemento no almacena ni procesa ningun
 $string['search:hint'] = 'Escribe para filtrar actividades y recursos...';
 $string['search:results'] = 'Resultados de la búsqueda';
 $string['untitled'] = 'Sin título';
+$string['zipinprogress'] = 'Ya hay una descarga en progreso. Espera a que termine.';
 $string['zipcreating'] = 'Se está creando el archivo ZIP...';
 $string['zipready'] = 'El archivo ZIP se ha creado con éxito.';
 $string['groupfilter'] = 'Filtrar por grupos';

@@ -41,6 +41,11 @@ $context = context_course::instance($course->id);
 
 require_capability('local/downloadcentercustom:view', $context);
 
+// Al cargar la página (GET), liberar bloqueo de descarga anterior.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    set_user_preference('downloadcentercustom_ziptime', 0);
+}
+
 $PAGE->set_url(new moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $course->id]));
 
 $PAGE->set_pagelayout('incourse');
@@ -65,6 +70,15 @@ $PAGE->set_title(get_string('navigationlink', 'local_downloadcentercustom') . ':
 $PAGE->set_heading($course->fullname);
 
 if ($data = $downloadform->get_data()) {
+    // Protección contra doble descarga (5 minutos de bloqueo).
+    $locktime = get_user_preferences('downloadcentercustom_ziptime', 0);
+    if ($locktime && (time() - $locktime) < 300) {
+        \core\notification::error(get_string('zipinprogress', 'local_downloadcentercustom'));
+        redirect(new moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $course->id]));
+        die;
+    }
+    set_user_preference('downloadcentercustom_ziptime', time());
+
     $event = \local_downloadcentercustom\event\zip_downloaded::create([
         'objectid' => $PAGE->course->id,
         'context' => $PAGE->context,
