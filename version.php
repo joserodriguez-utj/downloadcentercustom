@@ -21,6 +21,10 @@
  * @author    Simeon Naydenov
  * @copyright 2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @modified  2026 José Luis Rodriguez Escobedo - Universidad Tecnológica de Jalisco
+ *            Adaptación a Centro de descargas de evidencias con filtrado por grupos,
+ *            capacidades por rol (downloadMaterials/downloadAssingments) y generación
+ *            de ZIP con instrucciones HTML y estructura de materiales a nivel curso.
  */
 
 defined('MOODLE_INTERNAL') || die();
