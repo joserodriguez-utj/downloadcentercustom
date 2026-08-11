@@ -847,6 +847,35 @@ class local_downloadcentercustom_factory {
         require_once($CFG->dirroot . '/mod/assign/locallib.php');
         require_once($CFG->dirroot . '/mod/assign/externallib.php');
 
+        // Precargar datos de rúbrica si la actividad la tiene.
+        $hasrubric = false;
+        $rubriccriteria = [];
+        $rubricareaid = null;
+        $area = $DB->get_record_sql(
+            "SELECT gra.id FROM {course_modules} cm
+              JOIN {context} con ON cm.id = con.instanceid AND con.contextlevel = ?
+              JOIN {grading_areas} gra ON gra.contextid = con.id
+             WHERE cm.id = ? AND gra.activemethod = ?",
+            [CONTEXT_MODULE, $resource->cm->id, 'rubric']
+        );
+        if ($area) {
+            $hasrubric = true;
+            $rubricareaid = $area->id;
+            $criteria = $DB->get_records_sql(
+                "SELECT crit.id, crit.description, MAX(lev.score) AS max_score
+                   FROM {grading_definitions} def
+              LEFT JOIN {gradingform_rubric_criteria} crit ON crit.definitionid = def.id
+              LEFT JOIN {gradingform_rubric_levels} lev ON lev.criterionid = crit.id
+                  WHERE def.areaid = ?
+               GROUP BY crit.id, crit.description, crit.sortorder
+               ORDER BY crit.sortorder",
+                [$rubricareaid]
+            );
+            foreach ($criteria as $c) {
+                $rubriccriteria[$c->id] = $c;
+            }
+        }
+
         $includeinstructions = $this->downloadoptions['includeinstructions'] ?? true;
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $onlytasks = $this->downloadoptions['onlytasks'] ?? false;
@@ -1013,13 +1042,32 @@ class local_downloadcentercustom_factory {
                     if ($feedbackplugin->get_type() == 'comments') {
                         $comments = $feedbackplugin->get_editor_text('comments', $feedback->grade->id);
                         $comments = str_replace('@@PLUGINFILE@@/', '', $comments);
-                        if (mb_strlen(trim($comments)) > 0) {
-                            $comments = self::convert_content_to_html_doc($feedbackplugin->get_name(), $comments);
-                            $filename = $fullname . '/' . self::shorten_filename($feedbackplugin->get_name() . '.html');
-                            $filelist[$filename] = [$comments];
-                        }
                     }
                 }
+
+                // Generar HTML de rúbrica/retroalimentación por alumno.
+                $studentname = $user ? fullname($user) : 'desconocido';
+                $gradeval = $feedback->grade->grade ?? '';
+                if (is_numeric($gradeval)) {
+                    $gradeval = number_format((float)$gradeval, 1, '.', '');
+                }
+                if ($hasrubric) {
+                    $rubrich = self::build_rubric_html(
+                        $studentname,
+                        $rubriccriteria,
+                        $resource->cm->id,
+                        $rubricareaid,
+                        $user->id,
+                        $comments ?? '',
+                        $gradeval
+                    );
+                } else {
+                    $rubrich = self::build_feedback_html($studentname, $comments ?? '', $gradeval);
+                }
+                $htmlname = 'Retroalimentaci' . "\xC3\xB3n" . ' - ' . $studentname;
+                $rubrich = self::convert_content_to_html_doc($htmlname, $rubrich);
+                $filename = $fullname . '/' . self::shorten_filename($htmlname . '.html');
+                $filelist[$filename] = [$rubrich];
             }
         }
     }
@@ -1797,5 +1845,128 @@ ul.indent {
 </body>
 CSS;
         return str_replace('</body>', $csscontent, $htmlcontent);
+    }
+
+    /**
+     * Build HTML table with rubric criteria, feedback and grade for a student.
+     *
+     * @param string $studentname
+     * @param array $rubriccriteria Criterion id => {description, max_score}
+     * @param int $cmid Course module ID
+     * @param int $areaid Grading area ID
+     * @param int $userid
+     * @param string $feedbacktext General feedback text
+     * @param string $gradeval Final grade
+     * @return string HTML content
+     */
+    public static function build_rubric_html($studentname, $rubriccriteria, $cmid, $areaid, $userid, $feedbacktext, $gradeval) {
+        global $DB;
+
+        // Obtener fillings de rúbrica para este usuario.
+        $fillingsrs = $DB->get_recordset_sql(
+            "SELECT fill.criterionid, fill.levelid, fill.remark,
+                    lev.score, lev.definition AS leveldef
+               FROM {course_modules} cm
+               JOIN {context} con ON cm.id = con.instanceid AND con.contextlevel = ?
+               JOIN {grading_areas} gra ON gra.contextid = con.id
+               JOIN {grading_definitions} def ON def.areaid = gra.id
+               JOIN {grading_instances} inst ON inst.definitionid = def.id
+               JOIN {gradingform_rubric_fillings} fill ON fill.instanceid = inst.id
+          LEFT JOIN {gradingform_rubric_levels} lev ON lev.id = fill.levelid
+              WHERE cm.id = ? AND gra.id = ?
+                AND inst.itemid IN (
+                    SELECT act.id FROM {assign_grades} act WHERE act.assignment = cm.instance AND act.userid = ?
+                )
+           ORDER BY fill.criterionid",
+            [CONTEXT_MODULE, $cmid, $areaid, $userid]
+        );
+        $fillings = [];
+        foreach ($fillingsrs as $f) {
+            // Keep the latest filling per criterion (highest criterionid+levelid combo).
+            $fillings[$f->criterionid] = $f;
+        }
+        $fillingsrs->close();
+
+        // Construir tabla HTML.
+        $h = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">';
+
+        // Fila 1: encabezados de criterios.
+        $criterianames = [];
+        foreach ($rubriccriteria as $c) {
+            $criterianames[] = htmlspecialchars($c->description) . '<br>(máx ' . round($c->max_score, 2) . ')';
+        }
+        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>Estudiante</td>';
+        foreach ($rubriccriteria as $c) {
+            $h .= '<td>' . htmlspecialchars($c->description) . '<br>(máx ' . round($c->max_score, 2) . ')</td>';
+        }
+        $h .= '<td>Retroalimentación</td><td>Calificación</td></tr>';
+
+        // Fila 2: puntuación y nivel.
+        $h .= '<tr><td rowspan="2" style="vertical-align:top;font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
+        foreach ($rubriccriteria as $cid => $c) {
+            $found = false;
+            foreach ($fillings as $f) {
+                if ($f->criterionid == $cid) {
+                    $score = isset($f->score) ? round($f->score, 2) : 0;
+                    $level = $f->leveldef ?? '';
+                    $h .= '<td style="vertical-align:top;">Puntuación: ' . $score;
+                    if ($level) {
+                        $h .= '<br><em>Nivel: ' . htmlspecialchars($level) . '</em>';
+                    }
+                    $h .= '</td>';
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $h .= '<td style="vertical-align:top;color:#999;">-</td>';
+            }
+        }
+        $fb = trim(strip_tags($feedbacktext ?? ''));
+        $h .= '<td rowspan="2" style="vertical-align:top;">' . nl2br(htmlspecialchars($fb)) . '</td>';
+        $h .= '<td rowspan="2" style="vertical-align:top;text-align:center;">' . htmlspecialchars($gradeval) . '</td>';
+        $h .= '</tr>';
+
+        // Fila 3: observaciones por criterio.
+        $h .= '<tr>';
+        foreach ($rubriccriteria as $cid => $c) {
+            $obs = '';
+            foreach ($fillings as $f) {
+                if ($f->criterionid == $cid && !empty(trim($f->remark ?? ''))) {
+                    $obs = $f->remark;
+                    break;
+                }
+            }
+            if ($obs) {
+                $h .= '<td style="vertical-align:top;background:#fffde7;">Observación: ' . htmlspecialchars($obs) . '</td>';
+            } else {
+                $h .= '<td style="vertical-align:top;color:#999;">(sin observación)</td>';
+            }
+        }
+        $h .= '</tr>';
+
+        $h .= '</table>';
+        return $h;
+    }
+
+    /**
+     * Build simple HTML table with feedback and grade (no rubric).
+     *
+     * @param string $studentname
+     * @param string $feedbacktext
+     * @param string $gradeval
+     * @return string HTML content
+     */
+    public static function build_feedback_html($studentname, $feedbacktext, $gradeval) {
+        $fb = trim(strip_tags($feedbacktext ?? ''));
+        $h = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">';
+        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>Estudiante</td><td>Retroalimentación</td><td>Calificación</td></tr>';
+        $h .= '<tr>';
+        $h .= '<td style="font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
+        $h .= '<td>' . nl2br(htmlspecialchars($fb ?: '-')) . '</td>';
+        $h .= '<td style="text-align:center;">' . htmlspecialchars($gradeval) . '</td>';
+        $h .= '</tr>';
+        $h .= '</table>';
+        return $h;
     }
 }
