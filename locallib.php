@@ -21,6 +21,8 @@
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @modified      2026 José Luis Rodriguez Escobedo (jose.rodriguez@utj.edu.mx)
+ *               Universidad Tecnológica de Jalisco — joserodriguez-utj
  */
 class local_downloadcentercustom_factory {
     /**
