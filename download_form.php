@@ -50,8 +50,9 @@ class local_downloadcentercustom_download_form extends moodleform {
 
         $coursecontext = \context_course::instance($COURSE->id);
         $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
-        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssingments', $coursecontext);
-        $candownloadanything = $candownloadmaterials || $candownloadassign;
+        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssignments', $coursecontext);
+        $candownloadquizz = has_capability('local/downloadcentercustom:downloadQuizz', $coursecontext);
+        $candownloadanything = $candownloadmaterials || $candownloadassign || $candownloadquizz;
 
         if ($candownloadanything) {
             $infomessagestring = $candownloadmaterials ?
@@ -95,9 +96,10 @@ class local_downloadcentercustom_download_form extends moodleform {
         $showfolders = isset($modnamesincourse['folder']);
         $showurls = isset($modnamesincourse['url']);
         $showpages = isset($modnamesincourse['page']);
-        $tienealgomaterial = $showfiles || $showfolders || $showurls || $showpages;
+        $havequiz = isset($modnamesincourse['quiz']);
+        $havesomematerials = $showfiles || $showfolders || $showurls || $showpages;
 
-        if ($candownloadmaterials && $tienealgomaterial) {
+        if ($candownloadmaterials && $havesomematerials) {
             $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('materials', 'local_downloadcentercustom') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
@@ -121,11 +123,20 @@ class local_downloadcentercustom_download_form extends moodleform {
             $mform->setDefault('includeresources', 0);
             $mform->addElement('html', '</div>');
         }
+        if ($candownloadquizz && $havequiz) {
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('quiz', 'local_downloadcentercustom') . '</strong></span></div></div>');
+            $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
+            $mform->addElement('html', '<div class="separator"></div>');
+            $mform->addElement('checkbox', 'quiztries', get_string('quiz_tries', 'local_downloadcentercustom'));
+            $mform->setDefault('quiztries', 1);
+            $mform->addElement('html', '</div>');
+        }
         $mform->addElement('html', '</div>');
         $mform->addElement('html', <<<JS
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     var ot = document.getElementById("id_onlytasks");
+    var qtries = document.getElementById("id_quiztries");
     var ifiles = document.getElementById("id_includefiles");
     var ifolders = document.getElementById("id_includefolders");
     var iurls = document.getElementById("id_includeurls");
@@ -162,7 +173,7 @@ document.addEventListener("DOMContentLoaded", function() {
         updateDependents();
     }
 
-    if (!ot) return;
+    if (!ot && !qtries) return;
 
     function toggleByModname(modname, checked) {
         document.querySelectorAll('input[name^="item_' + modname + '_"]').forEach(function(el) {
@@ -204,9 +215,16 @@ document.addEventListener("DOMContentLoaded", function() {
             toggleByModname("url", this.checked);
         });
     }
-    ot.addEventListener("click", function() {
-        toggleByModname("assign", this.checked);
-    });
+    if (ot) {
+        ot.addEventListener("click", function() {
+            toggleByModname("assign", this.checked);
+        });
+    }
+    if (qtries) {
+        qtries.addEventListener("click", function() {
+            toggleByModname("quiz", this.checked);
+        });
+    }
 
     // Select All/None tambien controla checkboxes de contenido.
     function triggerChange(id) { var e = document.getElementById(id); if (e) e.dispatchEvent(new Event("change", {bubbles:true})); }
@@ -217,16 +235,18 @@ document.addEventListener("DOMContentLoaded", function() {
             if (ifolders) ifolders.checked = true;
             if (iurls) iurls.checked = true;
             if (ipages) ipages.checked = true;
-            ot.checked = true; ii.checked = true; ir.checked = true; fi.checked = true;
-            ["includefiles","includefolders","includeurls","includepages","onlytasks","includefeedback","includeinstructions","includeresources"].forEach(triggerChange);
+            if (ot) { ot.checked = true; } if (ii) ii.checked = true; if (ir) ir.checked = true; if (fi) fi.checked = true;
+            if (qtries) qtries.checked = true;
+            ["includefiles","includefolders","includeurls","includepages","onlytasks","includefeedback","includeinstructions","includeresources","quiztries"].forEach(triggerChange);
         }
         if (target.id === "downloadcenter-none-included") {
             if (ifiles) ifiles.checked = false;
             if (ifolders) ifolders.checked = false;
             if (iurls) iurls.checked = false;
             if (ipages) ipages.checked = false;
-            ot.checked = false; ii.checked = false; ir.checked = false; fi.checked = false;
-            ["includefiles","includefolders","includeurls","includepages","onlytasks","includefeedback","includeinstructions","includeresources"].forEach(triggerChange);
+            if (ot) { ot.checked = false; } if (ii) ii.checked = false; if (ir) ir.checked = false; if (fi) fi.checked = false;
+            if (qtries) qtries.checked = false;
+            ["includefiles","includefolders","includeurls","includepages","onlytasks","includefeedback","includeinstructions","includeresources","quiztries"].forEach(triggerChange);
         }
     });
 });
@@ -236,23 +256,18 @@ JS
 
         $firstbox = true;
         foreach ($resources as $sectionid => $sectioninfo) {
-            // Si no puede descargar materiales, filtrar solo tareas visibles.
-            if (!$candownloadmaterials) {
-                $sectioninfo->res = array_filter($sectioninfo->res, function($r) {
-                    return in_array($r->modname, ['assign', 'publication']);
-                });
-                if (empty($sectioninfo->res)) {
-                    continue;
+            // Filtrar los recursos según las capacidades del usuario.
+            $sectioninfo->res = array_filter($sectioninfo->res, function($r) use ($candownloadmaterials, $candownloadassign, $candownloadquizz) {
+                if ($r->modname === 'quiz') {
+                    return $candownloadquizz;
                 }
-            }
-            // Si no puede descargar tareas, filtrar solo materiales visibles.
-            if (!$candownloadassign) {
-                $sectioninfo->res = array_filter($sectioninfo->res, function($r) {
-                    return !in_array($r->modname, ['assign', 'publication']);
-                });
-                if (empty($sectioninfo->res)) {
-                    continue;
+                if (in_array($r->modname, ['assign', 'publication'])) {
+                    return $candownloadassign;
                 }
+                return $candownloadmaterials;
+            });
+            if (empty($sectioninfo->res)) {
+                continue;
             }
             $sectionname = 'item_topic_' . $sectionid;
             $class = 'card block mb-3';
@@ -297,12 +312,16 @@ JS
                     $currentsubsectionitemid = -1;
                 }
 
-                // Saltar materiales si no tiene permiso de descargarlos.
-                if (!$candownloadmaterials && !in_array($res->modname, ['assign', 'publication'])) {
-                    continue;
-                }
-                // Saltar tareas si no tiene permiso de descargarlas.
-                if (!$candownloadassign && in_array($res->modname, ['assign', 'publication'])) {
+                // Saltar recursos que el usuario no puede descargar según su capacidad.
+                if ($res->modname === 'quiz') {
+                    if (!$candownloadquizz) {
+                        continue;
+                    }
+                } else if (in_array($res->modname, ['assign', 'publication'])) {
+                    if (!$candownloadassign) {
+                        continue;
+                    }
+                } else if (!$candownloadmaterials) {
                     continue;
                 }
 
@@ -337,8 +356,8 @@ JS
         // $mform->setDefault('addnumbering', 0);
         // $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcentercustom');
 
-        // Group filtering (solo si tiene permiso de descargar tareas).
-        if ($candownloadassign) {
+        // Group filtering (solo si tiene permiso de descargar tareas o exámenes).
+        if ($candownloadassign || $candownloadquizz) {
             $canaccessallgroups = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
             if ($canaccessallgroups) {
                 $groups = groups_get_all_groups($COURSE->id);
@@ -419,7 +438,7 @@ JS
             }
         }
 
-        if ($candownloadassign && count($groups) >= 2) {
+        if (($candownloadassign || $candownloadquizz) && count($groups) >= 2) {
                 $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
                 $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
                 $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
@@ -447,7 +466,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
     function hastask() {
-        var ids = ["id_onlytasks","id_includefeedback","id_includeinstructions","id_includeresources"];
+        var ids = ["id_onlytasks","id_includefeedback","id_includeinstructions","id_includeresources","id_quiztries"];
         return ids.some(function(id) {
             var el = document.getElementById(id);
             return el && el.checked;
@@ -479,6 +498,8 @@ document.addEventListener("DOMContentLoaded", function() {
         if (pages) { pages.checked = !!checkedMods.page; }
         var tasks = document.getElementById('id_onlytasks');
         if (tasks) { tasks.checked = !!checkedMods.assign; }
+        var quiztries = document.getElementById('id_quiztries');
+        if (quiztries) { quiztries.checked = !!checkedMods.quiz; }
         // Sincronizar checkboxes de seccion.
         document.querySelectorAll('input[name^="item_topic_"]').forEach(function(el) {
             var section = el.closest('.card.block');
@@ -513,6 +534,10 @@ document.addEventListener("DOMContentLoaded", function() {
     var onlytasks = document.getElementById("id_onlytasks");
     if (onlytasks) {
         onlytasks.addEventListener("change", check);
+    }
+    var quiztries = document.getElementById("id_quiztries");
+    if (quiztries) {
+        quiztries.addEventListener("change", check);
     }
     if (allgrp) {
         allgrp.addEventListener("change", check);
@@ -549,7 +574,7 @@ JS
     function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $hasmat = !empty($data['includefiles']) || !empty($data['includefolders']) || !empty($data['includeurls']) || !empty($data['includepages']);
-        $hastask = !empty($data['onlytasks']) || !empty($data['includefeedback']) || !empty($data['includeinstructions']) || !empty($data['includeresources']);
+        $hastask = !empty($data['onlytasks']) || !empty($data['includefeedback']) || !empty($data['includeinstructions']) || !empty($data['includeresources']) || !empty($data['quiztries']);
         $hasgroups = !empty($data['selectallgroups']) || !empty($data['selectedgroups']);
         global $COURSE, $USER;
         // Solo exigir selección de grupos si el usuario tiene 2+ grupos asignados
