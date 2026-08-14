@@ -261,7 +261,7 @@ JS
                 if ($r->modname === 'quiz') {
                     return $candownloadquizz;
                 }
-                if (in_array($r->modname, ['assign', 'publication', 'h5pactivity'])) {
+                if (in_array($r->modname, ['assign', 'publication', 'h5pactivity', 'forum'])) {
                     return $candownloadassign;
                 }
                 return $candownloadmaterials;
@@ -317,7 +317,7 @@ JS
                     if (!$candownloadquizz) {
                         continue;
                     }
-                } else if (in_array($res->modname, ['assign', 'publication', 'h5pactivity'])) {
+                } else if (in_array($res->modname, ['assign', 'publication', 'h5pactivity', 'forum'])) {
                     if (!$candownloadassign) {
                         continue;
                     }
