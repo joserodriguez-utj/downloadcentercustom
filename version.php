@@ -23,14 +23,14 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @modified  2026 José Luis Rodriguez Escobedo - Universidad Tecnológica de Jalisco
  *            Adaptación a Centro de descargas de evidencias con filtrado por grupos,
- *            capacidades por rol (downloadMaterials/downloadAssignments) y generación
- *            de ZIP con instrucciones HTML y estructura de materiales a nivel curso.
+ *            capacidades por rol (downloadMaterials/downloadAssignments), generación
+ *            de ZIP con instrucciones HTML, descarga de quiz, H5P, foros y lecciones.
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2025072102;
+$plugin->version   = 2026081800;
 $plugin->requires  = 2025100600;
 $plugin->component = 'local_downloadcentercustom';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = "v5.1.1";
+$plugin->release   = "v1.5.0";

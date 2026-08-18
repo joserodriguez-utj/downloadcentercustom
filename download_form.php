@@ -51,8 +51,8 @@ class local_downloadcentercustom_download_form extends moodleform {
         $coursecontext = \context_course::instance($COURSE->id);
         $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
         $candownloadassign = has_capability('local/downloadcentercustom:downloadAssignments', $coursecontext);
-        $candownloadquizz = has_capability('local/downloadcentercustom:downloadQuizz', $coursecontext);
-        $candownloadanything = $candownloadmaterials || $candownloadassign || $candownloadquizz;
+        $candownloadquiz = has_capability('local/downloadcentercustom:downloadQuiz', $coursecontext);
+        $candownloadanything = $candownloadmaterials || $candownloadassign || $candownloadquiz;
 
         if ($candownloadanything) {
             $infomessagestring = $candownloadmaterials ?
@@ -123,7 +123,7 @@ class local_downloadcentercustom_download_form extends moodleform {
             $mform->setDefault('includeresources', 0);
             $mform->addElement('html', '</div>');
         }
-        if ($candownloadquizz && $havequiz) {
+        if ($candownloadquiz && $havequiz) {
             $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('quiz', 'local_downloadcentercustom') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
@@ -257,9 +257,9 @@ JS
         $firstbox = true;
         foreach ($resources as $sectionid => $sectioninfo) {
             // Filtrar los recursos según las capacidades del usuario.
-            $sectioninfo->res = array_filter($sectioninfo->res, function($r) use ($candownloadmaterials, $candownloadassign, $candownloadquizz) {
+            $sectioninfo->res = array_filter($sectioninfo->res, function($r) use ($candownloadmaterials, $candownloadassign, $can) {
                 if ($r->modname === 'quiz') {
-                    return $candownloadquizz;
+                    return $candownloadquiz;
                 }
                 if (in_array($r->modname, ['assign', 'publication', 'h5pactivity', 'forum', 'lesson'])) {
                     return $candownloadassign;
@@ -314,7 +314,7 @@ JS
 
                 // Saltar recursos que el usuario no puede descargar según su capacidad.
                 if ($res->modname === 'quiz') {
-                    if (!$candownloadquizz) {
+                    if (!$candownloadquiz) {
                         continue;
                     }
                 } else if (in_array($res->modname, ['assign', 'publication', 'h5pactivity', 'forum', 'lesson'])) {
@@ -357,7 +357,7 @@ JS
         // $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcentercustom');
 
         // Group filtering (solo si tiene permiso de descargar tareas o exámenes).
-        if ($candownloadassign || $candownloadquizz) {
+        if ($candownloadassign || $candownloadquiz) {
             $canaccessallgroups = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
             if ($canaccessallgroups) {
                 $groups = groups_get_all_groups($COURSE->id);
@@ -438,7 +438,7 @@ JS
             }
         }
 
-        if (($candownloadassign || $candownloadquizz) && count($groups) >= 2) {
+        if (($candownloadassign || $candownloadquiz) && count($groups) >= 2) {
                 $mform->addElement('html', '<div class="alert alert-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
                 $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
                 $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');

@@ -53,7 +53,7 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
-    'local/downloadcentercustom:downloadQuizz' => [
+    'local/downloadcentercustom:downloadQuiz' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
