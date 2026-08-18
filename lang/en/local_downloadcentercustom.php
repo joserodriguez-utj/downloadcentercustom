@@ -76,7 +76,6 @@ $string['quiz'] = 'Quiz';
 $string['quiz_tries'] = 'Attempts';
 $string['no_content'] = 'No content';
 $string['select_groups_one_by_one'] = 'Select groups one by one';
-$string['all_grups'] = 'All groups';
 $string['selectallgroups_help'] = 'Select all groups';
 $string['selectallgroups_help_help'] = 'Check this option to select all available groups.';
 $string['selectgroup_required'] = 'You must select at least one group to download tasks.';
