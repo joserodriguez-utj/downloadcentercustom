@@ -75,8 +75,8 @@ trait local_downloadcentercustom_lesson_trait {
             $studentname = fullname($user);
             $html = $this->build_lesson_html($lesson, $cm, $user, $studentname);
             if ($html) {
-                $html = self::convert_content_to_html_doc('Resultados - ' . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename('Resultados - ' . $studentname . '.html');
+                $html = self::convert_content_to_html_doc(get_string('lesson_results', 'local_downloadcentercustom') . $studentname, $html);
+                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('lesson_results', 'local_downloadcentercustom') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -143,11 +143,11 @@ trait local_downloadcentercustom_lesson_trait {
             $attemptsbyretry[$attempt->retry][] = $attempt;
         }
 
-        $h = '<h2>Resultados de la lección: ' . s($studentname) . ' — ' . s($lesson->name) . '</h2>';
+        $h = '<h2>' . get_string('lesson_lesson_results', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($lesson->name) . '</h2>';
 
         // Tabla resumen de intentos.
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
-        $h .= '<tr style="background:#f2f2f2;"><th>Intento</th><th>Calificación</th><th>Completado</th><th>Calificación final</th></tr>';
+        $h .= '<tr style="background:#f2f2f2;"><th>' . get_string('lesson_attempts', 'local_downloadcentercustom') . '</th><th>' . get_string('lesson_grade', 'local_downloadcentercustom') . '</th><th>'. get_string('lesson_complete', 'local_downloadcentercustom') . '</th><th>' . get_string('lesson_final_grade', 'local_downloadcentercustom') . '</th></tr>';
 
         $retries = array_keys($attemptsbyretry);
         sort($retries);
@@ -155,7 +155,7 @@ trait local_downloadcentercustom_lesson_trait {
         $firstretry = true;
         foreach ($retries as $retry) {
             $gradeval = isset($grades[$retry]) ? round($grades[$retry]->grade, 2) : '-';
-            $completed = isset($grades[$retry]) && !empty($grades[$retry]->completed) ? 'Sí' : 'No';
+            $completed = isset($grades[$retry]) && !empty($grades[$retry]->completed) ? get_string('yes') : get_string('no');
             $h .= '<tr>';
             $h .= '<td style="text-align:center;">' . ($retry + 1) . '</td>';
             $h .= '<td style="text-align:center;">' . $gradeval . '</td>';
@@ -170,7 +170,7 @@ trait local_downloadcentercustom_lesson_trait {
 
         // Detalle por intento.
         foreach ($retries as $retry) {
-            $h .= '<h3>Intento #' . ($retry + 1) . '</h3>';
+            $h .= '<h3>' . get_string('lesson_attempt', 'local_downloadcentercustom') . ($retry + 1) . '</h3>';
 
             $retryattempts = $attemptsbyretry[$retry];
             // Ordenar por timeseen para respetar el orden de navegación.
@@ -186,11 +186,11 @@ trait local_downloadcentercustom_lesson_trait {
                 $pageanswers = $answersbypage[$attempt->pageid] ?? [];
 
                 $h .= '<div style="border:1px solid #ccc;border-radius:4px;padding:8px;margin-bottom:10px;">';
-                $h .= '<div><b>Tema de página:</b> ' . s($page->title) . '</div>';
+                $h .= '<div><b>' . get_string('lesson_page_topic', 'local_downloadcentercustom') . '</b> ' . s($page->title) . '</div>';
 
                 // Contenido de la página (pregunta o contenido de ramificación).
                 if (!empty($page->contents)) {
-                    $h .= '<div><b>Pregunta:</b> ' . format_text($page->contents, $page->contentsformat ?? FORMAT_HTML) . '</div>';
+                    $h .= '<div><b>' . get_string('lesson_question', 'local_downloadcentercustom') . '</b> ' . format_text($page->contents, $page->contentsformat ?? FORMAT_HTML) . '</div>';
                 }
 
                 // Respuesta del alumno.
@@ -209,13 +209,13 @@ trait local_downloadcentercustom_lesson_trait {
                         $useranswertext = (string)$attempt->useranswer;
                         $score = '';
                     }
-                    $h .= '<div><b>Respuesta del alumno (ensayo):</b><br>' . s($useranswertext) . '</div>';
+                    $h .= '<div><b>' . get_string('lesson_student_answer_essay', 'local_downloadcentercustom') . '</b><br>' . s($useranswertext) . '</div>';
                     if ($score !== '') {
-                        $h .= '<div><b>Calificación del ensayo:</b> ' . s($score) . '</div>';
+                        $h .= '<div><b>' . get_string('lesson_essay_grade', 'local_downloadcentercustom') . '</b> ' . s($score) . '</div>';
                     }
                 } else if ($isbranch) {
                     // Tabla de ramificación: es contenido, no pregunta.
-                    $h .= '<div><em>Página de contenido/ramificación.</em></div>';
+                    $h .= '<div><em>' . get_string('lesson_content_branch_page', 'local_downloadcentercustom') . '</em></div>';
                 } else {
                     // Preguntas: opción múltiple, V/F, corta, numérica, relación.
                     $chosen = null;
@@ -228,7 +228,7 @@ trait local_downloadcentercustom_lesson_trait {
                     if ($chosen) {
                         $useranswertext = $chosen->answer;
                         $correct = !empty($attempt->correct);
-                        $h .= '<div><b>Respuesta del alumno:</b> ';
+                        $h .= '<div><b>' . get_string('lesson_student_answer', 'local_downloadcentercustom') . '</b> ';
                         $h .= $correct ?
                             '<span style="color:#198754;">✔ ' . s($useranswertext) . '</span>' :
                             '<span style="color:#dc3545;">✘ ' . s($useranswertext) . '</span>';
@@ -243,7 +243,7 @@ trait local_downloadcentercustom_lesson_trait {
                         }
                     }
                     if ($best && !$correct) {
-                        $h .= '<div><b>Respuesta correcta:</b> ' . s($best->answer) . '</div>';
+                        $h .= '<div><b>' . get_string('lesson_correct_answer', 'local_downloadcentercustom') . '</b> ' . s($best->answer) . '</div>';
                     }
                 }
 
@@ -257,7 +257,7 @@ trait local_downloadcentercustom_lesson_trait {
                         }
                     }
                     if ($chosenanswer) {
-                        $h .= '<div><b>Puntos:</b> ' . s($chosenanswer->score) . '</div>';
+                        $h .= '<div><b>' . get_string('lesson_points', 'local_downloadcentercustom') . '</b> ' . s($chosenanswer->score) . '</div>';
                     }
                 }
 

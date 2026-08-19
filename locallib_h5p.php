@@ -80,8 +80,8 @@ trait local_downloadcentercustom_h5p_trait {
             $studentname = fullname($user);
             $html = $this->build_h5p_html($h5p, $cm, $user, $studentname);
             if ($html) {
-                $html = self::convert_content_to_html_doc('Resultados - ' . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename('Resultados - ' . $studentname . '.html');
+                $html = self::convert_content_to_html_doc(get_string('h5p_filename', 'local_downloadcentercustom') . $studentname, $html);
+                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('h5p_filename', 'local_downloadcentercustom') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -101,10 +101,10 @@ trait local_downloadcentercustom_h5p_trait {
         $methods = \mod_h5pactivity\local\manager::get_grading_methods();
         $grademethodstr = $methods[$h5p->grademethod] ?? '';
 
-        $h = '<h2>Resultados: ' . s($studentname) . ' — ' . s($grademethodstr) . '</h2>';
+        $h = '<h2>' . get_string('h5p_title', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($grademethodstr) . '</h2>';
 
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">';
-        $h .= '<tr style="background:#f2f2f2;"><th>#</th><th>Fecha</th><th>Puntaje</th><th>Puntaje máximo</th><th>Duración</th><th>Éxito</th></tr>';
+        $h .= '<tr style="background:#f2f2f2;">'.'<th>'. get_string('h5p_sharp', 'local_downloadcentercustom') .'</th>' . '<th>' . get_string('h5p_date', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_max_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_duration', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_success', 'local_downloadcentercustom') . '</th>' . '</tr>';
         foreach ($attempts as $attempt) {
             $h .= '<tr>';
             $h .= '<td>' . $attempt->get_attempt() . '</td>';
@@ -112,18 +112,18 @@ trait local_downloadcentercustom_h5p_trait {
             $h .= '<td>' . $attempt->get_rawscore() . '</td>';
             $h .= '<td>' . $attempt->get_maxscore() . '</td>';
             $h .= '<td>' . s(format_time($attempt->get_duration())) . '</td>';
-            $h .= '<td>' . ($attempt->get_success() ? 'Sí' : 'No') . '</td>';
+            $h .= '<td>' . ($attempt->get_success() ? get_string('h5p_yes', 'local_downloadcentercustom') : get_string('h5p_no', 'local_downloadcentercustom')) . '</td>';
             $h .= '</tr>';
         }
         $h .= '</table>';
 
         // Detalle de respuestas por intento.
         foreach ($attempts as $attempt) {
-            $h .= '<h3>Intento #' . $attempt->get_attempt() . '</h3>';
+            $h .= '<h3>' . get_string('h5p_attempt', 'local_downloadcentercustom') . $attempt->get_attempt() . '</h3>';
 
             $results = $attempt->get_results();
             if (empty($results)) {
-                $h .= '<p><em>Sin respuestas registradas para este intento.</em></p>';
+                $h .= '<p><em>' . get_string('h5p_no_answer', 'local_downloadcentercustom') . '</em></p>';
                 continue;
             }
 

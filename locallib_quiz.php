@@ -88,8 +88,8 @@ trait local_downloadcentercustom_quiz_trait {
             }
             $html = $this->build_quiz_html($quiz, $cm, $user, $studentname, $attempts, $grademethod);
             if ($html) {
-                $html = self::convert_content_to_html_doc('Resultados - ' . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename('Resultados - ' . $studentname . '.html');
+                $html = self::convert_content_to_html_doc(get_string('quiz_results', 'local_downloadcentercustom') . $studentname, $html);
+                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('quiz_results', 'local_downloadcentercustom') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -158,27 +158,27 @@ trait local_downloadcentercustom_quiz_trait {
         }
 
         $methodnames = [
-            QUIZ_GRADEHIGHEST => 'Calificación más alta',
-            QUIZ_GRADEAVERAGE => 'Promedio de calificaciones',
-            QUIZ_ATTEMPTFIRST => 'Primer intento',
-            QUIZ_ATTEMPTLAST => 'Último intento',
-        ];
+            QUIZ_GRADEHIGHEST => get_string('quiz_grade_highest', 'local_downloadcentercustom'),
+            QUIZ_GRADEAVERAGE => get_string('quiz_grade_average', 'local_downloadcentercustom'),
+            QUIZ_ATTEMPTFIRST => get_string('quiz_attempt_first', 'local_downloadcentercustom'),
+            QUIZ_ATTEMPTLAST => get_string('quiz_attempt_last', 'local_downloadcentercustom'),
+        ]; //get_string('')
         $grademethodstr = $methodnames[$grademethod] ?? '';
 
         $slots = $DB->get_records('quiz_slots', ['quizid' => $quiz->id], 'slot ASC');
 
         $h = '<table border="1" cellspacing="0" cellpadding="3" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;">';
         $h .= '<tr>';
-        $h .= '<th>Apellido(s)</th><th>Nombre</th><th>Dirección Email</th><th>Estado</th>';
-        $h .= '<th>Iniciado</th><th>Finalizado</th><th>Duración</th>';
+        $h .= '<th>' . get_string('quiz_lastname', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_firstname', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_email', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_status', 'local_downloadcentercustom') . '</th>';
+        $h .= '<th>' . get_string('quiz_time_start', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_time_end', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_duration', 'local_downloadcentercustom') . '</th>';
         $qnum = 0;
         foreach ($slots as $slot) {
             $qnum++;
-            $h .= '<th>Pregunta ' . $qnum . '</th>';
-            $h .= '<th>Respuesta ' . $qnum . '</th>';
-            $h .= '<th>Respuesta correcta ' . $qnum . '</th>';
+            $h .= '<th>' . get_string('quiz_question', 'local_downloadcentercustom') . $qnum . '</th>';
+            $h .= '<th>' . get_string('quiz_answer', 'local_downloadcentercustom') . $qnum . '</th>';
+            $h .= '<th>' . get_string('quiz_correct_answer', 'local_downloadcentercustom') . $qnum . '</th>';
         }
-        $h .= '<th>Calificación intento</th><th>Método de calificación</th><th>Calificación final</th>';
+        $h .= '<th>'. get_string('quiz_grade_attempt', 'local_downloadcentercustom') .'</th>' . '<th>' . get_string('quiz_grade_method', 'local_downloadcentercustom') . '</th>' .'<th>' . get_string('quiz_final_grade', 'local_downloadcentercustom') . '</th>';
         $h .= '</tr>';
 
         $numattempts = count($attempts);

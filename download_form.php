@@ -218,6 +218,9 @@ document.addEventListener("DOMContentLoaded", function() {
     if (ot) {
         ot.addEventListener("click", function() {
             toggleByModname("assign", this.checked);
+            toggleByModname("h5pactivity", this.checked);
+            toggleByModname("forum", this.checked);
+            toggleByModname("lesson", this.checked);
         });
     }
     if (qtries) {
@@ -257,7 +260,7 @@ JS
         $firstbox = true;
         foreach ($resources as $sectionid => $sectioninfo) {
             // Filtrar los recursos según las capacidades del usuario.
-            $sectioninfo->res = array_filter($sectioninfo->res, function($r) use ($candownloadmaterials, $candownloadassign, $can) {
+            $sectioninfo->res = array_filter($sectioninfo->res, function($r) use ($candownloadmaterials, $candownloadassign, $candownloadquiz) {
                 if ($r->modname === 'quiz') {
                     return $candownloadquiz;
                 }

@@ -132,14 +132,14 @@ trait local_downloadcentercustom_materials_trait {
         }
         // Saltar labels con nombre generico "Etiqueta" (separadores).
         $basename = preg_replace('/\s*\(copia\)\s*/', '', $name);
-        if (trim($basename) === 'Etiqueta' || trim($basename) === 'Label') {
+        if (trim($basename) === get_string('string_label', 'local_downloadcentercustom') || trim($basename) === 'Label') {
             return;
         }
         $content = $label->intro;
         $context = $resource->context;
         $fs = get_file_storage();
         if (!empty($content)) {
-            $content = str_replace('@@PLUGINFILE@@', 'Archivos', $content);
+            $content = str_replace('@@PLUGINFILE@@', get_string('files', 'local_downloadcentercustom'), $content);
             $content = self::convert_content_to_html_doc($name, $content);
             $filename = $resdir . '/' . self::shorten_filename(self::clean_filename_ascii($name)) . '.html';
             $filelist[$filename] = [$content];
@@ -159,7 +159,7 @@ trait local_downloadcentercustom_materials_trait {
                 continue;
             }
             $this->filehashes[$hash] = true;
-            $filename = $resdir . '/Archivos/' . self::shorten_filename($file->get_filename());
+            $filename = $resdir . '/' . get_string('files', 'local_downloadcentercustom') . '/' . self::shorten_filename($file->get_filename());
             $filelist[$filename] = $file;
         }
     }

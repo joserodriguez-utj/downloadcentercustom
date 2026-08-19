@@ -80,3 +80,83 @@ $string['selectallgroups_help'] = 'Seleccionar todos los grupos';
 $string['selectallgroups_help_help'] = 'Selecciona esta opción para marcar todos los grupos disponibles.';
 $string['selectgroup_required'] = 'Debes seleccionar al menos un grupo para descargar tareas.';
 
+//Locallib_quiz strings
+$string['quiz_grade_highest'] = 'Calificación más alta';
+$string['quiz_grade_average'] = 'Promedio de calificaciones';
+$string['quiz_attempt_first'] = 'Primer intento';
+$string['quiz_attempt_last'] = 'Último intento';
+$string['quiz_lastname'] = 'Apellido(s)';
+$string['quiz_firstname'] = 'Nombre';
+$string['quiz_email'] = 'Dirección email';
+$string['quiz_status'] = 'Estado';
+$string['quiz_time_start'] = 'Iniciado';
+$string['quiz_time_end'] = 'Finalizado';
+$string['quiz_duration'] = 'Duración';
+$string['quiz_question'] = 'Pregunta';
+$string['quiz_answer'] = 'Respuesta';
+$string['quiz_correct_answer'] = 'Respuesta correcta';
+$string['quiz_grade_attempt'] = 'Calificación intento';
+$string['quiz_grade_method'] = 'Método de calificación';
+$string['quiz_final_grade'] = 'Calificación final';
+$string['quiz_results'] = 'Resultados - ';
+
+
+//Locallib_h5p strings
+$string['h5p_filename'] = 'Resultados - ';
+$string['h5p_title'] = 'Resultados: ';
+$string['h5p_sharp'] = '#';
+$string['h5p_date'] = 'Fecha';
+$string['h5p_score'] = 'Puntaje';
+$string['h5p_max_score'] = 'Puntaje máximo';
+$string['h5p_duration'] = 'Duracion';
+$string['h5p_success'] = 'Éxito';
+$string['h5p_yes'] = 'Sí';
+$string['h5p_no'] = 'No';
+$string['h5p_attempt'] = 'Intento #';
+$string['h5p_no_answer'] = 'Sin respuesta registrada para este intento.';
+
+//Locallib_forum strings
+$string['forum_results'] = 'Resultados -';
+$string['forum_forum_results'] = 'Resultados del foro: ';
+$string['forum_discussion'] = 'Discusión';
+$string['forum_participations'] = 'Participaciones';
+$string['forum_last_post'] = 'Última participación';
+$string['forum_grade_method'] = 'Método de calificación';
+$string['forum_number_of_ratings'] = 'Número de evaluaciones (Rating)';
+$string['forum_final_grade'] = 'Calificación final';
+$string['forum_discussion_topic'] = 'Tema de discución:';
+$string['forum_autor'] = 'Autor: ';
+$string['forum_date'] = 'Fecha: ';
+$string['forum_subject'] = 'Asunto: ';
+$string['forum_attachments'] = 'Adjuntos: ';
+$string['forum_attachments_url'] = 'Adjuntos';
+
+//Locallib_lesson strings
+$string['lesson_results'] = 'Resultados - ';
+$string['lesson_lesson_results'] = 'Resultados de la lección: ';
+$string['lesson_attempts'] = 'Intento';
+$string['lesson_grade'] = 'Calificación';
+$string['lesson_complete'] = 'Completado';
+$string['lesson_final_grade'] = 'Calificación final';
+$string['lesson_attempt'] = 'Intento #';
+$string['lesson_page_topic'] = 'Tema de página: ';
+$string['lesson_question'] = 'Pregunta: ';
+$string['lesson_student_answer_essay'] = 'Respuesta del alumno (ensayo): ';
+$string['lesson_essay_grade'] = 'Calificación del ensayo: ';
+$string['lesson_content_branch_page'] = 'Página de contenido/ramificación.';
+$string['lesson_student_answer'] = 'Respuesta del alumno: ';
+$string['lesson_correct_answer'] = 'Respuesta correcta: ';
+$string['lesson_points'] = 'Puntos: ';
+
+//Locallib_assign strings
+$string['string_unknown'] = 'Desconocido';
+$string['string_feedback_url'] = 'Retroalimentación';
+$string['string_student'] = 'Estudiante';
+$string['string_feedback'] = 'Retroalimentación';
+$string['string_grade'] = 'Calificación';
+$string['string_points'] = 'Puntuación: ';
+$string['string_level'] = 'Nivel: ';
+$string['string_observation'] = 'Observación: ';
+$string['string_no_comment'] = '(sin observación)';
+$string['string_max'] = '(máx {$a})';
+$string['string_label'] = 'Etiqueta';
