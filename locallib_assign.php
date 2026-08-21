@@ -177,7 +177,7 @@ trait local_downloadcentercustom_assign_trait {
                     if ($areafiles) {
                         foreach ($areafiles as $file) {
                             $originalname = $file->get_filename();
-                            $studentname = $user ? fullname($user) : 'desconocido';
+                            $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_downloadcentercustom');
                             $newname = $fileprefix . ' - ' . $studentname . ' - ' . $originalname;
                             $filename = $fullname . $file->get_filepath() .
                                 self::shorten_filename($newname);
@@ -189,7 +189,7 @@ trait local_downloadcentercustom_assign_trait {
                     $onlinetext = $assignplugin->get_editor_text('onlinetext', $submission->id);
                     $onlinetext = str_replace('@@PLUGINFILE@@/', '', $onlinetext);
                     if (mb_strlen(trim($onlinetext)) > 0) {
-                        $studentname = $user ? fullname($user) : 'desconocido';
+                        $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_downloadcentercustom');
                         $htmlname = $fileprefix . ' - ' . $studentname . ' - ' . $assignplugin->get_name();
                         $onlinetext = self::convert_content_to_html_doc($htmlname, $onlinetext);
                         $filename = $fullname . '/' . self::shorten_filename($htmlname . '.html');
@@ -207,7 +207,7 @@ trait local_downloadcentercustom_assign_trait {
             }
             $grade = $assign->get_user_grade($user->id, false);
             if ($grade) {
-                $fullname .= '/Retroalimentaci' . "\xC3\xB3n";
+                $fullname .= '/' . get_string('string_feedback_url', 'local_downloadcentercustom');
 
                 foreach ($feedbackplugins as $feedbackplugin) {
                     if (!$feedbackplugin->is_enabled() || !$feedbackplugin->is_visible()) {
@@ -245,7 +245,7 @@ trait local_downloadcentercustom_assign_trait {
                 }
 
                 // Generar HTML de rúbrica/retroalimentación por alumno.
-                $studentname = $user ? fullname($user) : 'desconocido';
+                $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_downloadcentercustom');
                 $gradeval = $grade->grade ?? '';
                 if (is_numeric($gradeval)) {
                     $gradeval = number_format((float)$gradeval, 1, '.', '');
@@ -263,7 +263,7 @@ trait local_downloadcentercustom_assign_trait {
                 } else {
                     $rubrich = self::build_feedback_html($studentname, $comments ?? '', $gradeval);
                 }
-                $htmlname = 'Retroalimentaci' . "\xC3\xB3n" . ' - ' . $studentname;
+                $htmlname = get_string('string_feedback', 'local_downloadcentercustom') . ' - ' . $studentname;
                 $rubrich = self::convert_content_to_html_doc($htmlname, $rubrich);
                 $filename = $fullname . '/' . self::shorten_filename($htmlname . '.html');
                 $filelist[$filename] = [$rubrich];
@@ -317,13 +317,13 @@ trait local_downloadcentercustom_assign_trait {
         // Fila 1: encabezados de criterios.
         $criterianames = [];
         foreach ($rubriccriteria as $c) {
-            $criterianames[] = htmlspecialchars($c->description) . '<br>(máx ' . round($c->max_score, 2) . ')';
+            $criterianames[] = htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_downloadcentercustom', round($c->max_score, 2));
         }
-        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>Estudiante</td>';
+        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_downloadcentercustom') . '</td>';
         foreach ($rubriccriteria as $c) {
-            $h .= '<td>' . htmlspecialchars($c->description) . '<br>(máx ' . round($c->max_score, 2) . ')</td>';
+            $h .= '<td>' . htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_downloadcentercustom', round($c->max_score, 2)) . '</td>';
         }
-        $h .= '<td>Retroalimentación</td><td>Calificación</td></tr>';
+        $h .= '<td>' . get_string('string_feedback', 'local_downloadcentercustom') . '</td><td>' . get_string('string_grade', 'local_downloadcentercustom') . '</td></tr>';
 
         // Fila 2: puntuación y nivel.
         $h .= '<tr><td rowspan="2" style="vertical-align:top;font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
@@ -333,9 +333,9 @@ trait local_downloadcentercustom_assign_trait {
                 if ($f->criterionid == $cid) {
                     $score = isset($f->score) ? round($f->score, 2) : 0;
                     $level = $f->leveldef ?? '';
-                    $h .= '<td style="vertical-align:top;">Puntuación: ' . $score;
+                    $h .= '<td style="vertical-align:top;">' . get_string('string_points', 'local_downloadcentercustom') . $score;
                     if ($level) {
-                        $h .= '<br><em>Nivel: ' . htmlspecialchars($level) . '</em>';
+                        $h .= '<br><em>' . get_string('string_level', 'local_downloadcentercustom') . htmlspecialchars($level) . '</em>';
                     }
                     $h .= '</td>';
                     $found = true;
@@ -347,7 +347,12 @@ trait local_downloadcentercustom_assign_trait {
             }
         }
         $fb = trim(strip_tags($feedbacktext ?? ''));
-        $h .= '<td rowspan="2" style="vertical-align:top;">' . nl2br(htmlspecialchars($fb)) . '</td>';
+        if ($fb === '') {
+            $fb = get_string('string_no_feedback', 'local_downloadcentercustom');
+        } else {
+            $fb = nl2br(htmlspecialchars($fb));
+        }
+        $h .= '<td rowspan="2" style="vertical-align:top;">' . $fb . '</td>';
         $h .= '<td rowspan="2" style="vertical-align:top;text-align:center;">' . htmlspecialchars($gradeval) . '</td>';
         $h .= '</tr>';
 
@@ -362,9 +367,9 @@ trait local_downloadcentercustom_assign_trait {
                 }
             }
             if ($obs) {
-                $h .= '<td style="vertical-align:top;background:#fffde7;">Observación: ' . htmlspecialchars($obs) . '</td>';
+                $h .= '<td style="vertical-align:top;background:#fffde7;">' . get_string('string_observation', 'local_downloadcentercustom') . htmlspecialchars($obs) . '</td>';
             } else {
-                $h .= '<td style="vertical-align:top;color:#999;">(sin observación)</td>';
+                $h .= '<td style="vertical-align:top;color:#999;">' . get_string('string_no_comment', 'local_downloadcentercustom') . '</td>';
             }
         }
         $h .= '</tr>';
@@ -384,7 +389,7 @@ trait local_downloadcentercustom_assign_trait {
     public static function build_feedback_html($studentname, $feedbacktext, $gradeval) {
         $fb = trim(strip_tags($feedbacktext ?? ''));
         $h = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">';
-        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>Estudiante</td><td>Retroalimentación</td><td>Calificación</td></tr>';
+        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_downloadcentercustom') . '</td><td>' . get_string('string_feedback', 'local_downloadcentercustom') . '</td><td>' . get_string('string_grade', 'local_downloadcentercustom') . '</td></tr>';
         $h .= '<tr>';
         $h .= '<td style="font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
         $h .= '<td>' . nl2br(htmlspecialchars($fb ?: '-')) . '</td>';

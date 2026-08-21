@@ -144,6 +144,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var ii = document.getElementById("id_includeinstructions");
     var ir = document.getElementById("id_includeresources");
     var fi = document.getElementById("id_includefeedback");
+    var form = document.querySelector("form.mform");
 
     function moverOpciones() {
         var card = document.querySelector(".grouped_settings.section_level.block.card");
@@ -158,20 +159,25 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     moverOpciones();
 
-    // Retro, Instrucciones y Recursos dependen de Entregas.
-    if (ot) {
-        function updateDependents() {
-            var ena = ot.checked;
-            var fb = document.getElementById("id_includefeedback");
-            var ins = document.getElementById("id_includeinstructions");
-            var rec = document.getElementById("id_includeresources");
-            if (fb) { fb.disabled = !ena; if (!ena) fb.checked = false; }
-            if (ins) { ins.disabled = !ena; if (!ena) ins.checked = false; }
-            if (rec) { rec.disabled = !ena; if (!ena) rec.checked = false; }
-        }
-        ot.addEventListener("change", updateDependents);
-        updateDependents();
+    // Retro, Instrucciones y Recursos dependen de Entregas (o de al menos una tarea seleccionada).
+    function updateDependents() {
+        var ena = ot && (ot.checked || document.querySelectorAll('input[name^="item_assign_"]:checked').length > 0);
+        var fb = document.getElementById("id_includefeedback");
+        var ins = document.getElementById("id_includeinstructions");
+        var rec = document.getElementById("id_includeresources");
+        if (fb) { fb.disabled = !ena; if (!ena) fb.checked = false; }
+        if (ins) { ins.disabled = !ena; if (!ena) ins.checked = false; }
+        if (rec) { rec.disabled = !ena; if (!ena) rec.checked = false; }
     }
+    if (ot) {
+        ot.addEventListener("change", updateDependents);
+        form.addEventListener("change", function(e) {
+            if (e.target && e.target.name && e.target.name.indexOf('item_assign_') === 0) {
+                updateDependents();
+            }
+        });
+    }
+    updateDependents();
 
     if (!ot && !qtries) return;
 
@@ -184,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.querySelectorAll('.card.block').forEach(function(card) {
             var sec = card.querySelector('input[name^="item_topic_"]');
             if (!sec) return;
-            var items = card.querySelectorAll('input.form-check-input[name^="item_"][name!="' + sec.name + '"]');
+            var items = card.querySelectorAll('input.form-check-input[name^="item_"]:not([name="' + sec.name + '"])');
             if (items.length === 0) return;
             sec.checked = Array.from(items).some(function(it) { return it.checked; });
         });
@@ -195,9 +201,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (ifiles) {
         ifiles.addEventListener("click", function() {
-            toggleByModname("resource", this.checked);
-            toggleByModname("label", this.checked);
-            toggleByModname("book", this.checked);
+            var checked = this.checked;
+            toggleByModname("resource", checked);
+            toggleByModname("label", checked);
+            toggleByModname("book", checked);
         });
     }
     if (ipages) {
@@ -217,7 +224,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     if (ot) {
         ot.addEventListener("click", function() {
-            toggleByModname("assign", this.checked);
+            var checked = this.checked;
+            toggleByModname("assign", checked);
+            toggleByModname("h5pactivity", checked);
+            toggleByModname("forum", checked);
+            toggleByModname("lesson", checked);
         });
     }
     if (qtries) {
@@ -257,7 +268,7 @@ JS
         $firstbox = true;
         foreach ($resources as $sectionid => $sectioninfo) {
             // Filtrar los recursos según las capacidades del usuario.
-            $sectioninfo->res = array_filter($sectioninfo->res, function($r) use ($candownloadmaterials, $candownloadassign, $can) {
+            $sectioninfo->res = array_filter($sectioninfo->res, function($r) use ($candownloadmaterials, $candownloadassign, $candownloadquiz) {
                 if ($r->modname === 'quiz') {
                     return $candownloadquiz;
                 }
