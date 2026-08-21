@@ -145,6 +145,12 @@ trait local_downloadcentercustom_lesson_trait {
 
         $h = '<h2>' . get_string('lesson_lesson_results', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($lesson->name) . '</h2>';
 
+        // Método de calificación de la lección.
+        $grademethod = !empty($lesson->usemaxgrade)
+            ? get_string('lesson_grade_highest', 'local_downloadcentercustom')
+            : get_string('lesson_grade_average', 'local_downloadcentercustom');
+        $h .= '<p><b>' . get_string('lesson_grade_method', 'local_downloadcentercustom') . ':</b> ' . $grademethod . '</p>';
+
         // Tabla resumen de intentos.
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
         $h .= '<tr style="background:#f2f2f2;"><th>' . get_string('lesson_attempts', 'local_downloadcentercustom') . '</th><th>' . get_string('lesson_grade', 'local_downloadcentercustom') . '</th><th>'. get_string('lesson_complete', 'local_downloadcentercustom') . '</th><th>' . get_string('lesson_final_grade', 'local_downloadcentercustom') . '</th></tr>';

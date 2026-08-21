@@ -347,7 +347,12 @@ trait local_downloadcentercustom_assign_trait {
             }
         }
         $fb = trim(strip_tags($feedbacktext ?? ''));
-        $h .= '<td rowspan="2" style="vertical-align:top;">' . nl2br(htmlspecialchars($fb)) . '</td>';
+        if ($fb === '') {
+            $fb = get_string('string_no_feedback', 'local_downloadcentercustom');
+        } else {
+            $fb = nl2br(htmlspecialchars($fb));
+        }
+        $h .= '<td rowspan="2" style="vertical-align:top;">' . $fb . '</td>';
         $h .= '<td rowspan="2" style="vertical-align:top;text-align:center;">' . htmlspecialchars($gradeval) . '</td>';
         $h .= '</tr>';
 

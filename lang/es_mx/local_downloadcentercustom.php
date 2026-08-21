@@ -67,7 +67,7 @@ $string['files'] = 'Archivos';
 $string['folders'] = 'Carpetas';
 $string['urls'] = 'URLs';
 $string['pages'] = 'Páginas';
-$string['tasks'] = 'Tareas';
+$string['tasks'] = 'Actividades';
 $string['assignments'] = 'Entregas';
 $string['feedback'] = 'Retroalimentación';
 $string['instructions'] = 'Instrucciones';
@@ -147,6 +147,9 @@ $string['lesson_content_branch_page'] = 'Página de contenido/ramificación.';
 $string['lesson_student_answer'] = 'Respuesta del alumno: ';
 $string['lesson_correct_answer'] = 'Respuesta correcta: ';
 $string['lesson_points'] = 'Puntos: ';
+$string['lesson_grade_method'] = 'Método de calificación';
+$string['lesson_grade_highest'] = 'Calificación más alta';
+$string['lesson_grade_average'] = 'Promedio de calificaciones';
 
 //Locallib_assign strings
 $string['string_unknown'] = 'Desconocido';
@@ -157,6 +160,7 @@ $string['string_grade'] = 'Calificación';
 $string['string_points'] = 'Puntuación: ';
 $string['string_level'] = 'Nivel: ';
 $string['string_observation'] = 'Observación: ';
+$string['string_no_feedback'] = '(sin retroalimentación)';
 $string['string_no_comment'] = '(sin observación)';
 $string['string_max'] = '(máx {$a})';
 $string['string_label'] = 'Etiqueta';

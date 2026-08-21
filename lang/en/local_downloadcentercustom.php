@@ -67,7 +67,7 @@ $string['files'] = 'Files';
 $string['folders'] = 'Folders';
 $string['urls'] = 'URLs';
 $string['pages'] = 'Pages';
-$string['tasks'] = 'Tasks';
+$string['tasks'] = 'Activities';
 $string['assignments'] = 'Assignments';
 $string['feedback'] = 'Feedback';
 $string['instructions'] = 'Instructions';
@@ -146,6 +146,9 @@ $string['lesson_content_branch_page'] = 'Content/Branch page.';
 $string['lesson_student_answer'] = 'Student answer: ';
 $string['lesson_correct_answer'] = 'Correct answer: ';
 $string['lesson_points'] = 'Points: ';
+$string['lesson_grade_method'] = 'Grading method';
+$string['lesson_grade_highest'] = 'Highest grade';
+$string['lesson_grade_average'] = 'Average grade';
 
 // Locallib_assign strings
 $string['string_unknown'] = 'Unknown';
@@ -156,6 +159,7 @@ $string['string_grade'] = 'Grade';
 $string['string_points'] = 'Points: ';
 $string['string_level'] = 'Level: ';
 $string['string_observation'] = 'Comment: ';
+$string['string_no_feedback'] = '(no feedback)';
 $string['string_no_comment'] = '(no comment)';
 $string['string_max'] = '(max {$a})';
 $string['string_label'] = 'Label';
