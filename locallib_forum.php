@@ -79,7 +79,9 @@ trait local_downloadcentercustom_forum_trait {
         foreach ($users as $user) {
             $studentname = fullname($user);
             $studentfolder = self::shorten_filename(self::clean_filename_ascii($studentname));
-            $adjbasedir = $evidenciadir . '/' . $studentfolder . '/Adjuntos';
+            // En portafolio ya hay carpeta por estudiante arriba: adjuntos directo a Evidencias/Adjuntos.
+            $adjbase = ($this->portfolio_userid !== null) ? $evidenciadir : ($evidenciadir . '/' . $studentfolder);
+            $adjbasedir = $adjbase . '/Adjuntos';
             $html = $this->build_forum_html($forum, $cm, $user, $studentname, $adjbasedir, $filelist);
             if ($html) {
                 $html = self::convert_content_to_html_doc(get_string('forum_results', 'local_downloadcentercustom') . $studentname, $html);

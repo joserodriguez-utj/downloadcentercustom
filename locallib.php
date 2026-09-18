@@ -91,10 +91,6 @@ class local_downloadcentercustom_factory {
     /**
      * @var int|null
      */
-    private $portfolio_groupid = null;
-    /**
-     * @var int|null
-     */
     private $portfolio_userid = null;
     /**
      * @var array
@@ -196,15 +192,6 @@ class local_downloadcentercustom_factory {
     }
 
     /**
-     * Set the group used for the portfolio download.
-     *
-     * @param int|null $groupid
-     */
-    public function set_portfolio_group(?int $groupid): void {
-        $this->portfolio_groupid = $groupid ?: null;
-    }
-
-    /**
      * Get the eligible user IDs of the course that can produce evidence.
      *
      * @return array
@@ -223,8 +210,10 @@ class local_downloadcentercustom_factory {
     /**
      * Get the students that will be included in the portfolio download.
      *
-     * If a specific group is set, only the members of that group (intersected with
-     * the selected users when provided) are returned.
+     * Uses the shared group filter (selectedgroups): if groups are selected,
+     * only the members of those groups (intersected with the selected users
+     * when provided) are returned. If no group is selected, all eligible
+     * students are returned.
      *
      * @return array
      */
@@ -232,17 +221,35 @@ class local_downloadcentercustom_factory {
         global $DB;
         $eligible = $this->get_eligible_user_ids();
 
-        $ids = null;
-        if ($this->portfolio_groupid) {
-            $members = groups_get_members($this->portfolio_groupid, 'u.id');
-            $ids = $members ? array_keys((array)$members) : [];
+        // Grupos seleccionados (el filtro compartido con el modo normal).
+        $groupids = $this->selectedgroups;
+        $memberids = [];
+        if (!empty($groupids)) {
+            foreach ($groupids as $gid) {
+                $members = groups_get_members((int)$gid, 'u.id');
+                if ($members) {
+                    foreach ((array)$members as $member) {
+                        $memberids[(int)$member->id] = true;
+                    }
+                }
+            }
+            if (empty($memberids)) {
+                // Los grupos seleccionados no tienen miembros: portafolio vacío.
+                return [];
+            }
+            $ids = array_keys($memberids);
+        } else {
+            $ids = null;
         }
 
         if (!empty($this->selectedusers)) {
             $selected = $this->selectedusers;
-            // Unigrupo: filtrar seleccionados que sean del grupo.
-            if ($this->portfolio_groupid) {
-                $selected = array_intersect($selected, $ids);
+            // Filtrar seleccionados que sean miembros de los grupos elegidos.
+            if ($ids !== null) {
+                $memberbyid = array_flip($ids);
+                $selected = array_values(array_filter($selected, function ($uid) use ($memberbyid) {
+                    return isset($memberbyid[(int)$uid]);
+                }));
             }
             $result = [];
             foreach ($selected as $uid) {
@@ -253,8 +260,8 @@ class local_downloadcentercustom_factory {
             return $result;
         }
 
-        // Sin selección específica: todos los del grupo (o todos los elegibles si no hay grupo).
-        if ($this->portfolio_groupid) {
+        // Sin selección específica: todos los de los grupos elegidos (o todos los elegibles si no hay grupos).
+        if ($ids !== null) {
             $result = [];
             foreach ($ids as $uid) {
                 if (isset($eligible[$uid])) {
@@ -336,7 +343,8 @@ class local_downloadcentercustom_factory {
             $sorted['default'] = new stdClass();
             $sorted['default']->title = '0';
             $sorted['default']->res = [];
-            $sorted['default']->itemid = -1;
+            $sorted['default']->itemid = 0;
+            $sorted['default']->visible = true;
         }
         $cms = [];
         $resources = [];
@@ -1038,12 +1046,12 @@ class local_downloadcentercustom_factory {
     /**
      * Creates a zip file with the evidence of each selected student for the portfolio download.
      *
-     * Structure: Curso/Grupo/Estudiante/Actividad/Evidencias/...
+     * Structure: Curso/Estudiante/Actividad/Evidencias/... (sin carpeta de grupo)
      *
      * @return void
      */
     public function create_portfolio_zip() {
-        global $CFG, $DB;
+        global $CFG;
 
         if (file_exists($CFG->dirroot . '/mod/publication/locallib.php')) {
             require_once($CFG->dirroot . '/mod/publication/locallib.php');
@@ -1060,57 +1068,12 @@ class local_downloadcentercustom_factory {
         $includefeedback = $this->downloadoptions['includefeedback'] ?? true;
         $pathlist = $this->section_pathnames();
 
-        $group = null;
-        if ($this->portfolio_groupid) {
-            $group = $DB->get_record('groups', ['id' => $this->portfolio_groupid]);
-        }
-        $groupname = $group
-            ? self::shorten_filename(self::clean_filename_ascii($group->name))
-            : get_string('sin_grupo', 'local_downloadcentercustom');
-        $groupdir = $coursename . '/' . $groupname;
-        $filelist[$coursename] = null;
-        $filelist[$groupdir] = null;
-
+        // Sin carpeta de grupo: una carpeta por estudiante directamente bajo el curso.
+        // El filtro de grupos determina qué estudiantes se incluyen (no la estructura).
         $students = $this->get_portfolio_users();
+        $filelist[$coursename] = null;
 
-        foreach ($students as $student) {
-            $studentname = self::shorten_filename(self::clean_filename_ascii(fullname($student)));
-            $studentdir = $groupdir . '/' . $studentname;
-            $filelist[$studentdir] = null;
-            $this->portfolio_userid = $student->id;
-
-            foreach ($pathlist as $sectionresources) {
-                $sectionresources = $this->preprocess_resource_names($sectionresources, $addnumbering);
-                foreach ($sectionresources as $res) {
-                    $res->name = html_entity_decode($res->name);
-                    if (!in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
-                        continue;
-                    }
-                    $activityname = self::shorten_filename(self::clean_filename_ascii($res->name));
-                    $resdir = $studentdir . '/' . $activityname;
-
-                    if ($res->modname == 'assign') {
-                        $this->handle_assign($res, $resdir, $filelist, $this->portfolio_groupid, $fileprefix, $includefeedback);
-                    } else if ($res->modname == 'quiz') {
-                        $this->handle_quiz($res, $resdir, $filelist, $this->portfolio_groupid);
-                    } else if ($res->modname == 'h5pactivity') {
-                        $this->handle_h5pactivity($res, $resdir, $filelist, $this->portfolio_groupid);
-                    } else if ($res->modname == 'forum') {
-                        $this->handle_forum($res, $resdir, $filelist, $this->portfolio_groupid);
-                    } else if ($res->modname == 'lesson') {
-                        $this->handle_lesson($res, $resdir, $filelist, $this->portfolio_groupid);
-                    } else if ($res->modname == 'workshop') {
-                        $this->handle_workshop($res, $resdir, $filelist, $this->portfolio_groupid);
-                    } else if ($res->modname == 'data') {
-                        $this->handle_data($res, $resdir, $filelist, $this->portfolio_groupid);
-                    } else {
-                        $this->handle_publication($res, $resdir, $filelist, $this->portfolio_groupid);
-                    }
-                }
-            }
-
-            $this->portfolio_userid = null;
-        }
+        $this->append_portfolio_students($students, $coursename, $pathlist, $addnumbering, $filelist, null, $fileprefix, $includefeedback);
 
         // Eliminar carpetas que quedaron vacías (sin evidencias).
         $this->prune_empty_dirs($filelist);
@@ -1133,6 +1096,60 @@ class local_downloadcentercustom_factory {
 
         $zipwriter->finish();
         die;
+    }
+
+    /**
+     * Appends the portfolio evidence of a set of students to the file list.
+     *
+     * @param array $students
+     * @param string $basedir
+     * @param array $pathlist
+     * @param bool $addnumbering
+     * @param array $filelist
+     * @param int|null $gid
+     * @param string $fileprefix
+     * @param bool $includefeedback
+     * @return void
+     */
+    private function append_portfolio_students($students, $basedir, $pathlist, $addnumbering, &$filelist, $gid, $fileprefix, $includefeedback) {
+        foreach ($students as $student) {
+            $studentname = self::shorten_filename(self::clean_filename_ascii(fullname($student)));
+            $studentdir = $basedir . '/' . $studentname;
+            $filelist[$studentdir] = null;
+            $this->portfolio_userid = $student->id;
+
+            foreach ($pathlist as $sectionresources) {
+                $sectionresources = $this->preprocess_resource_names($sectionresources, $addnumbering);
+                foreach ($sectionresources as $res) {
+                    $res->name = html_entity_decode($res->name);
+                    if (!in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
+                        continue;
+                    }
+                    $activityname = self::shorten_filename(self::clean_filename_ascii($res->name));
+                    $resdir = $studentdir . '/' . $activityname;
+
+                    if ($res->modname == 'assign') {
+                        $this->handle_assign($res, $resdir, $filelist, $gid, $fileprefix, $includefeedback);
+                    } else if ($res->modname == 'quiz') {
+                        $this->handle_quiz($res, $resdir, $filelist, $gid);
+                    } else if ($res->modname == 'h5pactivity') {
+                        $this->handle_h5pactivity($res, $resdir, $filelist, $gid);
+                    } else if ($res->modname == 'forum') {
+                        $this->handle_forum($res, $resdir, $filelist, $gid);
+                    } else if ($res->modname == 'lesson') {
+                        $this->handle_lesson($res, $resdir, $filelist, $gid);
+                    } else if ($res->modname == 'workshop') {
+                        $this->handle_workshop($res, $resdir, $filelist, $gid);
+                    } else if ($res->modname == 'data') {
+                        $this->handle_data($res, $resdir, $filelist, $gid);
+                    } else {
+                        $this->handle_publication($res, $resdir, $filelist, $gid);
+                    }
+                }
+            }
+
+            $this->portfolio_userid = null;
+        }
     }
 
     /**
@@ -1223,9 +1240,8 @@ class local_downloadcentercustom_factory {
         // Modo de descarga: normal o portafolio.
         $this->set_download_mode($data['downloadmode'] ?? 'normal');
 
-        // Portafolio: grupo y estudiantes seleccionados.
+        // Portafolio: estudiantes seleccionados (el grupo se toma del filtro compartido).
         if ($this->downloadmode === 'portafolio') {
-            $this->set_portfolio_group(isset($data['portfoliogroup']) ? (int)$data['portfoliogroup'] : null);
             $selectedusers = $data['selectedstudents'] ?? [];
             if (is_string($selectedusers)) {
                 $selectedusers = array_filter(array_map('trim', explode(',', $selectedusers)));

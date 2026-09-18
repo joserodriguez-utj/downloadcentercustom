@@ -94,7 +94,7 @@ trait local_downloadcentercustom_h5p_trait {
     }
 
     private function build_h5p_html($h5p, $cm, $user, $studentname) {
-        global $DB, $PAGE;
+        global $DB, $CFG, $PAGE;
 
         $manager = \mod_h5pactivity\local\manager::create_from_instance($h5p);
         $attempts = $manager->get_user_attempts($user->id);
@@ -107,18 +107,51 @@ trait local_downloadcentercustom_h5p_trait {
         $methods = \mod_h5pactivity\local\manager::get_grading_methods();
         $grademethodstr = $methods[$h5p->grademethod] ?? '';
 
-        $h = '<h2>' . get_string('h5p_title', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($grademethodstr) . '</h2>';
+        // Calificación final del libro de calificaciones.
+        require_once($CFG->libdir . '/gradelib.php');
+        require_once($CFG->libdir . '/grade/grade_item.php');
+        require_once($CFG->libdir . '/grade/grade_grade.php');
 
+        $gradeitem = \grade_item::fetch(['itemtype' => 'mod', 'itemmodule' => 'h5pactivity', 'iteminstance' => $h5p->id]);
+        $finalgrade = '';
+        if ($gradeitem) {
+            $grade = \grade_grade::fetch(['itemid' => $gradeitem->id, 'userid' => $user->id]);
+            if ($grade && isset($grade->finalgrade) && $grade->finalgrade !== null) {
+                $finalgrade = round($grade->finalgrade, 2);
+            }
+        }
+
+        // Fallback: calcular con el puntaje escalado si no hay calificación en el libro.
+        if ($finalgrade === '') {
+            $scores = $manager->get_users_scaled_score($user->id);
+            $score = $scores ? reset($scores) : null;
+            if ($score && isset($score->scaled)) {
+                $maxgrade = $gradeitem ? (float)$gradeitem->grademax : (float)$h5p->grade;
+                $finalgrade = round($maxgrade * (float)$score->scaled, 2);
+            }
+        }
+        $finalgradedisplay = ($finalgrade === '')
+            ? get_string('string_no_grade', 'local_downloadcentercustom')
+            : $finalgrade;
+
+        $h = '<h2>' . get_string('h5p_title', 'local_downloadcentercustom') . s($studentname) . '</h2>';
+
+        $attemptcount = count($attempts);
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">';
-        $h .= '<tr style="background:#f2f2f2;">'.'<th>'. get_string('h5p_sharp', 'local_downloadcentercustom') .'</th>' . '<th>' . get_string('h5p_date', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_max_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_duration', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_success', 'local_downloadcentercustom') . '</th>' . '</tr>';
+        $h .= '<tr style="background:#f2f2f2;">'.'<th>'. get_string('h5p_sharp', 'local_downloadcentercustom') .'</th>' . '<th>' . get_string('h5p_date', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_max_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_duration', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_grade_method', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('string_grade', 'local_downloadcentercustom') . '</th>' . '</tr>';
+        $row = 0;
         foreach ($attempts as $attempt) {
+            $row++;
             $h .= '<tr>';
             $h .= '<td>' . $attempt->get_attempt() . '</td>';
             $h .= '<td>' . s(userdate($attempt->get_timecreated())) . '</td>';
             $h .= '<td>' . $attempt->get_rawscore() . '</td>';
             $h .= '<td>' . $attempt->get_maxscore() . '</td>';
             $h .= '<td>' . s(format_time($attempt->get_duration())) . '</td>';
-            $h .= '<td>' . ($attempt->get_success() ? get_string('h5p_yes', 'local_downloadcentercustom') : get_string('h5p_no', 'local_downloadcentercustom')) . '</td>';
+            if ($row === 1) {
+                $h .= '<td rowspan="' . $attemptcount . '" style="text-align:center;">' . s($grademethodstr) . '</td>';
+                $h .= '<td rowspan="' . $attemptcount . '" style="text-align:center;">' . s($finalgradedisplay) . '</td>';
+            }
             $h .= '</tr>';
         }
         $h .= '</table>';
@@ -133,11 +166,13 @@ trait local_downloadcentercustom_h5p_trait {
                 continue;
             }
 
+            $printed = false;
             foreach ($results as $result) {
                 $outputresult = \mod_h5pactivity\output\result::create_from_record($result);
                 if (!$outputresult) {
                     continue;
                 }
+                $printed = true;
                 $data = $outputresult->export_for_template($renderer);
 
                 if (!empty($data->description)) {
@@ -165,6 +200,12 @@ trait local_downloadcentercustom_h5p_trait {
                 } else if (!empty($data->content)) {
                     $h .= $data->content;
                 }
+            }
+
+            // Los resultados tipo "compound" no se pueden detallar: mostrar al menos el puntaje.
+            if (!$printed) {
+                $h .= '<p>' . get_string('string_points', 'local_downloadcentercustom')
+                    . $attempt->get_rawscore() . ' / ' . $attempt->get_maxscore() . '</p>';
             }
         }
         return $h;

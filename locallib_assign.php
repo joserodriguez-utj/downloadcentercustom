@@ -147,19 +147,22 @@ trait local_downloadcentercustom_assign_trait {
         $evidenciadir = $resdir . '/Evidencias';
         $filelist[$evidenciadir] = null;
         $soloevidencias = $onlytasks && !$includefeedback && !$includeinstructions && !$includeresources;
+        $portfoliomode = $this->portfolio_userid !== null;
         foreach ($submissions as $submission) {
             $user = null;
             $group = null;
             if ($submission->userid != 0) {
                 $user = $DB->get_record('user', ['id' => $submission->userid]);
-                $fullname = $soloevidencias ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename(fullname($user));
+                // En portafolio ya hay una carpeta por estudiante arriba:
+                // las evidencias van directo a Actividad/Evidencias.
+                $fullname = ($portfoliomode || $soloevidencias) ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename(fullname($user));
             } else if ($submission->groupid != 0) {
                 $group = $DB->get_record('groups', ['id' => $submission->groupid]);
                 $groupname = get_string('group', 'group') . ': ' . $group->name;
-                $fullname = $soloevidencias ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
+                $fullname = ($portfoliomode || $soloevidencias) ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
             } else {
                 $groupname = get_string('group', 'group') . ': ' . get_string('defaultteam', 'assign');
-                $fullname = $soloevidencias ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
+                $fullname = ($portfoliomode || $soloevidencias) ? $evidenciadir : $evidenciadir . '/' . self::shorten_filename($groupname);
             }
 
             // Submission!
@@ -213,7 +216,12 @@ trait local_downloadcentercustom_assign_trait {
             }
             $grade = $assign->get_user_grade($user->id, false);
             if ($grade) {
-                $fullname .= '/' . get_string('string_feedback_url', 'local_downloadcentercustom');
+                if ($portfoliomode) {
+                    // Portafolio: retroalimentación al nivel de la actividad.
+                    $fullname = $resdir . '/' . get_string('string_feedback_url', 'local_downloadcentercustom');
+                } else {
+                    $fullname .= '/' . get_string('string_feedback_url', 'local_downloadcentercustom');
+                }
 
                 foreach ($feedbackplugins as $feedbackplugin) {
                     if (!$feedbackplugin->is_enabled() || !$feedbackplugin->is_visible()) {
@@ -253,8 +261,11 @@ trait local_downloadcentercustom_assign_trait {
                 // Generar HTML de rúbrica/retroalimentación por alumno.
                 $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_downloadcentercustom');
                 $gradeval = $grade->grade ?? '';
-                if (is_numeric($gradeval)) {
+                if (is_numeric($gradeval) && (float)$gradeval >= 0) {
                     $gradeval = number_format((float)$gradeval, 1, '.', '');
+                } else {
+                    // Moodle usa -1 como "sin calificar".
+                    $gradeval = get_string('string_no_grade', 'local_downloadcentercustom');
                 }
                 if ($hasrubric) {
                     $rubrich = self::build_rubric_html(

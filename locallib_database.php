@@ -394,7 +394,9 @@ trait local_downloadcentercustom_database_trait {
                     continue;
                 }
                 $fname = $file->get_filename();
-                $filename = $evidenciadir . '/' . $studentfolder . '/' . self::shorten_filename($field->name . ' - ' . $fname);
+                // En portafolio ya hay carpeta por estudiante arriba: adjuntos directo a Evidencias.
+                $subdir = ($this->portfolio_userid !== null) ? '' : ($studentfolder . '/');
+                $filename = $evidenciadir . '/' . $subdir . self::shorten_filename($field->name . ' - ' . $fname);
                 $filelist[$filename] = $file;
             }
         }

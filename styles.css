@@ -99,6 +99,7 @@
 }
 
 .path-local-downloadcentercustom #region-main .card.block.grouped_settings {
+    margin-bottom: 1rem !important;
     background-color: #fff;
 }
 
@@ -300,6 +301,10 @@
 }
 
 /* Modo de descarga: se mueve con moverOpciones() al inicio del card. */
+.path-local-downloadcentercustom .dc-hidden {
+    display: none !important;
+}
+
 .path-local-downloadcentercustom #modo-selector {
     margin-top: 0 !important;
     margin-bottom: 18px !important;
