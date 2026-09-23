@@ -122,6 +122,21 @@
     margin: 10px 0 !important;
 }
 
+/* Sección "Filtrar por grupos": mismo look de tarjeta (borde/radio/fondo) que "Opciones de descarga". */
+.path-local-downloadcentercustom #id_groupfilter {
+    border: 1px solid rgba(0, 0, 0, 0.175);
+    border-radius: 8px;
+    background-color: #fff;
+    margin-bottom: 1rem;
+    padding: 5px 1rem;;
+    overflow: hidden;
+}
+
+.path-local-downloadcentercustom #id_groupfilter > .d-flex {
+    margin-bottom: 0.75rem;
+    padding-left: 1rem;
+}
+
 /* delete first empty row used in hack :) */
 .path-local-downloadcentercustom #region-main .card-body .mform .warningmessage + .fitem {
     display: none;
@@ -231,7 +246,7 @@
 }
 
 .path-local-downloadcentercustom .mform .fitem:has(#id_selectedgroups) {
-    margin-bottom: 10px !important;
+    margin-bottom: 1rem !important;
 }
 
 .path-local-downloadcentercustom #fgroup_id_buttonar {
@@ -360,4 +375,11 @@
 /* Contenido a descargar: mismo margen izquierdo que el resto de titulos. */
 .path-local-downloadcentercustom #opciones-title {
     padding-left: 14px !important;
+}
+
+/* Desplegable "Opciones de descarga": header colapsable sobre el modo de descarga. */
+.path-local-downloadcentercustom #opciones-header {
+    margin-bottom: 8px !important;
+    padding-left: 1rem !important;
+    /* padding: 0.5rem 0.5rem !important; */
 }

@@ -83,7 +83,24 @@ class local_downloadcentercustom_download_form extends moodleform {
 
         $mform->addElement('html', '<div id="mode-panel-normal">');
 
-        $mform->addElement('html', '<div id="opciones-container">');
+        // Desplegable "Opciones de descarga" (colapsable): mismo estilo que el header "Filtrar por grupos".
+        $mform->addElement('html', '<div id="opciones-header" class="d-flex align-items-center mb-2">
+    <div class="position-relative d-flex ftoggler align-items-center position-relative me-1">
+        <a data-bs-toggle="collapse" href="#opcionesbody" role="button" aria-expanded="true" aria-controls="opcionesbody"
+           class="btn btn-icon me-3 icons-collapse-expand stretched-link fheader">
+            <span class="expanded-icon icon-no-margin p-2" title="' . get_string('collapse', 'core') . '">
+                ' . $OUTPUT->pix_icon('t/expandedchevron', '', 'core') . '
+            </span>
+            <span class="collapsed-icon icon-no-margin p-2" title="' . get_string('expand', 'core') . '">
+                <span class="dir-rtl-hide">' . $OUTPUT->pix_icon('t/collapsedchevron', '', 'core') . '</span>
+                <span class="dir-ltr-hide">' . $OUTPUT->pix_icon('t/collapsedchevron_rtl', '', 'core') . '</span>
+            </span>
+            <span class="visually-hidden">' . get_string('opciones_descarga', 'local_downloadcentercustom') . '</span>
+        </a>
+        <h3 class="d-flex align-self-stretch align-items-center mb-0" aria-hidden="true">' . get_string('opciones_descarga', 'local_downloadcentercustom') . '</h3>
+    </div>
+</div>');
+        $mform->addElement('html', '<div id="opcionesbody" class="fcontainer collapseable collapse show">');
         // Modo de descarga: Normal o Portafolio.
         $mform->addElement('html', '<div id="modo-selector">');
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('download_mode_title', 'local_downloadcentercustom') . '</span></div></div>');
@@ -94,8 +111,9 @@ class local_downloadcentercustom_download_form extends moodleform {
         $mform->addElement('html', '</div></div>');
         $mform->addElement('html', '</div>'); // cierra modo-selector
         if ($candownloadanything) {
-            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold; margin-left:-1rem;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold; margin-left:-0.7rem;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
         }
+        $mform->addElement('html', '<div id="opciones-container">');
         // Detectar que modnames existen en el curso.
         $modnamesincourse = [];
         foreach ($resources as $sec) {
@@ -142,7 +160,8 @@ class local_downloadcentercustom_download_form extends moodleform {
             $mform->setDefault('quiztries', 1);
             $mform->addElement('html', '</div>');
         }
-        $mform->addElement('html', '</div>');
+        $mform->addElement('html', '</div>'); // cierra opciones-container
+        $mform->addElement('html', '</div>'); // cierra opcionesbody
         $mform->addElement('html', <<<JS
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -159,15 +178,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function moverOpciones() {
         var card = document.querySelector(".grouped_settings.section_level.block.card");
+        var header = document.getElementById("opciones-header");
+        var body = document.getElementById("opcionesbody");
         var container = document.getElementById("opciones-container");
-        var title = document.getElementById("opciones-title");
-        var modo = document.getElementById("modo-selector");
-        if (card && container && title) {
-            card.insertBefore(title, card.firstChild);
-            if (modo) {
-                card.insertBefore(modo, title);
+        // Se espera a que el AMD de modfilter construya la tarjeta con sus filas.
+        if (card && header && body && container && document.getElementById("mod_select_links")) {
+            var modo = document.getElementById("modo-selector");
+            var title = document.getElementById("opciones-title");
+            // Mueve las filas "todo/nada" (depende del tipo) al cuerpo colapsable, antes del contenedor.
+            while (card.firstChild) {
+                body.insertBefore(card.firstChild, container);
             }
-            card.appendChild(container);
+            // Garantiza el orden: [modo, titulo, fila "Seleccionar", mod_select_links, contenedor].
+            if (modo) { body.insertBefore(modo, body.firstChild); }
+            if (title) { body.insertBefore(title, modo ? modo.nextSibling : body.firstChild); }
+            card.insertBefore(header, card.firstChild);
+            card.appendChild(body);
         } else {
             setTimeout(moverOpciones, 100);
         }
@@ -795,6 +821,19 @@ document.addEventListener("DOMContentLoaded", function() {
             el.classList.toggle('dc-hidden', portafolio);
         });
         if (portafolio) {
+            // Al pasar a portafolio se conserva expandido el desplegable "Opciones de descarga"
+            // para no ocultar el selector de modo.
+            var oc = document.getElementById("opcionesbody");
+            if (oc) {
+                oc.classList.remove("collapsing");
+                oc.classList.add("show");
+            }
+            var oh = document.getElementById("opciones-header");
+            if (oh) {
+                oh.setAttribute("aria-expanded", "true");
+                var ic = oh.querySelector(".icons-collapse-expand");
+                if (ic) { ic.classList.remove("collapsed"); }
+            }
             if (selectedStudents) {
                 selectedStudents.disabled = selectAll ? selectAll.checked : false;
             }

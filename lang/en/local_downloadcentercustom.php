@@ -58,6 +58,7 @@ $string['zipinprogress'] = 'One moment! We are now downloading your file.';
 $string['zipcreating'] = 'The ZIP archive is being created...';
 $string['zipready'] = 'The ZIP archive has been successfully created.';
 $string['groupfilter'] = 'Filter by groups';
+$string['opciones_descarga'] = 'Download options';
 $string['groupfilter_help'] = 'This filter limits downloaded submissions to the selected groups.';
 $string['groupfilter_help_help'] = 'Select one or more groups to download only submissions from students in those groups. Leave empty to include all groups.';
 $string['all_groups'] = 'All groups';

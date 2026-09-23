@@ -58,6 +58,7 @@ $string['zipinprogress'] = '¡Un momento! Ya estamos descargando tu archivo.';
 $string['zipcreating'] = 'Se está creando el archivo ZIP...';
 $string['zipready'] = 'El archivo ZIP se ha creado con éxito.';
 $string['groupfilter'] = 'Filtrar por grupos';
+$string['opciones_descarga'] = 'Opciones de descarga';
 $string['groupfilter_help'] = 'Este filtro limita las entregas descargadas a los grupos seleccionados.';
 $string['groupfilter_help_help'] = 'Selecciona uno o más grupos para descargar únicamente las entregas de los estudiantes de esos grupos.';
 $string['all_groups'] = 'Todos los grupos';
