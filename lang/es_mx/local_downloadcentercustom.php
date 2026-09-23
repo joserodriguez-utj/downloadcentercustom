@@ -173,6 +173,13 @@ $string['workshop_grade'] = 'Calificación';
 $string['workshop_content'] = 'Contenido de la entrega';
 $string['workshop_feedback'] = 'Retroalimentación';
 
+// Locallib portfolio grade report strings
+$string['string_grade_report'] = 'Reporte de calificaciones';
+$string['string_grade_report_item'] = 'Elemento de calificación';
+$string['string_grade_report_grade'] = 'Calificación';
+$string['string_grade_report_max'] = 'Calificación máxima';
+$string['string_grade_report_feedback'] = 'Retroalimentación';
+
 //Locallib_assign strings
 $string['string_unknown'] = 'Desconocido';
 $string['string_feedback_url'] = 'Retroalimentación';
@@ -180,6 +187,7 @@ $string['string_student'] = 'Estudiante';
 $string['string_feedback'] = 'Retroalimentación';
 $string['string_grade'] = 'Calificación';
 $string['string_no_grade'] = 'Sin calificación';
+$string['string_not_done'] = 'Sin realizar';
 $string['string_points'] = 'Puntuación: ';
 $string['string_level'] = 'Nivel: ';
 $string['string_observation'] = 'Observación: ';

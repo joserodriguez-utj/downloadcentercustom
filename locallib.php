@@ -1145,11 +1145,222 @@ class local_downloadcentercustom_factory {
                     } else {
                         $this->handle_publication($res, $resdir, $filelist, $gid);
                     }
+
+                    // Portafolio: si el alumno no generó ninguna evidencia, dejar constancia.
+                    if ($this->portfolio_userid !== null && !$this->has_files_under($filelist, $resdir)) {
+                        $notdone = get_string('string_not_done', 'local_downloadcentercustom');
+                        $html = self::convert_content_to_html_doc($notdone, '<p>' . $notdone . '</p>');
+                        $filelist[$resdir . '/' . self::shorten_filename($notdone . '.html')] = [$html];
+                    }
                 }
             }
 
             $this->portfolio_userid = null;
+
+            // Portafolio: reporte de calificaciones del alumno (al mismo nivel de las carpetas de actividades).
+            $reporthtml = $this->build_grade_report_html($student);
+            if ($reporthtml !== '') {
+                $reportname = get_string('string_grade_report', 'local_downloadcentercustom') . ' - ' . $studentname;
+                $doc = self::convert_content_to_html_doc($reportname, $reporthtml);
+                $filelist[$studentdir . '/' . self::shorten_filename($reportname . '.html')] = [$doc];
+            }
         }
+    }
+
+    /**
+     * Builds the HTML content of the user grade report (reporte de usuario de calificaciones).
+     *
+     * Reuses the real Moodle user report (\gradereport_user\report\user) so that the grades
+     * shown match the gradebook. The rendered table data is parsed and rebuilt as a clean,
+     * self-contained HTML table with a fixed set of columns: grade item, grade, maximum
+     * grade and feedback (the site/user report settings in Moodle are ignored).
+     *
+     * @param object $student
+     * @return string The HTML fragment (may be empty if the course has no grade items).
+     */
+    private function build_grade_report_html($student) {
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+        require_once($CFG->dirroot . '/grade/lib.php');
+        require_once($CFG->dirroot . '/grade/report/user/lib.php');
+
+        $gpr = new grade_plugin_return([
+            'type' => 'report',
+            'plugin' => 'user',
+            'courseid' => $this->course->id,
+            'userid' => $student->id,
+        ]);
+        $context = context_course::instance($this->course->id);
+
+        $report = new \gradereport_user\report\user($this->course->id, $gpr, $context, $student->id, false);
+        // Force a fixed set of columns regardless of the site/report user settings.
+        $report->showweight = false;
+        $report->showgrade = true;
+        $report->showrange = true; // Used to derive the maximum grade.
+        $report->showpercentage = false;
+        $report->showfeedback = true;
+        $report->showcontributiontocoursetotal = false;
+        $report->showlettergrade = false;
+        $report->showrank = false;
+        $report->showaverage = false;
+        $report->fill_table();
+
+        $rows = $this->parse_grade_report_table($report->tabledata);
+        if (empty($rows)) {
+            return '';
+        }
+
+        $h = '<h2>' . s(get_string('string_grade_report', 'local_downloadcentercustom')) . '</h2>';
+        $h .= '<p><strong>' . s(get_string('string_student', 'local_downloadcentercustom')) . ':</strong> ' . s(fullname($student)) . '</p>';
+        $h .= '<p><strong>' . s(get_string('course', 'core')) . ':</strong> ' . s($this->course->fullname) . '</p>';
+
+        $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">';
+        $h .= '<tr style="background:#f2f2f2;">';
+        $headers = [
+            get_string('string_grade_report_item', 'local_downloadcentercustom'),
+            get_string('string_grade_report_grade', 'local_downloadcentercustom'),
+            get_string('string_grade_report_max', 'local_downloadcentercustom'),
+            get_string('string_grade_report_feedback', 'local_downloadcentercustom'),
+        ];
+        foreach ($headers as $head) {
+            $h .= '<th style="text-align:left;">' . s($head) . '</th>';
+        }
+        $h .= '</tr>';
+
+        foreach ($rows as $row) {
+            if ($row['type'] === 'category') {
+                // Skip the category row that repeats the course name (grade tree root).
+                if ($row['name'] === trim($this->course->fullname)) {
+                    continue;
+                }
+                $h .= '<tr><td colspan="' . count($headers) . '" style="background:#e8e8e8;font-weight:bold;">'
+                    . s($row['name']) . '</td></tr>';
+                continue;
+            }
+
+            $itemstyle = '';
+            // Aggregation totals (e.g. "Cálculo total (agregación)"): italic + semibold.
+            if ($row['itemtype'] === get_string('aggregation', 'core_grades')) {
+                $itemstyle = 'font-style:italic;font-weight:600;';
+            }
+            // Calculated grades (e.g. "Calificación calculada"): fully bold.
+            if ($row['itemtype'] === get_string('calculatedgrade', 'grades')) {
+                $itemstyle = 'font-weight:bold;background:#f7f7f7;';
+            }
+            $nametext = s($row['itemtype']) . ': ' . s($row['name']);
+            $h .= '<tr>'
+                . '<td style="' . $itemstyle . '">' . $nametext . '</td>'
+                . '<td style="' . $itemstyle . 'text-align:center;">' . s($row['grade']) . '</td>'
+                . '<td style="' . $itemstyle . 'text-align:center;">' . s($row['max']) . '</td>'
+                . '<td style="' . $itemstyle . '">' . s($row['feedback']) . '</td>'
+                . '</tr>';
+        }
+
+        $h .= '</table>';
+        return $h;
+    }
+
+    /**
+     * Parses the table data produced by \gradereport_user\report\user::fill_table() into a
+     * flat list of clean rows (categories and grade items) with plain-text cell values.
+     *
+     * @param array $tabledata
+     * @return array[] Each row: ['type' => 'category'|'item', 'name', 'itemtype',
+     *                 'grade', 'max', 'feedback'].
+     */
+    private function parse_grade_report_table(array $tabledata) {
+        $rows = [];
+        foreach ($tabledata as $row) {
+            if (!isset($row['itemname'])) {
+                continue;
+            }
+            $content = $row['itemname']['content'];
+
+            if (strpos($content, 'category-content') !== false) {
+                preg_match('/category-content">.*?<span>([^<]*)<\/span>/s', $content, $m);
+                $rows[] = ['type' => 'category', 'name' => trim($m[1] ?? '')];
+                continue;
+            }
+
+            preg_match('/text-uppercase small[^>]*title="([^"]*)"/', $content, $t);
+            $itemtype = trim($t[1] ?? '');
+            preg_match('/<div class="rowtitle">(?:<[^>]*>)*([^<]+)/', $content, $n);
+            $name = trim(html_entity_decode($n[1] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $rows[] = [
+                'type' => 'item',
+                'itemtype' => $itemtype,
+                'name' => $name,
+                'grade' => $this->grade_report_grade_cell($row['grade']['content'] ?? '-'),
+                'max' => $this->grade_report_max_cell($row['range']['content'] ?? '-'),
+                'feedback' => $this->grade_report_plain_cell($row['feedback']['content'] ?? ''),
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * Cleans the grade cell: graded items keep the numeric grade, anything else falls
+     * back to the plain text content of the cell.
+     *
+     * @param string $content
+     * @return string
+     */
+    private function grade_report_grade_cell($content) {
+        if (preg_match('/d-flex align-items-center"><div>(.*?)<\/div>/s', $content, $m)) {
+            $v = trim(html_entity_decode(strip_tags($m[1])));
+            if ($v !== '') {
+                return $v;
+            }
+        }
+        return $this->grade_report_plain_cell($content);
+    }
+
+    /**
+     * Extracts the maximum grade from the formatted range cell (e.g. "0&ndash;10" -> "10").
+     *
+     * @param string $content
+     * @return string
+     */
+    private function grade_report_max_cell($content) {
+        $pos = strpos($content, '&ndash;');
+        if ($pos === false) {
+            return $this->grade_report_plain_cell($content);
+        }
+        $max = trim(html_entity_decode(strip_tags(substr($content, $pos + strlen('&ndash;')))));
+        return $max === '' ? '-' : $max;
+    }
+
+    /**
+     * Strips markup from a cell and decodes entities, normalising any empty or
+     * non-breaking space only content to an empty string.
+     *
+     * @param string $content
+     * @return string
+     */
+    private function grade_report_plain_cell($content) {
+        $c = trim(html_entity_decode(strip_tags(str_replace(['&nbsp;', '&nbsp'], ' ', $content))));
+        return $c === '' ? '' : $c;
+    }
+
+    /**
+     * Checks whether at least one file (non directory placeholder) exists under the given path.
+     *
+     * @param array $filelist
+     * @param string $dir
+     * @return bool
+     */
+    private function has_files_under(array $filelist, string $dir): bool {
+        $prefix = $dir . '/';
+        foreach ($filelist as $path => $file) {
+            if ($file !== null && strpos($path, $prefix) === 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
