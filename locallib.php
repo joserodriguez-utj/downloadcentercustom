@@ -1118,15 +1118,22 @@ class local_downloadcentercustom_factory {
             $filelist[$studentdir] = null;
             $this->portfolio_userid = $student->id;
 
-            foreach ($pathlist as $sectionresources) {
+            foreach ($pathlist as $sectionname => $sectionresources) {
                 $sectionresources = $this->preprocess_resource_names($sectionresources, $addnumbering);
+                // Carpeta de la sección del curso (Presentacion, Unidad 1, Remedial, ...).
+                $sectionsubdir = '';
                 foreach ($sectionresources as $res) {
                     $res->name = html_entity_decode($res->name);
                     if (!in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
                         continue;
                     }
+                    if ($sectionsubdir === '') {
+                        // Solo se crea si hay alguna actividad soportada en la sección.
+                        $sectionsubdir = $studentdir . '/' . $sectionname;
+                        $filelist[$sectionsubdir] = null;
+                    }
                     $activityname = self::shorten_filename(self::clean_filename_ascii($res->name));
-                    $resdir = $studentdir . '/' . $activityname;
+                    $resdir = $sectionsubdir . '/' . $activityname;
 
                     if ($res->modname == 'assign') {
                         $this->handle_assign($res, $resdir, $filelist, $gid, $fileprefix, $includefeedback);
