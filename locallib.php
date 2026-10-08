@@ -37,6 +37,7 @@ require_once(__DIR__ . '/locallib_materials.php');
 require_once(__DIR__ . '/locallib_glossary.php');
 require_once(__DIR__ . '/locallib_lightboxgallery.php');
 require_once(__DIR__ . '/locallib_etherpadlite.php');
+require_once(__DIR__ . '/locallib_scorm.php');
 
 class local_downloadcentercustom_factory {
     use local_downloadcentercustom_lesson_trait;
@@ -51,6 +52,7 @@ class local_downloadcentercustom_factory {
     use local_downloadcentercustom_lightboxgallery_trait;
     use local_downloadcentercustom_etherpadlite_trait;
     use local_downloadcentercustom_database_trait;
+    use local_downloadcentercustom_scorm_trait;
 
     /**
      * @var mixed|object
@@ -118,6 +120,7 @@ class local_downloadcentercustom_factory {
         'url',
         'label',
         'data',
+        'scorm',
     ];
     /**
      * @var array
@@ -742,10 +745,10 @@ class local_downloadcentercustom_factory {
                     $materialitems = [];
                     foreach ($sectionresources as $res) {
                         $res->name = html_entity_decode($res->name);
-                        if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
+                        if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
                             continue;
                         }
-                        if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
+                        if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
                             $assignitems[] = $res;
                         } else {
                             $materialitems[] = $res;
@@ -772,6 +775,8 @@ class local_downloadcentercustom_factory {
                             $this->handle_workshop($res, $resdir, $filelist, $groupid);
                         } else if ($res->modname == 'data') {
                             $this->handle_data($res, $resdir, $filelist, $groupid);
+                        } else if ($res->modname == 'scorm') {
+                            $this->handle_scorm($res, $resdir, $filelist, $groupid);
                         } else {
                             $this->handle_publication($res, $resdir, $filelist, $groupid);
                         }
@@ -890,10 +895,10 @@ class local_downloadcentercustom_factory {
                 $materialitems = [];
                 foreach ($sectionresources as $res) {
                     $res->name = html_entity_decode($res->name);
-                    if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
+                    if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
                         continue;
                     }
-                    if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
+                    if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
                         $assignitems[] = $res;
                     } else {
                         $materialitems[] = $res;
@@ -918,6 +923,8 @@ class local_downloadcentercustom_factory {
                         $this->handle_workshop($res, $resdir, $filelist);
                     } else if ($res->modname == 'data') {
                         $this->handle_data($res, $resdir, $filelist);
+                    } else if ($res->modname == 'scorm') {
+                        $this->handle_scorm($res, $resdir, $filelist);
                     } else {
                         $this->handle_publication($res, $resdir, $filelist);
                     }
@@ -1124,7 +1131,7 @@ class local_downloadcentercustom_factory {
                 $sectionsubdir = '';
                 foreach ($sectionresources as $res) {
                     $res->name = html_entity_decode($res->name);
-                    if (!in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data'])) {
+                    if (!in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
                         continue;
                     }
                     if ($sectionsubdir === '') {
@@ -1149,6 +1156,8 @@ class local_downloadcentercustom_factory {
                         $this->handle_workshop($res, $resdir, $filelist, $gid);
                     } else if ($res->modname == 'data') {
                         $this->handle_data($res, $resdir, $filelist, $gid);
+                    } else if ($res->modname == 'scorm') {
+                        $this->handle_scorm($res, $resdir, $filelist, $gid);
                     } else {
                         $this->handle_publication($res, $resdir, $filelist, $gid);
                     }

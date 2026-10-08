@@ -230,4 +230,25 @@ $string['data_final_grade'] = 'Calificación final';
 $string['data_no_grade'] = 'Sin calificación';
 $string['data_rated'] = 'Calificación de registros';
 
+// Locallib_scorm strings
+$string['scorm_results'] = 'Resultados - ';
+$string['scorm_scorm_results'] = 'Resultados del paquete SCORM: ';
+$string['scorm_attempt'] = 'Intento #';
+$string['scorm_status'] = 'Estado';
+$string['scorm_status_passed'] = 'Aprobado';
+$string['scorm_status_completed'] = 'Completado';
+$string['scorm_status_failed'] = 'Reprobado';
+$string['scorm_status_incomplete'] = 'Incompleto';
+$string['scorm_status_browsed'] = 'Explorado';
+$string['scorm_status_notattempted'] = 'No intentado';
+$string['scorm_status_unknown'] = 'Desconocido';
+$string['scorm_score'] = 'Puntaje';
+$string['scorm_max_score'] = 'Puntaje máximo';
+$string['scorm_time'] = 'Tiempo total';
+$string['scorm_start'] = 'Iniciado';
+$string['scorm_finish'] = 'Finalizado';
+$string['scorm_grade_method'] = 'Método de calificación';
+$string['scorm_what_grade'] = 'Calificación de intentos';
+$string['scorm_final_grade'] = 'Calificación final';
+
 // Download mode strings.

@@ -229,4 +229,25 @@ $string['data_final_grade'] = 'Final grade';
 $string['data_no_grade'] = 'No grade';
 $string['data_rated'] = 'Record rating';
 
+// Locallib_scorm strings
+$string['scorm_results'] = 'Results - ';
+$string['scorm_scorm_results'] = 'SCORM package results: ';
+$string['scorm_attempt'] = 'Attempt #';
+$string['scorm_status'] = 'Status';
+$string['scorm_status_passed'] = 'Passed';
+$string['scorm_status_completed'] = 'Completed';
+$string['scorm_status_failed'] = 'Failed';
+$string['scorm_status_incomplete'] = 'Incomplete';
+$string['scorm_status_browsed'] = 'Browsed';
+$string['scorm_status_notattempted'] = 'Not attempted';
+$string['scorm_status_unknown'] = 'Unknown';
+$string['scorm_score'] = 'Score';
+$string['scorm_max_score'] = 'Maximum score';
+$string['scorm_time'] = 'Total time';
+$string['scorm_start'] = 'Started';
+$string['scorm_finish'] = 'Finished';
+$string['scorm_grade_method'] = 'Grading method';
+$string['scorm_what_grade'] = 'Attempts grading';
+$string['scorm_final_grade'] = 'Final grade';
+
 // Portfolio strings.
