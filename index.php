@@ -72,6 +72,16 @@ $PAGE->set_title(get_string('navigationlink', 'local_downloadcentercustom') . ':
 $PAGE->set_heading($course->fullname);
 
 if ($data = $downloadform->get_data()) {
+    // Verificar que el usuario tenga capacidad para algún modo de descarga.
+    $canmodenormal = has_capability('local/downloadcentercustom:downloadnormal', $context);
+    $canmodeportfolio = $canmodenormal
+        || has_capability('local/downloadcentercustom:downloadportfolio', $context);
+    if (!$canmodenormal && !$canmodeportfolio) {
+        \core\notification::error(get_string('no_download_permission', 'local_downloadcentercustom'));
+        redirect(new moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $course->id]));
+        die;
+    }
+
     // Protección contra doble descarga (5 minutos de bloqueo).
     $locktime = get_user_preferences('downloadcentercustom_ziptime', 0);
     if ($locktime && (time() - $locktime) < 300) {

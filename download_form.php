@@ -52,18 +52,33 @@ class local_downloadcentercustom_download_form extends moodleform {
         $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
         $candownloadassign = has_capability('local/downloadcentercustom:downloadAssignments', $coursecontext);
         $candownloadquiz = has_capability('local/downloadcentercustom:downloadQuiz', $coursecontext);
-        $candownloadanything = $candownloadmaterials || $candownloadassign || $candownloadquiz;
+        // Capacidades de modo. 'downloadnormal' es superconjunto: habilita normal
+        // y portafolio; 'downloadportfolio' habilita únicamente el modo portafolio.
+        $canmodenormal = has_capability('local/downloadcentercustom:downloadnormal', $coursecontext);
+        $canmodeportfolio = $canmodenormal
+            || has_capability('local/downloadcentercustom:downloadportfolio', $coursecontext);
+        // Si no puede modo normal, se oculta el selector y se fija portafolio.
+        $hidemodoselector = !$canmodenormal;
+        $candownloadanything = ($candownloadmaterials || $candownloadassign || $candownloadquiz)
+            && ($canmodenormal || $canmodeportfolio);
 
         if ($candownloadanything) {
-            $infomessagestring = $candownloadmaterials ?
-                get_string('infomessage_teachers', 'local_downloadcentercustom') :
-                get_string('infomessage_teachers_nomat', 'local_downloadcentercustom');
+            $infomessagestring = self::build_infomessage('normal', $candownloadmaterials, $candownloadassign, $candownloadquiz);
+            $infomessageportfolio = self::build_infomessage('portafolio', $candownloadmaterials, $candownloadassign, $candownloadquiz);
             $mform->addElement(
                 'html',
                 html_writer::tag(
                     'div',
                     $infomessagestring,
-                    ['class' => 'alert alert-info alert-block']
+                    ['class' => 'alert alert-info alert-block', 'id' => 'dc-infomessage-normal']
+                )
+            );
+            $mform->addElement(
+                'html',
+                html_writer::tag(
+                    'div',
+                    $infomessageportfolio,
+                    ['class' => 'alert alert-info alert-block dc-hidden', 'id' => 'dc-infomessage-portfolio']
                 )
             );
         } else {
@@ -76,7 +91,9 @@ class local_downloadcentercustom_download_form extends moodleform {
                 )
             );
         }
-        if ($candownloadanything) {
+        // La búsqueda filtra las actividades/recursos del modo normal; para quien
+        // solo tiene portafolios no aplica, así que no se muestra.
+        if ($candownloadanything && !$hidemodoselector) {
             $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcentercustom/searchbox', []));
             $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
         }
@@ -101,13 +118,15 @@ class local_downloadcentercustom_download_form extends moodleform {
     </div>
 </div>');
         $mform->addElement('html', '<div id="opcionesbody" class="fcontainer collapseable collapse show">');
-        // Modo de descarga: Normal o Portafolio.
-        $mform->addElement('html', '<div id="modo-selector">');
+        // Modo de descarga: Normal o Portafolio. Si el usuario no puede modo normal
+        // (solo portafolio), se oculta el selector y se fija el modo portafolio.
+        $modoselectorstyle = $hidemodoselector ? ' style="display:none;"' : '';
+        $mform->addElement('html', '<div id="modo-selector"' . $modoselectorstyle . '>');
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('download_mode_title', 'local_downloadcentercustom') . '</span></div></div>');
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9">');
         $mform->addElement('radio', 'downloadmode', '', get_string('mode_normal', 'local_downloadcentercustom'), 'normal', ['class' => 'mode-radio']);
         $mform->addElement('radio', 'downloadmode', '', get_string('mode_portfolio', 'local_downloadcentercustom'), 'portafolio', ['class' => 'mode-radio']);
-        $mform->setDefault('downloadmode', 'normal');
+        $mform->setDefault('downloadmode', $canmodenormal ? 'normal' : 'portafolio');
         $mform->addElement('html', '</div></div>');
         $mform->addElement('html', '</div>'); // cierra modo-selector
         if ($candownloadanything) {
@@ -189,9 +208,12 @@ document.addEventListener("DOMContentLoaded", function() {
             while (card.firstChild) {
                 body.insertBefore(card.firstChild, container);
             }
-            // Garantiza el orden: [modo, titulo, fila "Seleccionar", mod_select_links, contenedor].
+            // Garantiza el orden: [modo, selector de portafolio, título, fila "Seleccionar", ...].
             if (modo) { body.insertBefore(modo, body.firstChild); }
-            if (title) { body.insertBefore(title, modo ? modo.nextSibling : body.firstChild); }
+            var pms = document.getElementById("portfolio-mode-selector");
+            if (pms) { body.insertBefore(pms, modo ? modo.nextSibling : body.firstChild); }
+            var afterPms = pms ? pms.nextSibling : (modo ? modo.nextSibling : body.firstChild);
+            if (title) { body.insertBefore(title, afterPms); }
             card.insertBefore(header, card.firstChild);
             card.appendChild(body);
         } else {
@@ -439,15 +461,27 @@ JS
             // select de grupos; limitamos los estudiantes a los que le corresponden.
             $ungroupedonly = (count($groups) === 0);
             $singlegroup = (count($groups) === 1) ? (int) array_key_first($groups) : null;
+            $allowedgroupids = array_map('intval', array_keys($groups));
             foreach ($students as $e) {
                 $ug = groups_get_user_groups($COURSE->id, $e->id);
-                $studentgroups[$e->id] = $ug[0] ?? [];
-                if ($ungroupedonly && !empty($studentgroups[$e->id])) {
-                    continue;
+                $studentgroups[$e->id] = array_map('intval', $ug[0] ?? []);
+                if ($ungroupedonly) {
+                    // 0 grupos: solo alumnos sin grupo.
+                    if (!empty($studentgroups[$e->id])) {
+                        continue;
+                    }
+                } else if ($singlegroup !== null) {
+                    // Un único grupo: solo sus alumnos.
+                    if (!in_array($singlegroup, $studentgroups[$e->id], true)) {
+                        continue;
+                    }
+                } else if (!$canaccessallgroups) {
+                    // Varios grupos (profesor): solo alumnos de sus grupos asignados.
+                    if (empty(array_intersect($studentgroups[$e->id], $allowedgroupids))) {
+                        continue;
+                    }
                 }
-                if ($singlegroup !== null && !in_array($singlegroup, $studentgroups[$e->id], true)) {
-                    continue;
-                }
+                // (Quien puede ver todos los grupos: se incluyen todos los alumnos.)
                 $studentoptions[$e->id] = fullname($e);
             }
 
@@ -467,6 +501,9 @@ JS
                 $select->setMultiple(true);
                 $mform->addHelpButton('selectedgroups', 'groupfilter_help', 'local_downloadcentercustom');
                 $mform->setDefault('selectedgroups', []);
+                // Etiquetas para el label del autocomplete según el modo (se cambian por JS).
+                $mform->addElement('html', '<span class="d-none" id="dc-lblgroups-multiple">' . get_string('select_groups_multiple', 'local_downloadcentercustom') . '</span>');
+                $mform->addElement('html', '<span class="d-none" id="dc-lblgroups-single">' . get_string('select_group_single', 'local_downloadcentercustom') . '</span>');
                 $mform->addElement('html', '
                 <script>
                     document.getElementById("id_selectallgroups").onclick = function() {
@@ -516,11 +553,23 @@ JS
                 </script>');
             }
 
-        // ===== Sección de estudiantes: dentro del desplegable "Filtrar por grupos" (solo portafolio). =====
+        // ===== Sección de estudiantes (solo portafolio). =====
         $mform->addElement('html', '<div id="portfolio-students-section" style="display:none;">');
-        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-9" style="margin-left:2rem;"><span class="itemtitle"><strong>' . get_string('select_students', 'local_downloadcentercustom') . '</strong></span></div></div>');
-
-        // Etiqueta equivalente a "Seleccionar grupo uno por uno".
+        // Selector de filtro de portafolio: todos mis grupos asignados vs por alumno.
+        $mform->addElement('html', '<div id="portfolio-mode-selector">');
+        // El título "MODO DE SELECCIÓN" se oculta para quien solo tiene portafolio
+        // (no puede modo normal), dejando visibles las opciones Grupo completo / Estudiante.
+        $portfolio_title_class = 'form-group row fitem downloadcenter_selector' . ($hidemodoselector ? ' dc-hidden' : '');
+        $mform->addElement('html', '<div class="' . $portfolio_title_class . '"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('portfolio_select_title', 'local_downloadcentercustom') . '</span></div></div>');
+        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9">');
+        $mform->addElement('radio', 'portfolioselect', '', get_string('portfolio_sel_allmygroups', 'local_downloadcentercustom'), 'allmygroups', ['class' => 'portfolio-sel-radio']);
+        $mform->addElement('radio', 'portfolioselect', '', get_string('portfolio_sel_bystudent', 'local_downloadcentercustom'), 'bystudent', ['class' => 'portfolio-sel-radio']);
+        $mform->setDefault('portfolioselect', 'allmygroups');
+        $mform->addElement('html', '</div></div>');
+        $mform->addElement('html', '</div>');
+        // ===== Bloque "Por alumno": filtro de grupos + selección de alumnos =====
+        $mform->addElement('html', '<div id="student-selector-block">');
+        // Etiqueta del select de estudiantes (con ayuda), como estaba.
         $studentselect = $mform->addElement('autocomplete', 'selectedstudents', get_string('select_students_one_by_one', 'local_downloadcentercustom'), $studentoptions);
         $studentselect->setMultiple(true);
         $mform->setDefault('selectedstudents', []);
@@ -528,10 +577,12 @@ JS
         $mform->setDefault('selectallstudents', 0);
         $mform->addHelpButton('selectedstudents', 'selectedstudents_help', 'local_downloadcentercustom');
         $mform->addElement('html', '<div class="alert alert-info" id="portfolio-selected-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;display:none;"></div>');
-        $mform->addElement('html', '</div>');
+        $mform->addElement('html', '</div>'); // cierra student-selector-block
+        $mform->addElement('html', '</div>'); // cierra portfolio-students-section
         } 
 
         if (($candownloadassign || $candownloadquiz) && count($groups) >= 2) {
+            // Nota "importante" (modo normal).
             $mform->addElement('html', '<div class="alert alert-info" id="nota-grupos-alert" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
             $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
             $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
@@ -539,6 +590,14 @@ JS
                 $mform->addElement('html', '<li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
             }
             $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li>');
+            $mform->addElement('html', '</ul>');
+            $mform->addElement('html', '</div>');
+            // Nota "importante" (modo portafolio).
+            $mform->addElement('html', '<div class="alert alert-info dc-hidden" id="nota-portfolio-alert" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
+            $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
+            $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
+            $mform->addElement('html', '<li>' . get_string('infomessage_portfolio_assignment', 'local_downloadcentercustom', get_string('portfolio_sel_allmygroups', 'local_downloadcentercustom')) . '</li>');
+            $mform->addElement('html', '<li>' . get_string('infomessage_portfolio_student', 'local_downloadcentercustom', get_string('portfolio_sel_bystudent', 'local_downloadcentercustom')) . '</li>');
             $mform->addElement('html', '</ul>');
             $mform->addElement('html', '</div>');
             $mform->addElement('html', '</div>'); // Cierra mode-panel-normal
@@ -609,6 +668,12 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     function canSubmit() {
         if (currentDownloadMode() === 'portafolio') {
+            // "Todos mis grupos asignados": no requiere selección manual de alumnos.
+            var psel = document.querySelector('input[name="portfolioselect"]:checked');
+            var pval = psel ? psel.value : 'allmygroups';
+            if (pval === 'allmygroups') {
+                return true;
+            }
             var allChk = document.getElementById("id_selectallstudents");
             var sel = document.getElementById("id_selectedstudents");
             var allChecked = allChk && allChk.checked;
@@ -695,6 +760,14 @@ document.addEventListener("DOMContentLoaded", function() {
         return m;
     }
 
+    // Modo portafolio + "Estudiante" (selección individual de alumnos): solo ahí
+    // se restringe a un único grupo.
+    function studentMode() {
+        if (currentMode() !== 'portafolio') return false;
+        var ps = document.querySelector('input[name="portfolioselect"]:checked');
+        return !!(ps && ps.value === 'bystudent');
+    }
+
     function portfolioSelectedCount() {
         if (!selectedStudents) return 0;
         return Array.from(selectedStudents.options).filter(function(o) {
@@ -711,7 +784,7 @@ document.addEventListener("DOMContentLoaded", function() {
         Array.from(selectedGroups.options).forEach(function(o) {
             if (o.value && o.selected) selected.push(o.value);
         });
-        if (selected.length === 0) return true;
+        if (selected.length === 0) return false;
         var groups = (dcStudentGroups && dcStudentGroups[uid]) || [];
         return groups.some(function(g) {
             return selected.indexOf(String(g)) !== -1;
@@ -752,8 +825,11 @@ document.addEventListener("DOMContentLoaded", function() {
             if (!o.value) return;
             if (studentBelongsToSelectedGroups(o.value)) {
                 o.removeAttribute("data-enabled");
+                o.classList.remove("d-none");
             } else {
                 o.setAttribute("data-enabled", "disabled");
+                // Ocultar en la lista de sugerencias (la clase del option se copia al li).
+                o.classList.add("d-none");
                 // Deseleccionar estudiantes que ya no pertenecen a los grupos elegidos.
                 if (o.selected && !isAll) {
                     o.selected = false;
@@ -802,25 +878,112 @@ document.addEventListener("DOMContentLoaded", function() {
         Array.prototype.forEach.call(document.querySelectorAll("#mode-panel-normal > div.card.block.mb-3"), function(el) {
             bits.push(el);
         });
-        // En modo portafolio se ocultan el "Todos los grupos" y la nota de selección.
-        var allGroups = document.getElementById("id_selectallgroups");
-        if (allGroups) {
-            var allGroupsItem = allGroups.closest(".fitem");
-            if (allGroupsItem) { bits.push(allGroupsItem); }
-        }
-        var groupNote = document.getElementById("nota-grupos-alert");
-        if (groupNote) { bits.push(groupNote); }
         return bits;
+    }
+
+    // Muestra/oculta el bloque "Por alumno" (filtro de grupos + alumnos) según el
+    // selector portfolioselect. En normal, el filtro de grupos siempre se muestra.
+    function applyPortfolioSelect(portafolio) {
+        // El selector "MODO DE SELECCIÓN" (y sus opciones) solo se muestran en portafolio.
+        var pms = document.getElementById('portfolio-mode-selector');
+        if (pms) { pms.classList.toggle('dc-hidden', !portafolio); }
+        // El filtro de grupos se muestra siempre (en ambos modos).
+        // El selector de alumnos solo aparece en "Por alumno".
+        var ps = document.querySelector('input[name="portfolioselect"]:checked');
+        var bystudent = ((ps ? ps.value : 'allmygroups') === 'bystudent');
+        var ss = document.getElementById('student-selector-block');
+        if (ss) { ss.classList.toggle('dc-hidden', !(portafolio && bystudent)); }
+        // En modo "Estudiante" se oculta el checkbox "Todos los grupos".
+        var sag = document.getElementById('id_selectallgroups');
+        if (sag) {
+            var sagf = sag.closest('.fitem');
+            if (sagf) { sagf.classList.toggle('dc-hidden', portafolio && bystudent); }
+        }
+        // Mensaje informativo superior: normal vs portafolio.
+        var infoNormal = document.getElementById('dc-infomessage-normal');
+        var infoPort = document.getElementById('dc-infomessage-portfolio');
+        if (infoNormal) { infoNormal.classList.toggle('dc-hidden', portafolio); }
+        if (infoPort) { infoPort.classList.toggle('dc-hidden', !portafolio); }
+        // Nota "importante": normal vs portafolio.
+        var notaNormal = document.getElementById('nota-grupos-alert');
+        var notaPort = document.getElementById('nota-portfolio-alert');
+        if (notaNormal) { notaNormal.classList.toggle('dc-hidden', portafolio); }
+        if (notaPort) { notaPort.classList.toggle('dc-hidden', !portafolio); }
+        // Etiqueta del autocomplete de grupos según el modo.
+        updateGroupLabel();
+    }
+
+    // Cambia el texto del label del autocomplete "selectedgroups" según el modo.
+    function updateGroupLabel() {
+        var lbl = document.getElementById('id_selectedgroups_label');
+        if (!lbl) return;
+        var single = document.getElementById('dc-lblgroups-single');
+        var multi = document.getElementById('dc-lblgroups-multiple');
+        var text = studentMode() && single ? single.textContent : (multi ? multi.textContent : '');
+        for (var i = 0; i < lbl.childNodes.length; i++) {
+            if (lbl.childNodes[i].nodeType === 3) { lbl.childNodes[i].nodeValue = text + ' '; return; }
+        }
+    }
+
+    // Limpia la selección de grupos (opciones + etiquetas badge + "Todos los grupos").
+    function clearGroupSelection() {
+        var allGroups = document.getElementById('id_selectallgroups');
+        if (allGroups) { allGroups.checked = false; }
+        var sel = document.getElementById('id_selectedgroups');
+        if (!sel) return;
+        Array.from(sel.options).forEach(function(o) { if (o.value) { o.selected = false; } });
+        var region = sel.parentElement ? sel.parentElement.querySelector('.form-autocomplete-selection') : null;
+        if (region) { region.innerHTML = ''; }
+    }
+
+    // Limpia la selección de estudiantes (opciones + etiquetas badge).
+    function clearStudentSelection() {
+        if (!selectedStudents) return;
+        Array.from(selectedStudents.options).forEach(function(o) { if (o.value) { o.selected = false; } });
+        var region = selectedStudents.parentElement ? selectedStudents.parentElement.querySelector('.form-autocomplete-selection') : null;
+        if (region) { region.innerHTML = ''; }
+    }
+
+    // El selector de estudiantes depende del filtro de grupos: queda deshabilitado
+    // mientras no haya ningún grupo seleccionado (ni "Todos los grupos" marcado),
+    // y también cuando está marcado "Todos los estudiantes".
+    function updateStudentSelectorState() {
+        if (!selectedStudents) return;
+        var allGroups = document.getElementById('id_selectallgroups');
+        var selGroups = document.getElementById('id_selectedgroups');
+        var hasGroups = (allGroups && allGroups.checked) ||
+            !!(selGroups && Array.from(selGroups.options).some(function(o) { return o.value && o.selected; }));
+        // El bloqueo (y el gris) depende de que haya grupo seleccionado; con "Todos
+        // los estudiantes" marcado el select queda interactivo para poder ajustar.
+        var disabled = !hasGroups;
+        selectedStudents.disabled = disabled;
+        // Deshabilitar también la interacción con el input visible del autocomplete.
+        var fe = selectedStudents.closest('[data-fieldtype="autocomplete"]');
+        if (fe) {
+            var input = fe.querySelector('input[role="combobox"], input.form-control');
+            if (input) { input.disabled = disabled; }
+            var arrow = fe.querySelector('.form-autocomplete-downarrow');
+            if (arrow) { arrow.style.pointerEvents = disabled ? 'none' : ''; }
+            fe.classList.toggle('dc-disabled', disabled);
+        }
+        // El checkbox "Todos los estudiantes" depende de que haya grupo seleccionado.
+        if (selectAll) {
+            selectAll.disabled = !hasGroups;
+            if (!hasGroups && selectAll.checked) { selectAll.checked = false; }
+        }
     }
 
     function setModeUI() {
         var portafolio = (currentMode() === 'portafolio');
+        var dcform = document.querySelector("form.mform");
+        if (dcform) { dcform.classList.toggle('dc-portfolio-mode', portafolio); }
         if (portfolioPanel) {
             portfolioPanel.style.display = portafolio ? '' : 'none';
         }
         hidingNormalBits().forEach(function(el) {
             el.classList.toggle('dc-hidden', portafolio);
         });
+        applyPortfolioSelect(portafolio);
         if (portafolio) {
             // Al pasar a portafolio se conserva expandido el desplegable "Opciones de descarga"
             // para no ocultar el selector de modo.
@@ -835,15 +998,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 var ic = oh.querySelector(".icons-collapse-expand");
                 if (ic) { ic.classList.remove("collapsed"); }
             }
-            if (selectedStudents) {
-                selectedStudents.disabled = selectAll ? selectAll.checked : false;
-            }
             applyStudentGroupFilter(false);
-        } else {
-            if (selectedStudents) {
-                selectedStudents.disabled = false;
-            }
         }
+        updateStudentSelectorState();
         if (typeof window.__dcCheck === 'function') {
             window.__dcCheck();
         }
@@ -852,11 +1009,23 @@ document.addEventListener("DOMContentLoaded", function() {
     radios.forEach(function(r) {
         r.addEventListener("change", setModeUI);
     });
+    document.querySelectorAll('input[name="portfolioselect"]').forEach(function(r) {
+        r.addEventListener("change", function() {
+            // Al cambiar entre "Grupo completo" y "Estudiante" se limpia la selección de
+            // grupos y también el estado de la lista de estudiantes (para no arrastrar
+            // los alumnos del grupo que estaba marcado antes).
+            clearGroupSelection();
+            applyPortfolioSelect(currentMode() === 'portafolio');
+            applyStudentGroupFilter(false);
+            updateStudentSelectorState();
+            if (typeof window.__dcCheck === 'function') { window.__dcCheck(); }
+        });
+    });
     if (selectAll) {
         selectAll.addEventListener("change", function() {
             var checked = selectAll.checked;
             if (selectedStudents) {
-                selectedStudents.disabled = checked;
+                updateStudentSelectorState();
                 if (checked) {
                     // Solo los habilitados por el filtro de grupos (data-enabled).
                     populateAllStudents();
@@ -890,7 +1059,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // El ul de sugerencias se resuelve en cada clic porque Moodle lo renderiza
         // de forma asíncrona (puede no existir aún al dispararse DOMContentLoaded).
         document.addEventListener("click", function(e) {
-            if (currentMode() !== 'portafolio') return;
+            if (!studentMode()) return;
             if (!groupSel || !groupSel.parentElement) return;
             var groupSuggestions = groupSel.parentElement.querySelector('ul.form-autocomplete-suggestions');
             if (!groupSuggestions) return;
@@ -905,7 +1074,7 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }, true);
         groupSel.addEventListener("change", function() {
-            if (currentMode() === 'portafolio') {
+            if (studentMode()) {
                 // Guard por si la selección llega por teclado: dejar solo un grupo
                 // (el sugerido activo o, en su defecto, el último).
                 var groupSuggestions = groupSel.parentElement ? groupSel.parentElement.querySelector('ul.form-autocomplete-suggestions') : null;
@@ -936,8 +1105,14 @@ document.addEventListener("DOMContentLoaded", function() {
                         }
                     }
                 }
+            }
+            if (currentMode() === 'portafolio') {
                 applyStudentGroupFilter(false);
             }
+            // Al cambiar de grupo se desmarca "Todos los estudiantes" y se limpian los alumnos.
+            if (selectAll) { selectAll.checked = false; }
+            clearStudentSelection();
+            updateStudentSelectorState();
         });
     }
     if (groupAll) {
@@ -945,6 +1120,10 @@ document.addEventListener("DOMContentLoaded", function() {
             if (currentMode() === 'portafolio') {
                 applyStudentGroupFilter(false);
             }
+            // Al marcar/quitar "Todos los grupos": desmarcar "Todos" y limpiar alumnos.
+            if (selectAll) { selectAll.checked = false; }
+            clearStudentSelection();
+            updateStudentSelectorState();
         });
     }
     setModeUI();
@@ -987,14 +1166,75 @@ JS
 );
     }
 
+    /**
+     * Builds the top info message for a given mode based on the user's capabilities.
+     *
+     * @param string $mode 'normal' or 'portafolio'.
+     * @param bool $materials Can download materials.
+     * @param bool $assign Can download assignment evidence.
+     * @param bool $quiz Can download quiz results.
+     * @return string
+     */
+    private static function build_infomessage(string $mode, bool $materials, bool $assign, bool $quiz): string {
+        $and = get_string('list_and', 'local_downloadcentercustom');
+        $items = [];
+        if ($mode === 'portafolio') {
+            if ($assign) {
+                $items[] = get_string('info_pitem_evidence', 'local_downloadcentercustom');
+                $items[] = get_string('info_pitem_feedback', 'local_downloadcentercustom');
+            }
+            if ($quiz) {
+                $items[] = get_string('info_pitem_quizzes', 'local_downloadcentercustom');
+            }
+            if ($materials) {
+                $items[] = get_string('info_pitem_materials', 'local_downloadcentercustom');
+            }
+            return get_string('infomessage_portfolio', 'local_downloadcentercustom', self::join_list($items, $and));
+        }
+        if ($materials) {
+            $items[] = get_string('info_item_materials', 'local_downloadcentercustom');
+        }
+        if ($assign) {
+            $items[] = get_string('info_item_evidence', 'local_downloadcentercustom');
+            $items[] = get_string('info_item_feedback', 'local_downloadcentercustom');
+        }
+        if ($quiz) {
+            $items[] = get_string('info_item_quizzes', 'local_downloadcentercustom');
+        }
+        return get_string('infomessage_normal', 'local_downloadcentercustom', self::join_list($items, $and));
+    }
+
+    /**
+     * Joins a list of strings using commas and the given conjunction for the last item.
+     *
+     * @param array $items
+     * @param string $and
+     * @return string
+     */
+    private static function join_list(array $items, string $and): string {
+        $count = count($items);
+        if ($count === 0) {
+            return '';
+        }
+        if ($count === 1) {
+            return $items[0];
+        }
+        $last = array_pop($items);
+        return implode(', ', $items) . $and . $last;
+    }
+
     function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $mode = $data['downloadmode'] ?? 'normal';
         if ($mode === 'portafolio') {
-            $allstudents = !empty($data['selectallstudents']);
-            $hassel = !empty($data['selectedstudents']);
-            if (!$allstudents && !$hassel) {
-                $errors['selectedstudents'] = get_string('selectstudents_required', 'local_downloadcentercustom');
+            // Con "Todos mis grupos asignados" no se exige selección manual de alumnos.
+            $portfolioselect = $data['portfolioselect'] ?? 'allmygroups';
+            if ($portfolioselect !== 'allmygroups') {
+                $allstudents = !empty($data['selectallstudents']);
+                $hassel = !empty($data['selectedstudents']);
+                if (!$allstudents && !$hassel) {
+                    $errors['selectedstudents'] = get_string('selectstudents_required', 'local_downloadcentercustom');
+                }
             }
             return $errors;
         }

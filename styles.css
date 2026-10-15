@@ -320,29 +320,38 @@
     display: none !important;
 }
 
+/* En modo portafolio se oculta la fila global "Seleccionar (Todos / Ninguno)"
+   que modfilter.js inserta de forma asíncrona (y la lista de tipos). Se usa :has()
+   para no depender del momento en que se crea. IMPORTANTE: no ocultar la tarjeta
+   contenedora porque moverOpciones() mueve ahí todo el panel de opciones. */
+.path-local-downloadcentercustom form.dc-portfolio-mode .downloadcenter_selector:has(#downloadcenter-all-included),
+.path-local-downloadcentercustom form.dc-portfolio-mode #mod_select_links {
+    display: none !important;
+}
+
 .path-local-downloadcentercustom #modo-selector {
     margin-top: 0 !important;
     margin-bottom: 18px !important;
 }
 
-.path-local-downloadcentercustom #modo-selector .downloadcenter_selector {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector {
     margin: 10px 0 8px !important;
     padding-left: 14px !important;
 }
 
-.path-local-downloadcentercustom #modo-selector .downloadcenter_selector > .col-md-9 {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector > .col-md-9 {
     padding-left: 0 !important;
 }
 
 /* Radios de modo: una sola fila horizontal, alineados verticalmente al centro. */
-.path-local-downloadcentercustom #modo-selector .downloadcenter_selector > .col-md-9 {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector > .col-md-9 {
     display: flex;
     align-items: center;
     gap: 4px;
     flex-wrap: nowrap;
 }
 
-.path-local-downloadcentercustom #modo-selector .col-md-9 > .fitem {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 > .fitem {
     display: inline-flex !important;
     align-items: center !important;
     margin: 0 !important;
@@ -351,20 +360,20 @@
     flex: 0 0 auto !important;
 }
 
-.path-local-downloadcentercustom #modo-selector .col-md-9 > .fitem .fitemtitle {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 > .fitem .fitemtitle {
     display: none !important;
 }
 
-.path-local-downloadcentercustom #modo-selector .col-md-9 .felement {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 .felement {
     padding: 0 !important;
 }
 
-.path-local-downloadcentercustom #modo-selector .col-md-9 .felement input[type="radio"] {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 .felement input[type="radio"] {
     margin: 0 8px 0 0 !important;
     position: static !important;
 }
 
-.path-local-downloadcentercustom #modo-selector .col-md-9 label {
+.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 label {
     font-weight: normal !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -382,4 +391,19 @@
     margin-bottom: 8px !important;
     padding-left: 1rem !important;
     /* padding: 0.5rem 0.5rem !important; */
+}
+
+/* Desplaza un poco a la derecha el label "Selecciona un grupo (?)". */
+.path-local-downloadcentercustom #id_selectedgroups_label {
+    margin-left: 1.25rem;
+}
+
+/* Desplaza un poco a la derecha el label "Selecciona estudiante(s) (?)". */
+.path-local-downloadcentercustom #id_selectedstudents_label {
+    margin-left: 1.25rem;
+}
+
+/* Estado deshabilitado del bloque dependiente (estudiantes) cuando no hay grupo. */
+.path-local-downloadcentercustom .dc-disabled {
+    opacity: .55;
 }

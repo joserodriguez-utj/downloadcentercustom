@@ -1047,6 +1047,8 @@ class local_downloadcentercustom_factory {
         }
 
         $zipwriter->finish();
+        // Liberar el candado anti doble-descarga: solo debe cubrir la generación.
+        set_user_preference('downloadcentercustom_ziptime', 0);
         die;
     }
 
@@ -1075,12 +1077,56 @@ class local_downloadcentercustom_factory {
         $includefeedback = $this->downloadoptions['includefeedback'] ?? true;
         $pathlist = $this->section_pathnames();
 
-        // Sin carpeta de grupo: una carpeta por estudiante directamente bajo el curso.
-        // El filtro de grupos determina qué estudiantes se incluyen (no la estructura).
         $students = $this->get_portfolio_users();
         $filelist[$coursename] = null;
 
-        $this->append_portfolio_students($students, $coursename, $pathlist, $addnumbering, $filelist, null, $fileprefix, $includefeedback);
+        // Si se descargan varios grupos, se separan los alumnos por carpeta de grupo:
+        //   Curso/Grupo/Estudiante/Sección/Actividad/...
+        // Con un solo grupo (o ninguno) se mantiene la estructura plana:
+        //   Curso/Estudiante/...
+        $groupids = array_values(array_filter(array_map('intval', $this->selectedgroups)));
+        if (count($groupids) >= 2) {
+            $groupfolder = [];
+            $membergroup = [];
+            foreach ($groupids as $gid) {
+                $group = groups_get_group($gid);
+                if (!$group) {
+                    continue;
+                }
+                $foldername = self::shorten_filename(self::clean_filename_ascii($group->name));
+                $base = $foldername;
+                $i = 1;
+                while (in_array($foldername, $groupfolder, true)) {
+                    $foldername = $base . '_' . $i;
+                    $i++;
+                }
+                $groupfolder[$gid] = $foldername;
+                foreach ((array)groups_get_members($gid, 'u.id') as $member) {
+                    if (!isset($membergroup[(int)$member->id])) {
+                        $membergroup[(int)$member->id] = $gid;
+                    }
+                }
+            }
+            $bygroup = [];
+            foreach ($students as $student) {
+                $gid = $membergroup[(int)$student->id] ?? 0;
+                $bygroup[$gid][] = $student;
+            }
+            foreach ($bygroup as $gid => $groupstudents) {
+                $foldername = ($gid && isset($groupfolder[$gid]))
+                    ? $groupfolder[$gid]
+                    : get_string('no_group', 'local_downloadcentercustom');
+                $groupdir = $coursename . '/' . $foldername;
+                $filelist[$groupdir] = null;
+                $this->append_portfolio_students(
+                    $groupstudents, $groupdir, $pathlist, $addnumbering, $filelist, null, $fileprefix, $includefeedback
+                );
+            }
+        } else {
+            $this->append_portfolio_students(
+                $students, $coursename, $pathlist, $addnumbering, $filelist, null, $fileprefix, $includefeedback
+            );
+        }
 
         // Eliminar carpetas que quedaron vacías (sin evidencias).
         $this->prune_empty_dirs($filelist);
@@ -1102,6 +1148,8 @@ class local_downloadcentercustom_factory {
         }
 
         $zipwriter->finish();
+        // Liberar el candado anti doble-descarga: solo debe cubrir la generación.
+        set_user_preference('downloadcentercustom_ziptime', 0);
         die;
     }
 
@@ -1464,16 +1512,37 @@ class local_downloadcentercustom_factory {
         $data = (array)$data;
         $filtered = [];
 
-        // Modo de descarga: normal o portafolio.
-        $this->set_download_mode($data['downloadmode'] ?? 'normal');
+        // Modo de descarga: normal o portafolio. Se valida contra las capacidades
+        // del usuario (no se confía en el formulario). 'downloadnormal' es
+        // superconjunto: habilita normal y portafolio; 'downloadportfolio' solo portafolio.
+        $coursecontext = \context_course::instance($this->course->id);
+        $canmodenormal = has_capability('local/downloadcentercustom:downloadnormal', $coursecontext, $this->user);
+        $canmodeportfolio = $canmodenormal
+            || has_capability('local/downloadcentercustom:downloadportfolio', $coursecontext, $this->user);
+        $requestedmode = $data['downloadmode'] ?? 'normal';
+        if ($requestedmode === 'normal' && !$canmodenormal) {
+            $requestedmode = 'portafolio';
+        }
+        if ($requestedmode === 'portafolio' && !$canmodeportfolio) {
+            $requestedmode = 'normal';
+        }
+        $this->set_download_mode($requestedmode);
 
-        // Portafolio: estudiantes seleccionados (el grupo se toma del filtro compartido).
+        // Portafolio: filtro "Todos mis grupos asignados" vs "Por alumno".
+        // En "Todos mis grupos asignados" se descargan todos los alumnos de los grupos
+        // marcados en el filtro de grupos; en "Por alumno" además se respeta la
+        // selección individual de alumnos.
+        $portfolioselect = $data['portfolioselect'] ?? 'allmygroups';
         if ($this->downloadmode === 'portafolio') {
-            $selectedusers = $data['selectedstudents'] ?? [];
-            if (is_string($selectedusers)) {
-                $selectedusers = array_filter(array_map('trim', explode(',', $selectedusers)));
+            if ($portfolioselect === 'allmygroups') {
+                $this->set_selected_users([]);
+            } else {
+                $selectedusers = $data['selectedstudents'] ?? [];
+                if (is_string($selectedusers)) {
+                    $selectedusers = array_filter(array_map('trim', explode(',', $selectedusers)));
+                }
+                $this->set_selected_users((array)$selectedusers);
             }
-            $this->set_selected_users((array)$selectedusers);
         }
 
         // Determinar cuántos grupos tiene el usuario en el curso.
@@ -1481,8 +1550,8 @@ class local_downloadcentercustom_factory {
         $usergroupids = $usergroups[0] ?? [];
         // Quien tiene downloadMaterials (manager) o accessallgroups ve todos los grupos.
         $coursecontext = \context_course::instance($this->course->id);
-        $canaccessall = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext)
-            || has_capability('moodle/site:accessallgroups', $coursecontext);
+        $canaccessall = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext, $this->user)
+            || has_capability('moodle/site:accessallgroups', $coursecontext, $this->user);
 
         if ($canaccessall) {
             // Admins/managers: usan la selección del formulario directamente.
@@ -1503,14 +1572,8 @@ class local_downloadcentercustom_factory {
             // 1 grupo: auto-asignado a ese único grupo.
             $this->selectedgroups = [$usergroupids[0]];
         } else {
-            // 2+ grupos: usa la selección del formulario (o vacío si deseleccionó todos).
-            if (!empty($data['selectedgroups'])) {
-                $this->selectedgroups = $data['selectedgroups'];
-            } else if (!empty($data['selectallgroups'])) {
-                $this->selectedgroups = $usergroupids;
-            } else {
-                $this->selectedgroups = [];
-            }
+            // 2+ grupos: usa la selección del formulario; si no hay, todos sus grupos.
+            $this->selectedgroups = !empty($data['selectedgroups']) ? $data['selectedgroups'] : $usergroupids;
         }
 
         $sortedresources = $this->get_resources_for_user();
