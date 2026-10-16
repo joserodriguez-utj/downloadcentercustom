@@ -1565,9 +1565,9 @@ class local_downloadcentercustom_factory {
                 $this->selectedgroups = [];
             }
         } else if (count($usergroupids) === 0) {
-            // 0 grupos: solo alumnos sin grupo.
+            // Sin grupos propios: el docente ve todo el curso (sin restricción de
+            // grupo). Ver nota en download_form.php (caso REMEDIAL).
             $this->selectedgroups = [];
-            $this->onlyungrouped = true;
         } else if (count($usergroupids) === 1) {
             // 1 grupo: auto-asignado a ese único grupo.
             $this->selectedgroups = [$usergroupids[0]];

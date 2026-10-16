@@ -459,29 +459,28 @@ JS
             $students = get_enrolled_users($context, 'mod/assign:submit');
             // Sin grupos asignados (onlyungrouped) o con un único grupo no se muestra el
             // select de grupos; limitamos los estudiantes a los que le corresponden.
-            $ungroupedonly = (count($groups) === 0);
             $singlegroup = (count($groups) === 1) ? (int) array_key_first($groups) : null;
             $allowedgroupids = array_map('intval', array_keys($groups));
             foreach ($students as $e) {
                 $ug = groups_get_user_groups($COURSE->id, $e->id);
                 $studentgroups[$e->id] = array_map('intval', $ug[0] ?? []);
-                if ($ungroupedonly) {
-                    // 0 grupos: solo alumnos sin grupo.
-                    if (!empty($studentgroups[$e->id])) {
-                        continue;
-                    }
-                } else if ($singlegroup !== null) {
+                if ($singlegroup !== null) {
                     // Un único grupo: solo sus alumnos.
                     if (!in_array($singlegroup, $studentgroups[$e->id], true)) {
                         continue;
                     }
-                } else if (!$canaccessallgroups) {
+                } else if (!$canaccessallgroups && count($groups) > 1) {
                     // Varios grupos (profesor): solo alumnos de sus grupos asignados.
                     if (empty(array_intersect($studentgroups[$e->id], $allowedgroupids))) {
                         continue;
                     }
                 }
-                // (Quien puede ver todos los grupos: se incluyen todos los alumnos.)
+                // Sin grupos propios (docente "de todo el curso") o con acceso a
+                // todos: se incluyen todos los alumnos. Caso previsto: materias
+                // donde el curso es el grupo académico y conviven alumnos sin grupo
+                // con un grupo tipo "REMEDIAL". OJO: en un curso con grupos por
+                // docente, un docente sin grupos verá a todos (asignarlo a un grupo
+                // si se quiere restringir).
                 $studentoptions[$e->id] = fullname($e);
             }
 
@@ -951,7 +950,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!selectedStudents) return;
         var allGroups = document.getElementById('id_selectallgroups');
         var selGroups = document.getElementById('id_selectedgroups');
-        var hasGroups = (allGroups && allGroups.checked) ||
+        // Si el curso no tiene filtro de grupos, no se depende de ningún grupo.
+        var nogroupfilter = !selGroups && !allGroups;
+        var hasGroups = nogroupfilter || (allGroups && allGroups.checked) ||
             !!(selGroups && Array.from(selGroups.options).some(function(o) { return o.value && o.selected; }));
         // El bloqueo (y el gris) depende de que haya grupo seleccionado; con "Todos
         // los estudiantes" marcado el select queda interactivo para poder ajustar.
