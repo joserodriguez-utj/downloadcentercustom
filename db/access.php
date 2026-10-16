@@ -66,7 +66,8 @@ $capabilities = [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
-            'editingteacher' => CAP_ALLOW,
+            // Solo manager: teacher y editingteacher quedan por defecto con modo
+            // portafolio únicamente (downloadportfolio + view + evidencias/quiz).
             'manager' => CAP_ALLOW,
         ],
     ],

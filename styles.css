@@ -402,8 +402,3 @@
 .path-local-downloadcentercustom #id_selectedstudents_label {
     margin-left: 1.25rem;
 }
-
-/* Estado deshabilitado del bloque dependiente (estudiantes) cuando no hay grupo. */
-.path-local-downloadcentercustom .dc-disabled {
-    opacity: .55;
-}

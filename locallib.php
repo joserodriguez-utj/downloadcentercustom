@@ -1564,16 +1564,14 @@ class local_downloadcentercustom_factory {
             } else {
                 $this->selectedgroups = [];
             }
-        } else if (count($usergroupids) === 0) {
-            // 0 grupos: solo alumnos sin grupo.
-            $this->selectedgroups = [];
-            $this->onlyungrouped = true;
-        } else if (count($usergroupids) === 1) {
-            // 1 grupo: auto-asignado a ese único grupo.
-            $this->selectedgroups = [$usergroupids[0]];
-        } else {
+        } else if (count($usergroupids) >= 2) {
             // 2+ grupos: usa la selección del formulario; si no hay, todos sus grupos.
             $this->selectedgroups = !empty($data['selectedgroups']) ? $data['selectedgroups'] : $usergroupids;
+        } else {
+            // 0 o 1 grupo: el docente ve todo el curso (sin restringir por grupo), para
+            // contemplar cursos donde los alumnos van sin grupo y solo existe un grupo
+            // tipo "Remedial".
+            $this->selectedgroups = [];
         }
 
         $sortedresources = $this->get_resources_for_user();

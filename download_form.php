@@ -457,31 +457,18 @@ JS
             // Estudiantes elegibles para el portafolio (con sus grupos para poder filtrarlos).
             $context = \context_course::instance($COURSE->id);
             $students = get_enrolled_users($context, 'mod/assign:submit');
-            // Sin grupos asignados (onlyungrouped) o con un único grupo no se muestra el
-            // select de grupos; limitamos los estudiantes a los que le corresponden.
-            $ungroupedonly = (count($groups) === 0);
-            $singlegroup = (count($groups) === 1) ? (int) array_key_first($groups) : null;
+            // El docente/admin ve TODOS los alumnos del curso: los "sin grupo" y los de
+            // grupos tipo "Remedial". Solo se restringe por grupo cuando el docente tiene
+            // que elegir entre varios grupos (2+), que es el caso de los cursos con grupos
+            // por docente (p. ej. TEST).
+            $restrictbygroups = (!$canaccessallgroups && count($groups) >= 2);
             $allowedgroupids = array_map('intval', array_keys($groups));
             foreach ($students as $e) {
                 $ug = groups_get_user_groups($COURSE->id, $e->id);
                 $studentgroups[$e->id] = array_map('intval', $ug[0] ?? []);
-                if ($ungroupedonly) {
-                    // 0 grupos: solo alumnos sin grupo.
-                    if (!empty($studentgroups[$e->id])) {
-                        continue;
-                    }
-                } else if ($singlegroup !== null) {
-                    // Un único grupo: solo sus alumnos.
-                    if (!in_array($singlegroup, $studentgroups[$e->id], true)) {
-                        continue;
-                    }
-                } else if (!$canaccessallgroups) {
-                    // Varios grupos (profesor): solo alumnos de sus grupos asignados.
-                    if (empty(array_intersect($studentgroups[$e->id], $allowedgroupids))) {
-                        continue;
-                    }
+                if ($restrictbygroups && empty(array_intersect($studentgroups[$e->id], $allowedgroupids))) {
+                    continue;
                 }
-                // (Quien puede ver todos los grupos: se incluyen todos los alumnos.)
                 $studentoptions[$e->id] = fullname($e);
             }
 
@@ -743,7 +730,6 @@ document.addEventListener("DOMContentLoaded", function() {
 JS
 );
         // JS del selector de modo de descarga (Normal / Portafolio).
-        $studentgroupsjson = json_encode($studentgroups);
         $mform->addElement('html', <<<JS
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -752,7 +738,6 @@ document.addEventListener("DOMContentLoaded", function() {
     var selectAll = document.getElementById("id_selectallstudents");
     var selectedStudents = document.getElementById("id_selectedstudents");
     var submitBtn = document.querySelector("input[name='buttonar[submitbutton]']");
-    var dcStudentGroups = $studentgroupsjson;
 
     function currentMode() {
         var m = "normal";
@@ -775,31 +760,14 @@ document.addEventListener("DOMContentLoaded", function() {
         }).length;
     }
 
-    function studentBelongsToSelectedGroups(uid) {
-        var selectedGroups = document.getElementById("id_selectedgroups");
-        var allGroups = document.getElementById("id_selectallgroups");
-        if (!selectedGroups) return true;
-        if (allGroups && allGroups.checked) return true;
-        var selected = [];
-        Array.from(selectedGroups.options).forEach(function(o) {
-            if (o.value && o.selected) selected.push(o.value);
-        });
-        if (selected.length === 0) return false;
-        var groups = (dcStudentGroups && dcStudentGroups[uid]) || [];
-        return groups.some(function(g) {
-            return selected.indexOf(String(g)) !== -1;
-        });
-    }
-
     function populateAllStudents() {
         if (!selectedStudents) return;
         var container = selectedStudents.parentElement.querySelector('.form-autocomplete-selection');
         if (container) container.innerHTML = '';
         Array.from(selectedStudents.options).forEach(function(o) {
             if (!o.value) return;
-            var enabled = o.getAttribute('data-enabled') !== 'disabled';
-            o.selected = enabled;
-            if (enabled && container) {
+            o.selected = true;
+            if (container) {
                 var tag = document.createElement("span");
                 tag.className = "badge bg-secondary text-dark m-1";
                 tag.style.fontSize = "100%";
@@ -815,51 +783,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 container.appendChild(tag);
             }
         });
-    }
-
-    function applyStudentGroupFilter(reopen) {
-        if (!selectedStudents) return;
-        var isAll = selectAll && selectAll.checked;
-        var cleared = [];
-        Array.from(selectedStudents.options).forEach(function(o) {
-            if (!o.value) return;
-            if (studentBelongsToSelectedGroups(o.value)) {
-                o.removeAttribute("data-enabled");
-                o.classList.remove("d-none");
-            } else {
-                o.setAttribute("data-enabled", "disabled");
-                // Ocultar en la lista de sugerencias (la clase del option se copia al li).
-                o.classList.add("d-none");
-                // Deseleccionar estudiantes que ya no pertenecen a los grupos elegidos.
-                if (o.selected && !isAll) {
-                    o.selected = false;
-                    cleared.push(o.value);
-                }
-            }
-        });
-        // Si "Todos los estudiantes" está marcado, repoblar con solo los habilitados
-        // (coherente con el grupo seleccionado en el filtro).
-        if (isAll) {
-            populateAllStudents();
-            return;
-        }
-        if (cleared.length && selectedStudents.parentElement) {
-            var region = selectedStudents.parentElement.querySelector('.form-autocomplete-selection');
-            if (region) {
-                cleared.forEach(function(v) {
-                    var tag = region.querySelector('[data-value="' + v + '"]');
-                    if (tag) tag.remove();
-                });
-            }
-        }
-        // Re-render las sugerencias del autocomplete de estudiantes al cambiar el filtro.
-        if (reopen && selectedStudents.parentElement) {
-            var arrow = selectedStudents.parentElement.querySelector('.form-autocomplete-downarrow');
-            if (arrow) arrow.click();
-        }
-        if (typeof window.__dcCheck === 'function') {
-            window.__dcCheck();
-        }
     }
 
     function hidingNormalBits() {
@@ -936,43 +859,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (region) { region.innerHTML = ''; }
     }
 
-    // Limpia la selección de estudiantes (opciones + etiquetas badge).
-    function clearStudentSelection() {
-        if (!selectedStudents) return;
-        Array.from(selectedStudents.options).forEach(function(o) { if (o.value) { o.selected = false; } });
-        var region = selectedStudents.parentElement ? selectedStudents.parentElement.querySelector('.form-autocomplete-selection') : null;
-        if (region) { region.innerHTML = ''; }
-    }
-
-    // El selector de estudiantes depende del filtro de grupos: queda deshabilitado
-    // mientras no haya ningún grupo seleccionado (ni "Todos los grupos" marcado),
-    // y también cuando está marcado "Todos los estudiantes".
-    function updateStudentSelectorState() {
-        if (!selectedStudents) return;
-        var allGroups = document.getElementById('id_selectallgroups');
-        var selGroups = document.getElementById('id_selectedgroups');
-        var hasGroups = (allGroups && allGroups.checked) ||
-            !!(selGroups && Array.from(selGroups.options).some(function(o) { return o.value && o.selected; }));
-        // El bloqueo (y el gris) depende de que haya grupo seleccionado; con "Todos
-        // los estudiantes" marcado el select queda interactivo para poder ajustar.
-        var disabled = !hasGroups;
-        selectedStudents.disabled = disabled;
-        // Deshabilitar también la interacción con el input visible del autocomplete.
-        var fe = selectedStudents.closest('[data-fieldtype="autocomplete"]');
-        if (fe) {
-            var input = fe.querySelector('input[role="combobox"], input.form-control');
-            if (input) { input.disabled = disabled; }
-            var arrow = fe.querySelector('.form-autocomplete-downarrow');
-            if (arrow) { arrow.style.pointerEvents = disabled ? 'none' : ''; }
-            fe.classList.toggle('dc-disabled', disabled);
-        }
-        // El checkbox "Todos los estudiantes" depende de que haya grupo seleccionado.
-        if (selectAll) {
-            selectAll.disabled = !hasGroups;
-            if (!hasGroups && selectAll.checked) { selectAll.checked = false; }
-        }
-    }
-
     function setModeUI() {
         var portafolio = (currentMode() === 'portafolio');
         var dcform = document.querySelector("form.mform");
@@ -998,9 +884,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 var ic = oh.querySelector(".icons-collapse-expand");
                 if (ic) { ic.classList.remove("collapsed"); }
             }
-            applyStudentGroupFilter(false);
         }
-        updateStudentSelectorState();
         if (typeof window.__dcCheck === 'function') {
             window.__dcCheck();
         }
@@ -1011,13 +895,9 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     document.querySelectorAll('input[name="portfolioselect"]').forEach(function(r) {
         r.addEventListener("change", function() {
-            // Al cambiar entre "Grupo completo" y "Estudiante" se limpia la selección de
-            // grupos y también el estado de la lista de estudiantes (para no arrastrar
-            // los alumnos del grupo que estaba marcado antes).
+            // Al cambiar entre "Grupo completo" y "Estudiante" se limpia la selección de grupos.
             clearGroupSelection();
             applyPortfolioSelect(currentMode() === 'portafolio');
-            applyStudentGroupFilter(false);
-            updateStudentSelectorState();
             if (typeof window.__dcCheck === 'function') { window.__dcCheck(); }
         });
     });
@@ -1025,9 +905,7 @@ document.addEventListener("DOMContentLoaded", function() {
         selectAll.addEventListener("change", function() {
             var checked = selectAll.checked;
             if (selectedStudents) {
-                updateStudentSelectorState();
                 if (checked) {
-                    // Solo los habilitados por el filtro de grupos (data-enabled).
                     populateAllStudents();
                 } else {
                     var container = selectedStudents.parentElement.querySelector(".form-autocomplete-selection");
@@ -1049,9 +927,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
-    // El filtro de grupos compartido también filtra los estudiantes del portafolio.
     var groupSel = document.getElementById("id_selectedgroups");
-    var groupAll = document.getElementById("id_selectallgroups");
     if (groupSel) {
         // En modo portafolio solo se permite elegir un grupo: al hacer clic en una
         // sugerencia (fase de captura, antes del handler de Moodle) se limpia la
@@ -1106,24 +982,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 }
             }
-            if (currentMode() === 'portafolio') {
-                applyStudentGroupFilter(false);
-            }
-            // Al cambiar de grupo se desmarca "Todos los estudiantes" y se limpian los alumnos.
-            if (selectAll) { selectAll.checked = false; }
-            clearStudentSelection();
-            updateStudentSelectorState();
-        });
-    }
-    if (groupAll) {
-        groupAll.addEventListener("change", function() {
-            if (currentMode() === 'portafolio') {
-                applyStudentGroupFilter(false);
-            }
-            // Al marcar/quitar "Todos los grupos": desmarcar "Todos" y limpiar alumnos.
-            if (selectAll) { selectAll.checked = false; }
-            clearStudentSelection();
-            updateStudentSelectorState();
         });
     }
     setModeUI();
