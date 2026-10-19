@@ -1,4 +1,4 @@
-@local @local_downloadcentercustom @_file_upload
+@local @local_centro_de_descarga_de_portafolio_de_evidencias @_file_upload
 Feature: Both students and teachers should be able to supported activities in the Download Center.
 
   Background:

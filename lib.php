@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -34,8 +34,8 @@
  * @throws coding_exception
  * @throws moodle_exception
  */
-function local_downloadcentercustom_extend_navigation_course(navigation_node $parentnode, stdClass $course, context_course $context) {
-    if (!has_capability('local/downloadcentercustom:view', $context)) {
+function local_centro_de_descarga_de_portafolio_de_evidencias_extend_navigation_course(navigation_node $parentnode, stdClass $course, context_course $context) {
+    if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:view', $context)) {
         return;
     }
 
@@ -53,9 +53,9 @@ function local_downloadcentercustom_extend_navigation_course(navigation_node $pa
         }
     }
 
-    $url = new moodle_url('/local/downloadcentercustom/index.php', ['courseid' => $course->id]);
-    $title = get_string('navigationlink', 'local_downloadcentercustom');
-    $pix = new pix_icon('icon', $title, 'local_downloadcentercustom');
+    $url = new moodle_url('/local/centro_de_descarga_de_portafolio_de_evidencias/index.php', ['courseid' => $course->id]);
+    $title = get_string('navigationlink', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+    $pix = new pix_icon('icon', $title, 'local_centro_de_descarga_de_portafolio_de_evidencias');
     $childnode = navigation_node::create(
         $title,
         $url,
@@ -76,8 +76,8 @@ function local_downloadcentercustom_extend_navigation_course(navigation_node $pa
  *
  * @return array
  */
-function local_downloadcentercustom_get_fontawesome_icon_map() {
+function local_centro_de_descarga_de_portafolio_de_evidencias_get_fontawesome_icon_map() {
     return [
-        'local_downloadcentercustom:icon' => 'fa-arrow-circle-o-down',
+        'local_centro_de_descarga_de_portafolio_de_evidencias:icon' => 'fa-arrow-circle-o-down',
     ];
 }

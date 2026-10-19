@@ -1,7 +1,14 @@
-Centro de descarga de evidencias
-================================
+Centro de descarga de portafolio de evidencias
+==============================================
 
 Plugin para Moodle que permite a docentes y estudiantes descargar, en un archivo ZIP, los materiales, actividades, entregas y evidencias de un curso.
+
+> **Variante personalizada (fork).** Este plugin es una variante personalizada de
+> `local_downloadcenter` (de Simeon Naydenov / Clemens Marx, Academic Moodle
+> Cooperation), **adaptada para la Universidad Tecnológica de Jalisco (UTJ)**.
+> No es el plugin original: agrega filtrado por grupos, permisos por rol, modo
+> portafolio, y otras adaptaciones descritas más abajo. El componente se llama
+> `local_centro_de_descarga_de_portafolio_de_evidencias`.
 
 *Plugin original:* `local_downloadcenter` de Simeon Naydenov / Clemens Marx — [Academic Moodle Cooperation](http://www.academic-moodle-cooperation.org).
 
@@ -16,7 +23,7 @@ Este repositorio es una adaptación personalizada del plugin original, desarroll
 * **José Luis Rodríguez Escobedo** — `jose.rodriguez@utj.edu.mx`
 * **Universidad Tecnológica de Jalisco** — `joserodriguez-utj`
 
-Se adaptó a las necesidades de la UTJ: cambio de nombre a **"Centro de descarga de evidencias"**, filtrado por grupos, permisos por rol, descarga de rúbricas y retroalimentaciones, y descarga de resultados de exámenes (quiz).
+Se adaptó a las necesidades de la UTJ: cambio de nombre a **"Centro de descarga de portafolio de evidencias"**, filtrado por grupos, permisos por rol, descarga de rúbricas y retroalimentaciones, y descarga de resultados de exámenes (quiz).
 
 ---
 
@@ -66,7 +73,7 @@ Agrega la descarga de los resultados de los cuestionarios (quiz):
 
 ## Instalación
 
-1. Copiar el código a `local/downloadcentercustom`.
+1. Copiar el código a `local/centro_de_descarga_de_portafolio_de_evidencias`.
 2. Iniciar sesión en Moodle como administrador.
 3. Abrir el área de administración (`http://tu-moodle/admin`) para que se instale automáticamente.
 

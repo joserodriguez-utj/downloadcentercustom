@@ -17,7 +17,7 @@
 /**
  * Trait con la lógica de descarga de actividades Quiz.
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_quiz_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
 
 /**
      * Handle quiz module.
@@ -42,7 +42,7 @@ trait local_downloadcentercustom_quiz_trait {
     private function handle_quiz($resource, $resdir, &$filelist, $groupid = null) {
         global $CFG, $DB;
         $context = $resource->context;
-        if (!has_capability('local/downloadcentercustom:downloadQuiz', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz', $context->get_course_context())) {
             return;
         }
         // La descarga de exámenes depende del checkbox "Intentos".
@@ -95,8 +95,8 @@ trait local_downloadcentercustom_quiz_trait {
             }
             $html = $this->build_quiz_html($quiz, $cm, $user, $studentname, $attempts, $grademethod);
             if ($html) {
-                $html = self::convert_content_to_html_doc(get_string('quiz_results', 'local_downloadcentercustom') . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('quiz_results', 'local_downloadcentercustom') . $studentname . '.html');
+                $html = self::convert_content_to_html_doc(get_string('quiz_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
+                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('quiz_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -165,10 +165,10 @@ trait local_downloadcentercustom_quiz_trait {
         }
 
         $methodnames = [
-            QUIZ_GRADEHIGHEST => get_string('quiz_grade_highest', 'local_downloadcentercustom'),
-            QUIZ_GRADEAVERAGE => get_string('quiz_grade_average', 'local_downloadcentercustom'),
-            QUIZ_ATTEMPTFIRST => get_string('quiz_attempt_first', 'local_downloadcentercustom'),
-            QUIZ_ATTEMPTLAST => get_string('quiz_attempt_last', 'local_downloadcentercustom'),
+            QUIZ_GRADEHIGHEST => get_string('quiz_grade_highest', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+            QUIZ_GRADEAVERAGE => get_string('quiz_grade_average', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+            QUIZ_ATTEMPTFIRST => get_string('quiz_attempt_first', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+            QUIZ_ATTEMPTLAST => get_string('quiz_attempt_last', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
         ]; //get_string('')
         $grademethodstr = $methodnames[$grademethod] ?? '';
 
@@ -176,16 +176,16 @@ trait local_downloadcentercustom_quiz_trait {
 
         $h = '<table border="1" cellspacing="0" cellpadding="3" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;">';
         $h .= '<tr>';
-        $h .= '<th>' . get_string('quiz_lastname', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_firstname', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_email', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_status', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('quiz_time_start', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_time_end', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_duration', 'local_downloadcentercustom') . '</th>';
+        $h .= '<th>' . get_string('quiz_lastname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_firstname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_email', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_status', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('quiz_time_start', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_time_end', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_duration', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
         $qnum = 0;
         foreach ($slots as $slot) {
             $qnum++;
-            $h .= '<th>' . get_string('quiz_question', 'local_downloadcentercustom') . $qnum . '</th>';
-            $h .= '<th>' . get_string('quiz_answer', 'local_downloadcentercustom') . $qnum . '</th>';
-            $h .= '<th>' . get_string('quiz_correct_answer', 'local_downloadcentercustom') . $qnum . '</th>';
+            $h .= '<th>' . get_string('quiz_question', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $qnum . '</th>';
+            $h .= '<th>' . get_string('quiz_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $qnum . '</th>';
+            $h .= '<th>' . get_string('quiz_correct_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $qnum . '</th>';
         }
-        $h .= '<th>'. get_string('quiz_grade_attempt', 'local_downloadcentercustom') .'</th>' . '<th>' . get_string('quiz_grade_method', 'local_downloadcentercustom') . '</th>' .'<th>' . get_string('quiz_final_grade', 'local_downloadcentercustom') . '</th>';
+        $h .= '<th>'. get_string('quiz_grade_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</th>' . '<th>' . get_string('quiz_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' .'<th>' . get_string('quiz_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
         $h .= '</tr>';
 
         $numattempts = count($attempts);

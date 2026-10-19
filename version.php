@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,20 +17,22 @@
 /**
  * Version details.
  *
- * @package   local_downloadcentercustom
+ * Variante personalizada (fork) de local_downloadcenter, adaptada para la
+ * Universidad Tecnológica de Jalisco (UTJ).
+ *
+ * @package   local_centro_de_descarga_de_portafolio_de_evidencias
  * @author    Simeon Naydenov
  * @copyright 2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @modified  2026 José Luis Rodriguez Escobedo - Universidad Tecnológica de Jalisco
- *            Adaptación a Centro de descargas de evidencias con filtrado por grupos,
- *            capacidades por rol (downloadMaterials/downloadAssignments), generación
- *            de ZIP con instrucciones HTML, descarga de quiz, H5P, foros y lecciones.
+ *            Renombrado a "Centro de descarga de portafolio de evidencias" y
+ *            adaptado para la UTJ.
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026101601;
+$plugin->version   = 2026101700;
 $plugin->requires  = 2025100600;
-$plugin->component = 'local_downloadcentercustom';
+$plugin->component = 'local_centro_de_descarga_de_portafolio_de_evidencias';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = "v1.9.1";
+$plugin->release   = "v1.10.0";

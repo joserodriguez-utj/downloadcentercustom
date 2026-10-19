@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Trait con la lógica de descarga de actividades Workshop (taller).
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_workshop_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_workshop_trait {
 
     /**
      * Handle Workshop module.
@@ -42,7 +42,7 @@ trait local_downloadcentercustom_workshop_trait {
         global $CFG, $DB;
         $context = $resource->context;
 
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $context->get_course_context())) {
             return;
         }
 
@@ -95,9 +95,9 @@ trait local_downloadcentercustom_workshop_trait {
             $html = $this->build_workshop_html($workshop, $cm, $user, $submission, $studentname);
             if ($html) {
                 $html = self::convert_content_to_html_doc(
-                    get_string('workshop_results', 'local_downloadcentercustom') . $studentname, $html);
+                    get_string('workshop_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
                 $filename = $evidenciadir . '/' . self::shorten_filename(
-                    get_string('workshop_results', 'local_downloadcentercustom') . $studentname . '.html');
+                    get_string('workshop_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
 
@@ -133,16 +133,16 @@ trait local_downloadcentercustom_workshop_trait {
         $strategyname = '';
         switch ($strategy) {
             case 'accumulative':
-                $strategyname = get_string('workshop_accumulatuve', 'local_downloadcentercustom');
+                $strategyname = get_string('workshop_accumulatuve', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 break;
             case 'rubric':
-                $strategyname = get_string('workshop_rubric', 'local_downloadcentercustom');
+                $strategyname = get_string('workshop_rubric', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 break;
             case 'numerrors':
-                $strategyname = get_string('workshop_numerrors', 'local_downloadcentercustom');
+                $strategyname = get_string('workshop_numerrors', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 break;
             case 'comments':
-                $strategyname = get_string('workshop_comments', 'local_downloadcentercustom');
+                $strategyname = get_string('workshop_comments', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 break;
             default:
                 $strategyname = $strategy;
@@ -194,17 +194,17 @@ trait local_downloadcentercustom_workshop_trait {
         $numassessments = $DB->count_records('workshop_assessments', ['submissionid' => $submission->id]);
 
         // === CONSTRUIR HTML ===
-        $h = '<h2>' . get_string('workshop_workshop_results', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($workshop->name) . '</h2>';
+        $h = '<h2>' . get_string('workshop_workshop_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname) . ' — ' . s($workshop->name) . '</h2>';
 
         // Tabla resumen (similar a la de forum).
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
         $h .= '<tr style="background:#f2f2f2;">';
-        $h .= '<th>' . get_string('workshop_student', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('workshop_title', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('workshop_submitted', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('workshop_grading_method', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('workshop_number_assessments', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('workshop_final_grade', 'local_downloadcentercustom') . '</th>';
+        $h .= '<th>' . get_string('workshop_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('workshop_title', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('workshop_submitted', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('workshop_grading_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('workshop_number_assessments', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('workshop_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
         $h .= '</tr>';
 
         $h .= '<tr>';
@@ -220,7 +220,7 @@ trait local_downloadcentercustom_workshop_trait {
         // === DETALLE: Contenido de la entrega ===
         $content = $submission->content ?? '';
         if (!empty(trim($content))) {
-            $h .= '<h3>' . get_string('workshop_content', 'local_downloadcentercustom') . '</h3>';
+            $h .= '<h3>' . get_string('workshop_content', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</h3>';
             $content = file_rewrite_pluginfile_urls(
                 $content, 'pluginfile.php', $cm->id, 'mod_workshop', 'submission_content', $submission->id);
             $h .= '<div style="border:1px solid #ccc;border-radius:4px;padding:10px;margin-bottom:15px;">';
@@ -231,7 +231,7 @@ trait local_downloadcentercustom_workshop_trait {
         // === DETALLE: Feedback del autor ===
         $feedbackauthor = $submission->feedbackauthor ?? '';
         if (!empty(trim($feedbackauthor))) {
-            $h .= '<h3>' . get_string('workshop_feedback', 'local_downloadcentercustom') . '</h3>';
+            $h .= '<h3>' . get_string('workshop_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</h3>';
             $h .= '<div style="border:1px solid #ccc;border-radius:4px;padding:10px;background:#f9f9f9;">';
             $h .= format_text($feedbackauthor, $submission->feedbackauthorformat ?? FORMAT_HTML);
             $h .= '</div>';
@@ -240,18 +240,18 @@ trait local_downloadcentercustom_workshop_trait {
         // === DETALLE: Evaluaciones recibidas (similar a posts en forum) ===
         $assessments = $DB->get_records('workshop_assessments', ['submissionid' => $submission->id], 'timecreated ASC');
         if (!empty($assessments)) {
-            $h .= '<h3>' . get_string('workshop_assessments_received', 'local_downloadcentercustom') . '</h3>';
+            $h .= '<h3>' . get_string('workshop_assessments_received', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</h3>';
             foreach ($assessments as $assessment) {
                 $reviewer = $DB->get_record('user', ['id' => $assessment->reviewerid]);
-                $reviewername = $reviewer ? fullname($reviewer) : get_string('string_unknown', 'local_downloadcentercustom');
+                $reviewername = $reviewer ? fullname($reviewer) : get_string('string_unknown', 'local_centro_de_descarga_de_portafolio_de_evidencias');
 
                 $h .= '<div style="border:1px solid #0d6efd;border-radius:4px;padding:8px;margin-bottom:10px;">';
-                $h .= '<div><b>' . get_string('workshop_reviewer', 'local_downloadcentercustom') . '</b> ' . s($reviewername) . '</div>';
+                $h .= '<div><b>' . get_string('workshop_reviewer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . s($reviewername) . '</div>';
                 // === NUEVO: Mostrar fecha de la evaluación ===
-                $h .= '<div><b>' . get_string('workshop_assessment_date', 'local_downloadcentercustom') . '</b> ' . userdate($assessment->timecreated) . '</div>';
-                $h .= '<div><b>' . get_string('workshop_assessment_grade', 'local_downloadcentercustom') . '</b> ' . ($assessment->grade !== null ? round($assessment->grade, 2) : '-') . '</div>';
+                $h .= '<div><b>' . get_string('workshop_assessment_date', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . userdate($assessment->timecreated) . '</div>';
+                $h .= '<div><b>' . get_string('workshop_assessment_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . ($assessment->grade !== null ? round($assessment->grade, 2) : '-') . '</div>';
                 if (!empty($assessment->feedbackauthor)) {
-                    $h .= '<div><b>' . get_string('workshop_feedback', 'local_downloadcentercustom') . '</b> ' . format_text($assessment->feedbackauthor, FORMAT_HTML) . '</div>';
+                    $h .= '<div><b>' . get_string('workshop_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . format_text($assessment->feedbackauthor, FORMAT_HTML) . '</div>';
                 }
                 $h .= '</div>';
             }

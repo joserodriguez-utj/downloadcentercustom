@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_lightboxgallery_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_lightboxgallery_trait {
 
     /**
      * Handles the mod type lightboxgallery files.

@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Trait con la lógica de descarga de actividades SCORM.
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_scorm_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait {
 
     /**
      * Handle SCORM module.
@@ -41,7 +41,7 @@ trait local_downloadcentercustom_scorm_trait {
     private function handle_scorm($resource, $resdir, &$filelist, $groupid = null) {
         global $CFG, $DB;
 
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $resource->context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $resource->context->get_course_context())) {
             return;
         }
 
@@ -83,9 +83,9 @@ trait local_downloadcentercustom_scorm_trait {
             $html = $this->build_scorm_html($scorm, $user, $studentname);
             if ($html) {
                 $html = self::convert_content_to_html_doc(
-                    get_string('scorm_results', 'local_downloadcentercustom') . $studentname, $html);
+                    get_string('scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
                 $filename = $evidenciadir . '/' . self::shorten_filename(
-                    get_string('scorm_results', 'local_downloadcentercustom') . $studentname . '.html');
+                    get_string('scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -147,25 +147,25 @@ trait local_downloadcentercustom_scorm_trait {
             }
         }
 
-        $h = '<h2>' . get_string('scorm_scorm_results', 'local_downloadcentercustom') . s($studentname)
+        $h = '<h2>' . get_string('scorm_scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname)
             . ' — ' . s($scorm->name) . '</h2>';
-        $h .= '<p><strong>' . get_string('scorm_grade_method', 'local_downloadcentercustom') . ':</strong> '
+        $h .= '<p><strong>' . get_string('scorm_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ':</strong> '
             . s($grademethodstr)
-            . ' &nbsp;|&nbsp; <strong>' . get_string('scorm_what_grade', 'local_downloadcentercustom') . ':</strong> '
+            . ' &nbsp;|&nbsp; <strong>' . get_string('scorm_what_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ':</strong> '
             . s($whatgradestr)
-            . ' &nbsp;|&nbsp; <strong>' . get_string('scorm_max_score', 'local_downloadcentercustom') . ':</strong> '
+            . ' &nbsp;|&nbsp; <strong>' . get_string('scorm_max_score', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ':</strong> '
             . s($scorm->maxgrade) . '</p>';
 
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
         $h .= '<tr style="background:#f2f2f2;">';
-        $h .= '<th>' . get_string('scorm_attempt', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('scorm_status', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('scorm_score', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('scorm_time', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('scorm_start', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('scorm_finish', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('scorm_grade_method', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('scorm_final_grade', 'local_downloadcentercustom') . '</th>';
+        $h .= '<th>' . get_string('scorm_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('scorm_status', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('scorm_score', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('scorm_time', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('scorm_start', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('scorm_finish', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('scorm_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('scorm_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
         $h .= '</tr>';
 
         $numattempts = count($attempts);
@@ -230,7 +230,7 @@ trait local_downloadcentercustom_scorm_trait {
         ];
         $key = strtolower(trim((string)$status));
         if (isset($map[$key])) {
-            return get_string($map[$key], 'local_downloadcentercustom');
+            return get_string($map[$key], 'local_centro_de_descarga_de_portafolio_de_evidencias');
         }
         return (string)$status;
     }

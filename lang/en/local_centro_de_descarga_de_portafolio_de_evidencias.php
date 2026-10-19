@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -58,13 +58,13 @@ $string['note'] = 'Important note:';
 $string['no_download_permission'] = 'You do not have permission to download content in this course.';
 $string['navigationlink'] = 'Evidence portfolio';
 $string['pagetitle'] = 'Evidence portfolio';
-$string['pluginname'] = 'Download Evidence portfolio';
-$string['downloadcentercustom:view'] = 'View';
-$string['downloadcentercustom:downloadMaterials'] = 'Download materials';
-$string['downloadcentercustom:downloadAssignments'] = 'Download assignments';
-$string['downloadcentercustom:downloadQuiz'] = 'Download quiz';
-$string['downloadcentercustom:downloadnormal'] = 'Download in normal mode';
-$string['downloadcentercustom:downloadportfolio'] = 'Download in portfolio mode';
+$string['pluginname'] = 'Evidence Portfolio Download Center';
+$string['centro_de_descarga_de_portafolio_de_evidencias:view'] = 'View';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadMaterials'] = 'Download materials';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments'] = 'Download assignments';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz'] = 'Download quiz';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadnormal'] = 'Download in normal mode';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadportfolio'] = 'Download in portfolio mode';
 $string['privacy:null_reason'] = 'This plugin does not store or process any personal information. It presents an interface to download all course files which are manipulated from within the course.';
 $string['search:hint'] = 'Type to filter activities and resources...';
 $string['search:results'] = 'Search results';

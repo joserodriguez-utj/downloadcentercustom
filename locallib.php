@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -39,20 +39,20 @@ require_once(__DIR__ . '/locallib_lightboxgallery.php');
 require_once(__DIR__ . '/locallib_etherpadlite.php');
 require_once(__DIR__ . '/locallib_scorm.php');
 
-class local_downloadcentercustom_factory {
-    use local_downloadcentercustom_lesson_trait;
-    use local_downloadcentercustom_workshop_trait;
-    use local_downloadcentercustom_quiz_trait;
-    use local_downloadcentercustom_h5p_trait;
-    use local_downloadcentercustom_forum_trait;
-    use local_downloadcentercustom_assign_trait;
-    use local_downloadcentercustom_publication_trait;
-    use local_downloadcentercustom_materials_trait;
-    use local_downloadcentercustom_glossary_trait;
-    use local_downloadcentercustom_lightboxgallery_trait;
-    use local_downloadcentercustom_etherpadlite_trait;
-    use local_downloadcentercustom_database_trait;
-    use local_downloadcentercustom_scorm_trait;
+class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
+    use local_centro_de_descarga_de_portafolio_de_evidencias_lesson_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_workshop_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_h5p_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_forum_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_publication_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_materials_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_glossary_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_lightboxgallery_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_etherpadlite_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_database_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait;
 
     /**
      * @var mixed|object
@@ -135,7 +135,7 @@ class local_downloadcentercustom_factory {
     private $pathcount = [];
 
     /**
-     * local_downloadcentercustom_factory constructor.
+     * local_centro_de_descarga_de_portafolio_de_evidencias_factory constructor.
      * @param mixed|object $course
      * @param mixed|object $user
      */
@@ -332,7 +332,7 @@ class local_downloadcentercustom_factory {
             }
 
             foreach ($unnamedsections as $sectionid) {
-                $untitled = get_string('untitled', 'local_downloadcentercustom');
+                $untitled = get_string('untitled', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 $title = $untitled;
                 $i = 1;
                 while (isset($namedsections[$title])) {
@@ -1048,7 +1048,7 @@ class local_downloadcentercustom_factory {
 
         $zipwriter->finish();
         // Liberar el candado anti doble-descarga: solo debe cubrir la generación.
-        set_user_preference('downloadcentercustom_ziptime', 0);
+        set_user_preference('centro_de_descarga_de_portafolio_de_evidencias_ziptime', 0);
         die;
     }
 
@@ -1115,7 +1115,7 @@ class local_downloadcentercustom_factory {
             foreach ($bygroup as $gid => $groupstudents) {
                 $foldername = ($gid && isset($groupfolder[$gid]))
                     ? $groupfolder[$gid]
-                    : get_string('no_group', 'local_downloadcentercustom');
+                    : get_string('no_group', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 $groupdir = $coursename . '/' . $foldername;
                 $filelist[$groupdir] = null;
                 $this->append_portfolio_students(
@@ -1149,7 +1149,7 @@ class local_downloadcentercustom_factory {
 
         $zipwriter->finish();
         // Liberar el candado anti doble-descarga: solo debe cubrir la generación.
-        set_user_preference('downloadcentercustom_ziptime', 0);
+        set_user_preference('centro_de_descarga_de_portafolio_de_evidencias_ziptime', 0);
         die;
     }
 
@@ -1212,7 +1212,7 @@ class local_downloadcentercustom_factory {
 
                     // Portafolio: si el alumno no generó ninguna evidencia, dejar constancia.
                     if ($this->portfolio_userid !== null && !$this->has_files_under($filelist, $resdir)) {
-                        $notdone = get_string('string_not_done', 'local_downloadcentercustom');
+                        $notdone = get_string('string_not_done', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                         $html = self::convert_content_to_html_doc($notdone, '<p>' . $notdone . '</p>');
                         $filelist[$resdir . '/' . self::shorten_filename($notdone . '.html')] = [$html];
                     }
@@ -1224,7 +1224,7 @@ class local_downloadcentercustom_factory {
             // Portafolio: reporte de calificaciones del alumno (al mismo nivel de las carpetas de actividades).
             $reporthtml = $this->build_grade_report_html($student);
             if ($reporthtml !== '') {
-                $reportname = get_string('string_grade_report', 'local_downloadcentercustom') . ' - ' . $studentname;
+                $reportname = get_string('string_grade_report', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' - ' . $studentname;
                 $doc = self::convert_content_to_html_doc($reportname, $reporthtml);
                 $filelist[$studentdir . '/' . self::shorten_filename($reportname . '.html')] = [$doc];
             }
@@ -1274,17 +1274,17 @@ class local_downloadcentercustom_factory {
             return '';
         }
 
-        $h = '<h2>' . s(get_string('string_grade_report', 'local_downloadcentercustom')) . '</h2>';
-        $h .= '<p><strong>' . s(get_string('string_student', 'local_downloadcentercustom')) . ':</strong> ' . s(fullname($student)) . '</p>';
+        $h = '<h2>' . s(get_string('string_grade_report', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</h2>';
+        $h .= '<p><strong>' . s(get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . ':</strong> ' . s(fullname($student)) . '</p>';
         $h .= '<p><strong>' . s(get_string('course', 'core')) . ':</strong> ' . s($this->course->fullname) . '</p>';
 
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">';
         $h .= '<tr style="background:#f2f2f2;">';
         $headers = [
-            get_string('string_grade_report_item', 'local_downloadcentercustom'),
-            get_string('string_grade_report_grade', 'local_downloadcentercustom'),
-            get_string('string_grade_report_max', 'local_downloadcentercustom'),
-            get_string('string_grade_report_feedback', 'local_downloadcentercustom'),
+            get_string('string_grade_report_item', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+            get_string('string_grade_report_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+            get_string('string_grade_report_max', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+            get_string('string_grade_report_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
         ];
         foreach ($headers as $head) {
             $h .= '<th style="text-align:left;">' . s($head) . '</th>';
@@ -1516,9 +1516,9 @@ class local_downloadcentercustom_factory {
         // del usuario (no se confía en el formulario). 'downloadnormal' es
         // superconjunto: habilita normal y portafolio; 'downloadportfolio' solo portafolio.
         $coursecontext = \context_course::instance($this->course->id);
-        $canmodenormal = has_capability('local/downloadcentercustom:downloadnormal', $coursecontext, $this->user);
+        $canmodenormal = has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadnormal', $coursecontext, $this->user);
         $canmodeportfolio = $canmodenormal
-            || has_capability('local/downloadcentercustom:downloadportfolio', $coursecontext, $this->user);
+            || has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadportfolio', $coursecontext, $this->user);
         $requestedmode = $data['downloadmode'] ?? 'normal';
         if ($requestedmode === 'normal' && !$canmodenormal) {
             $requestedmode = 'portafolio';
@@ -1550,7 +1550,7 @@ class local_downloadcentercustom_factory {
         $usergroupids = $usergroups[0] ?? [];
         // Quien tiene downloadMaterials (manager) o accessallgroups ve todos los grupos.
         $coursecontext = \context_course::instance($this->course->id);
-        $canaccessall = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext, $this->user)
+        $canaccessall = has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadMaterials', $coursecontext, $this->user)
             || has_capability('moodle/site:accessallgroups', $coursecontext, $this->user);
 
         if ($canaccessall) {

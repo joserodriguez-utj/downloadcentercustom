@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -58,13 +58,13 @@ $string['note'] = 'Nota importante:';
 $string['no_download_permission'] = 'No tienes permiso para descargar contenido en este curso.';
 $string['navigationlink'] = 'Portafolio de evidencias';
 $string['pagetitle'] = 'Portafolio de evidencias';
-$string['pluginname'] = 'Descarga de portafolio de evidencias';
-$string['downloadcentercustom:view'] = 'Ver';
-$string['downloadcentercustom:downloadMaterials'] = 'Descargar materiales';
-$string['downloadcentercustom:downloadAssignments'] = 'Descargar evidencias';
-$string['downloadcentercustom:downloadQuiz'] = 'Descargar examenes';
-$string['downloadcentercustom:downloadnormal'] = 'Descargar en modo normal';
-$string['downloadcentercustom:downloadportfolio'] = 'Descargar en modo portafolio';
+$string['pluginname'] = 'Centro de descarga de portafolio de evidencias';
+$string['centro_de_descarga_de_portafolio_de_evidencias:view'] = 'Ver';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadMaterials'] = 'Descargar materiales';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments'] = 'Descargar evidencias';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz'] = 'Descargar examenes';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadnormal'] = 'Descargar en modo normal';
+$string['centro_de_descarga_de_portafolio_de_evidencias:downloadportfolio'] = 'Descargar en modo portafolio';
 $string['privacy:null_reason'] = 'Este complemento no almacena ni procesa ninguna información personal. Ofrece una interfaz para descargar todos los archivos del curso que se gestionan desde dentro del curso.';
 $string['search:hint'] = 'Escribe para filtrar actividades y recursos...';
 $string['search:results'] = 'Resultados de la búsqueda';

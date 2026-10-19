@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_downloadcentercustom\privacy;
+namespace local_centro_de_descarga_de_portafolio_de_evidencias\privacy;
 
 /**
- * Privacy Subsystem for local_downloadcentercustom implementing null_provider.
+ * Privacy Subsystem for local_centro_de_descarga_de_portafolio_de_evidencias implementing null_provider.
  *
- * @package   local_downloadcentercustom
+ * @package   local_centro_de_descarga_de_portafolio_de_evidencias
  * @author    Simeon Naydenov
  * @copyright 2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

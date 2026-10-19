@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Trait con la lógica de descarga de actividades Lesson.
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_lesson_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_lesson_trait {
 
     /**
      * Handle Lesson module.
@@ -42,7 +42,7 @@ trait local_downloadcentercustom_lesson_trait {
         global $CFG, $DB;
         $context = $resource->context;
 
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $context->get_course_context())) {
             return;
         }
 
@@ -82,8 +82,8 @@ trait local_downloadcentercustom_lesson_trait {
             $studentname = fullname($user);
             $html = $this->build_lesson_html($lesson, $cm, $user, $studentname);
             if ($html) {
-                $html = self::convert_content_to_html_doc(get_string('lesson_results', 'local_downloadcentercustom') . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('lesson_results', 'local_downloadcentercustom') . $studentname . '.html');
+                $html = self::convert_content_to_html_doc(get_string('lesson_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
+                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('lesson_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -150,17 +150,17 @@ trait local_downloadcentercustom_lesson_trait {
             $attemptsbyretry[$attempt->retry][] = $attempt;
         }
 
-        $h = '<h2>' . get_string('lesson_lesson_results', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($lesson->name) . '</h2>';
+        $h = '<h2>' . get_string('lesson_lesson_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname) . ' — ' . s($lesson->name) . '</h2>';
 
         // Método de calificación de la lección.
         $grademethod = !empty($lesson->usemaxgrade)
-            ? get_string('lesson_grade_highest', 'local_downloadcentercustom')
-            : get_string('lesson_grade_average', 'local_downloadcentercustom');
-        $h .= '<p><b>' . get_string('lesson_grade_method', 'local_downloadcentercustom') . ':</b> ' . $grademethod . '</p>';
+            ? get_string('lesson_grade_highest', 'local_centro_de_descarga_de_portafolio_de_evidencias')
+            : get_string('lesson_grade_average', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+        $h .= '<p><b>' . get_string('lesson_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ':</b> ' . $grademethod . '</p>';
 
         // Tabla resumen de intentos.
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
-        $h .= '<tr style="background:#f2f2f2;"><th>' . get_string('lesson_attempts', 'local_downloadcentercustom') . '</th><th>' . get_string('lesson_grade', 'local_downloadcentercustom') . '</th><th>'. get_string('lesson_complete', 'local_downloadcentercustom') . '</th><th>' . get_string('lesson_final_grade', 'local_downloadcentercustom') . '</th></tr>';
+        $h .= '<tr style="background:#f2f2f2;"><th>' . get_string('lesson_attempts', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th><th>' . get_string('lesson_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th><th>'. get_string('lesson_complete', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th><th>' . get_string('lesson_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th></tr>';
 
         $retries = array_keys($attemptsbyretry);
         sort($retries);
@@ -183,7 +183,7 @@ trait local_downloadcentercustom_lesson_trait {
 
         // Detalle por intento.
         foreach ($retries as $retry) {
-            $h .= '<h3>' . get_string('lesson_attempt', 'local_downloadcentercustom') . ($retry + 1) . '</h3>';
+            $h .= '<h3>' . get_string('lesson_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ($retry + 1) . '</h3>';
 
             $retryattempts = $attemptsbyretry[$retry];
             // Ordenar por timeseen para respetar el orden de navegación.
@@ -199,11 +199,11 @@ trait local_downloadcentercustom_lesson_trait {
                 $pageanswers = $answersbypage[$attempt->pageid] ?? [];
 
                 $h .= '<div style="border:1px solid #ccc;border-radius:4px;padding:8px;margin-bottom:10px;">';
-                $h .= '<div><b>' . get_string('lesson_page_topic', 'local_downloadcentercustom') . '</b> ' . s($page->title) . '</div>';
+                $h .= '<div><b>' . get_string('lesson_page_topic', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . s($page->title) . '</div>';
 
                 // Contenido de la página (pregunta o contenido de ramificación).
                 if (!empty($page->contents)) {
-                    $h .= '<div><b>' . get_string('lesson_question', 'local_downloadcentercustom') . '</b> ' . format_text($page->contents, $page->contentsformat ?? FORMAT_HTML) . '</div>';
+                    $h .= '<div><b>' . get_string('lesson_question', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . format_text($page->contents, $page->contentsformat ?? FORMAT_HTML) . '</div>';
                 }
 
                 // Respuesta del alumno.
@@ -222,13 +222,13 @@ trait local_downloadcentercustom_lesson_trait {
                         $useranswertext = (string)$attempt->useranswer;
                         $score = '';
                     }
-                    $h .= '<div><b>' . get_string('lesson_student_answer_essay', 'local_downloadcentercustom') . '</b><br>' . s($useranswertext) . '</div>';
+                    $h .= '<div><b>' . get_string('lesson_student_answer_essay', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b><br>' . s($useranswertext) . '</div>';
                     if ($score !== '') {
-                        $h .= '<div><b>' . get_string('lesson_essay_grade', 'local_downloadcentercustom') . '</b> ' . s($score) . '</div>';
+                        $h .= '<div><b>' . get_string('lesson_essay_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . s($score) . '</div>';
                     }
                 } else if ($isbranch) {
                     // Tabla de ramificación: es contenido, no pregunta.
-                    $h .= '<div><em>' . get_string('lesson_content_branch_page', 'local_downloadcentercustom') . '</em></div>';
+                    $h .= '<div><em>' . get_string('lesson_content_branch_page', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em></div>';
                 } else {
                     // Preguntas: opción múltiple, V/F, corta, numérica, relación.
                     $chosen = null;
@@ -241,7 +241,7 @@ trait local_downloadcentercustom_lesson_trait {
                     if ($chosen) {
                         $useranswertext = $chosen->answer;
                         $correct = !empty($attempt->correct);
-                        $h .= '<div><b>' . get_string('lesson_student_answer', 'local_downloadcentercustom') . '</b> ';
+                        $h .= '<div><b>' . get_string('lesson_student_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ';
                         $h .= $correct ?
                             '<span style="color:#198754;">✔ ' . s($useranswertext) . '</span>' :
                             '<span style="color:#dc3545;">✘ ' . s($useranswertext) . '</span>';
@@ -256,7 +256,7 @@ trait local_downloadcentercustom_lesson_trait {
                         }
                     }
                     if ($best && !$correct) {
-                        $h .= '<div><b>' . get_string('lesson_correct_answer', 'local_downloadcentercustom') . '</b> ' . s($best->answer) . '</div>';
+                        $h .= '<div><b>' . get_string('lesson_correct_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . s($best->answer) . '</div>';
                     }
                 }
 
@@ -270,7 +270,7 @@ trait local_downloadcentercustom_lesson_trait {
                         }
                     }
                     if ($chosenanswer) {
-                        $h .= '<div><b>' . get_string('lesson_points', 'local_downloadcentercustom') . '</b> ' . s($chosenanswer->score) . '</div>';
+                        $h .= '<div><b>' . get_string('lesson_points', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . s($chosenanswer->score) . '</div>';
                     }
                 }
 

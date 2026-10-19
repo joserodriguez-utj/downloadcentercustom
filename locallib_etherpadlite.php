@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_etherpadlite_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_etherpadlite_trait {
 
         /**
      * Handles the mod type etherpadlite files.

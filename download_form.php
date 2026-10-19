@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -31,9 +31,9 @@ require_once($CFG->libdir . '/formslib.php');
 require_once(__DIR__ . '/locallib.php');
 
 /**
- * Class local_downloadcentercustom_download_form
+ * Class local_centro_de_descarga_de_portafolio_de_evidencias_download_form
  */
-class local_downloadcentercustom_download_form extends moodleform {
+class local_centro_de_descarga_de_portafolio_de_evidencias_download_form extends moodleform {
     /**
      * Form definition
      *
@@ -49,14 +49,14 @@ class local_downloadcentercustom_download_form extends moodleform {
         $mform->setType('courseid', PARAM_INT);
 
         $coursecontext = \context_course::instance($COURSE->id);
-        $candownloadmaterials = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
-        $candownloadassign = has_capability('local/downloadcentercustom:downloadAssignments', $coursecontext);
-        $candownloadquiz = has_capability('local/downloadcentercustom:downloadQuiz', $coursecontext);
+        $candownloadmaterials = has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadMaterials', $coursecontext);
+        $candownloadassign = has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $coursecontext);
+        $candownloadquiz = has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz', $coursecontext);
         // Capacidades de modo. 'downloadnormal' es superconjunto: habilita normal
         // y portafolio; 'downloadportfolio' habilita únicamente el modo portafolio.
-        $canmodenormal = has_capability('local/downloadcentercustom:downloadnormal', $coursecontext);
+        $canmodenormal = has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadnormal', $coursecontext);
         $canmodeportfolio = $canmodenormal
-            || has_capability('local/downloadcentercustom:downloadportfolio', $coursecontext);
+            || has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadportfolio', $coursecontext);
         // Si no puede modo normal, se oculta el selector y se fija portafolio.
         $hidemodoselector = !$canmodenormal;
         $candownloadanything = ($candownloadmaterials || $candownloadassign || $candownloadquiz)
@@ -86,7 +86,7 @@ class local_downloadcentercustom_download_form extends moodleform {
                 'html',
                 html_writer::tag(
                     'div',
-                    get_string('no_download_permission', 'local_downloadcentercustom'),
+                    get_string('no_download_permission', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
                     ['class' => 'alert alert-warning alert-block']
                 )
             );
@@ -94,7 +94,7 @@ class local_downloadcentercustom_download_form extends moodleform {
         // La búsqueda filtra las actividades/recursos del modo normal; para quien
         // solo tiene portafolios no aplica, así que no se muestra.
         if ($candownloadanything && !$hidemodoselector) {
-            $mform->addElement('html', $OUTPUT->render_from_template('local_downloadcentercustom/searchbox', []));
+            $mform->addElement('html', $OUTPUT->render_from_template('local_centro_de_descarga_de_portafolio_de_evidencias/searchbox', []));
             $mform->addElement('static', 'warning', '', ''); // Hack to work around fieldsets!
         }
 
@@ -112,9 +112,9 @@ class local_downloadcentercustom_download_form extends moodleform {
                 <span class="dir-rtl-hide">' . $OUTPUT->pix_icon('t/collapsedchevron', '', 'core') . '</span>
                 <span class="dir-ltr-hide">' . $OUTPUT->pix_icon('t/collapsedchevron_rtl', '', 'core') . '</span>
             </span>
-            <span class="visually-hidden">' . get_string('opciones_descarga', 'local_downloadcentercustom') . '</span>
+            <span class="visually-hidden">' . get_string('opciones_descarga', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</span>
         </a>
-        <h3 class="d-flex align-self-stretch align-items-center mb-0" aria-hidden="true">' . get_string('opciones_descarga', 'local_downloadcentercustom') . '</h3>
+        <h3 class="d-flex align-self-stretch align-items-center mb-0" aria-hidden="true">' . get_string('opciones_descarga', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</h3>
     </div>
 </div>');
         $mform->addElement('html', '<div id="opcionesbody" class="fcontainer collapseable collapse show">');
@@ -122,15 +122,15 @@ class local_downloadcentercustom_download_form extends moodleform {
         // (solo portafolio), se oculta el selector y se fija el modo portafolio.
         $modoselectorstyle = $hidemodoselector ? ' style="display:none;"' : '';
         $mform->addElement('html', '<div id="modo-selector"' . $modoselectorstyle . '>');
-        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('download_mode_title', 'local_downloadcentercustom') . '</span></div></div>');
+        $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('download_mode_title', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</span></div></div>');
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9">');
-        $mform->addElement('radio', 'downloadmode', '', get_string('mode_normal', 'local_downloadcentercustom'), 'normal', ['class' => 'mode-radio']);
-        $mform->addElement('radio', 'downloadmode', '', get_string('mode_portfolio', 'local_downloadcentercustom'), 'portafolio', ['class' => 'mode-radio']);
+        $mform->addElement('radio', 'downloadmode', '', get_string('mode_normal', 'local_centro_de_descarga_de_portafolio_de_evidencias'), 'normal', ['class' => 'mode-radio']);
+        $mform->addElement('radio', 'downloadmode', '', get_string('mode_portfolio', 'local_centro_de_descarga_de_portafolio_de_evidencias'), 'portafolio', ['class' => 'mode-radio']);
         $mform->setDefault('downloadmode', $canmodenormal ? 'normal' : 'portafolio');
         $mform->addElement('html', '</div></div>');
         $mform->addElement('html', '</div>'); // cierra modo-selector
         if ($candownloadanything) {
-            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold; margin-left:-0.7rem;">' . get_string('content_to_download', 'local_downloadcentercustom') . '</span></div></div>');
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector" id="opciones-title"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold; margin-left:-0.7rem;">' . get_string('content_to_download', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</span></div></div>');
         }
         $mform->addElement('html', '<div id="opciones-container">');
         // Detectar que modnames existen en el curso.
@@ -148,34 +148,34 @@ class local_downloadcentercustom_download_form extends moodleform {
         $havesomematerials = $showfiles || $showfolders || $showurls || $showpages;
 
         if ($candownloadmaterials && $havesomematerials) {
-            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('materials', 'local_downloadcentercustom') . '</strong></span></div></div>');
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('materials', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
-            if ($showfiles) { $mform->addElement('checkbox', 'includefiles', get_string('files', 'local_downloadcentercustom')); $mform->setDefault('includefiles', 1); }
-            if ($showfolders) { $mform->addElement('checkbox', 'includefolders', get_string('folders', 'local_downloadcentercustom')); $mform->setDefault('includefolders', 1); }
-            if ($showurls) { $mform->addElement('checkbox', 'includeurls', get_string('urls', 'local_downloadcentercustom')); $mform->setDefault('includeurls', 1); }
-            if ($showpages) { $mform->addElement('checkbox', 'includepages', get_string('pages', 'local_downloadcentercustom')); $mform->setDefault('includepages', 1); }
+            if ($showfiles) { $mform->addElement('checkbox', 'includefiles', get_string('files', 'local_centro_de_descarga_de_portafolio_de_evidencias')); $mform->setDefault('includefiles', 1); }
+            if ($showfolders) { $mform->addElement('checkbox', 'includefolders', get_string('folders', 'local_centro_de_descarga_de_portafolio_de_evidencias')); $mform->setDefault('includefolders', 1); }
+            if ($showurls) { $mform->addElement('checkbox', 'includeurls', get_string('urls', 'local_centro_de_descarga_de_portafolio_de_evidencias')); $mform->setDefault('includeurls', 1); }
+            if ($showpages) { $mform->addElement('checkbox', 'includepages', get_string('pages', 'local_centro_de_descarga_de_portafolio_de_evidencias')); $mform->setDefault('includepages', 1); }
             $mform->addElement('html', '</div>');
         }
         if ($candownloadassign) {
-            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('tasks', 'local_downloadcentercustom') . '</strong></span></div></div>');
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('tasks', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
-            $mform->addElement('checkbox', 'onlytasks', get_string('assignments', 'local_downloadcentercustom'));
+            $mform->addElement('checkbox', 'onlytasks', get_string('assignments', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
             $mform->setDefault('onlytasks', 1);
-            $mform->addElement('checkbox', 'includefeedback', get_string('feedback', 'local_downloadcentercustom'));
+            $mform->addElement('checkbox', 'includefeedback', get_string('feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
             $mform->setDefault('includefeedback', 1);
-            $mform->addElement('checkbox', 'includeinstructions', get_string('instructions', 'local_downloadcentercustom'));
+            $mform->addElement('checkbox', 'includeinstructions', get_string('instructions', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
             $mform->setDefault('includeinstructions', 0);
-            $mform->addElement('checkbox', 'includeresources', get_string('resources_item', 'local_downloadcentercustom'));
+            $mform->addElement('checkbox', 'includeresources', get_string('resources_item', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
             $mform->setDefault('includeresources', 0);
             $mform->addElement('html', '</div>');
         }
         if ($candownloadquiz && $havequiz) {
-            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('quiz', 'local_downloadcentercustom') . '</strong></span></div></div>');
+            $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle"><strong>' . get_string('quiz', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</strong></span></div></div>');
             $mform->addElement('html', '<div style="display:flex;flex-wrap:wrap;gap:0;padding-left:1rem;">');
             $mform->addElement('html', '<div class="separator"></div>');
-            $mform->addElement('checkbox', 'quiztries', get_string('quiz_tries', 'local_downloadcentercustom'));
+            $mform->addElement('checkbox', 'quiztries', get_string('quiz_tries', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
             $mform->setDefault('quiztries', 1);
             $mform->addElement('html', '</div>');
         }
@@ -364,7 +364,7 @@ JS
             }
             $currentsubsectionitemid = -1;
             if (empty($sectioninfo->res)) {
-                $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-12"></div><div class="col-md-9"><span class="itemtitle"><strong>' . $sectiontitle . '</strong></span><br><em>' . get_string('no_content', 'local_downloadcentercustom') . '</em></div></div>');
+                $mform->addElement('html', '<div class="form-group row fitem"><div class="col-md-12"></div><div class="col-md-9"><span class="itemtitle"><strong>' . $sectiontitle . '</strong></span><br><em>' . get_string('no_content', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em></div></div>');
             } else {
                 $mform->addElement('checkbox', $sectionname, $sectiontitle, '', ['class' => 'mt-2']);
                 $mform->setDefault($sectionname, 1);
@@ -426,20 +426,20 @@ JS
 
         // Create a new section for the download options!
         // Opciones deshabilitadas - ya no se usan.
-        // $mform->addElement('header', 'downloadoptions', get_string('downloadoptions', 'local_downloadcentercustom'));
-        // $mform->addElement('checkbox', 'filesrealnames', get_string('downloadoptions:filesrealnames', 'local_downloadcentercustom'));
+        // $mform->addElement('header', 'downloadoptions', get_string('downloadoptions', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
+        // $mform->addElement('checkbox', 'filesrealnames', get_string('downloadoptions:filesrealnames', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
         // $mform->setDefault('filesrealnames', 0);
-        // $mform->addHelpButton('filesrealnames', 'downloadoptions:filesrealnames', 'local_downloadcentercustom');
-        // $mform->addElement('checkbox', 'addnumbering', get_string('downloadoptions:addnumbering', 'local_downloadcentercustom'));
+        // $mform->addHelpButton('filesrealnames', 'downloadoptions:filesrealnames', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+        // $mform->addElement('checkbox', 'addnumbering', get_string('downloadoptions:addnumbering', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
         // $mform->setDefault('addnumbering', 0);
-        // $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_downloadcentercustom');
+        // $mform->addHelpButton('addnumbering', 'downloadoptions:addnumbering', 'local_centro_de_descarga_de_portafolio_de_evidencias');
 
         // Group filtering (solo si tiene permiso de descargar tareas o exámenes).
         $groups = [];
         $studentoptions = [];
         $studentgroups = [];
         if ($candownloadassign || $candownloadquiz) {
-            $canaccessallgroups = has_capability('local/downloadcentercustom:downloadMaterials', $coursecontext);
+            $canaccessallgroups = has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadMaterials', $coursecontext);
             if ($canaccessallgroups) {
                 $groups = groups_get_all_groups($COURSE->id);
             } else {
@@ -479,18 +479,18 @@ JS
                     $groupoptions[$group->id] = $group->name;
                 }
                 $mform->addElement('html', '<div class="separator"></div>');
-                $mform->addElement('header', 'groupfilter', get_string('groupfilter', 'local_downloadcentercustom'));
+                $mform->addElement('header', 'groupfilter', get_string('groupfilter', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
                 $mform->setExpanded('groupfilter');
-                $mform->addElement('checkbox', 'selectallgroups', get_string('all_groups', 'local_downloadcentercustom'));
+                $mform->addElement('checkbox', 'selectallgroups', get_string('all_groups', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
                 $mform->setDefault('selectallgroups', 0);
                 $select = $mform->addElement('autocomplete', 'selectedgroups',
-                    get_string('select_groups_one_by_one', 'local_downloadcentercustom'), $groupoptions);
+                    get_string('select_groups_one_by_one', 'local_centro_de_descarga_de_portafolio_de_evidencias'), $groupoptions);
                 $select->setMultiple(true);
-                $mform->addHelpButton('selectedgroups', 'groupfilter_help', 'local_downloadcentercustom');
+                $mform->addHelpButton('selectedgroups', 'groupfilter_help', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 $mform->setDefault('selectedgroups', []);
                 // Etiquetas para el label del autocomplete según el modo (se cambian por JS).
-                $mform->addElement('html', '<span class="d-none" id="dc-lblgroups-multiple">' . get_string('select_groups_multiple', 'local_downloadcentercustom') . '</span>');
-                $mform->addElement('html', '<span class="d-none" id="dc-lblgroups-single">' . get_string('select_group_single', 'local_downloadcentercustom') . '</span>');
+                $mform->addElement('html', '<span class="d-none" id="dc-lblgroups-multiple">' . get_string('select_groups_multiple', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</span>');
+                $mform->addElement('html', '<span class="d-none" id="dc-lblgroups-single">' . get_string('select_group_single', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</span>');
                 $mform->addElement('html', '
                 <script>
                     document.getElementById("id_selectallgroups").onclick = function() {
@@ -547,22 +547,22 @@ JS
         // El título "MODO DE SELECCIÓN" se oculta para quien solo tiene portafolio
         // (no puede modo normal), dejando visibles las opciones Grupo completo / Estudiante.
         $portfolio_title_class = 'form-group row fitem downloadcenter_selector' . ($hidemodoselector ? ' dc-hidden' : '');
-        $mform->addElement('html', '<div class="' . $portfolio_title_class . '"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('portfolio_select_title', 'local_downloadcentercustom') . '</span></div></div>');
+        $mform->addElement('html', '<div class="' . $portfolio_title_class . '"><div class="col-md-3"></div><div class="col-md-9"><span class="itemtitle" style="font-weight:bold;">' . get_string('portfolio_select_title', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</span></div></div>');
         $mform->addElement('html', '<div class="form-group row fitem downloadcenter_selector"><div class="col-md-3"></div><div class="col-md-9">');
-        $mform->addElement('radio', 'portfolioselect', '', get_string('portfolio_sel_allmygroups', 'local_downloadcentercustom'), 'allmygroups', ['class' => 'portfolio-sel-radio']);
-        $mform->addElement('radio', 'portfolioselect', '', get_string('portfolio_sel_bystudent', 'local_downloadcentercustom'), 'bystudent', ['class' => 'portfolio-sel-radio']);
+        $mform->addElement('radio', 'portfolioselect', '', get_string('portfolio_sel_allmygroups', 'local_centro_de_descarga_de_portafolio_de_evidencias'), 'allmygroups', ['class' => 'portfolio-sel-radio']);
+        $mform->addElement('radio', 'portfolioselect', '', get_string('portfolio_sel_bystudent', 'local_centro_de_descarga_de_portafolio_de_evidencias'), 'bystudent', ['class' => 'portfolio-sel-radio']);
         $mform->setDefault('portfolioselect', 'allmygroups');
         $mform->addElement('html', '</div></div>');
         $mform->addElement('html', '</div>');
         // ===== Bloque "Por alumno": filtro de grupos + selección de alumnos =====
         $mform->addElement('html', '<div id="student-selector-block">');
         // Etiqueta del select de estudiantes (con ayuda), como estaba.
-        $studentselect = $mform->addElement('autocomplete', 'selectedstudents', get_string('select_students_one_by_one', 'local_downloadcentercustom'), $studentoptions);
+        $studentselect = $mform->addElement('autocomplete', 'selectedstudents', get_string('select_students_one_by_one', 'local_centro_de_descarga_de_portafolio_de_evidencias'), $studentoptions);
         $studentselect->setMultiple(true);
         $mform->setDefault('selectedstudents', []);
-        $mform->addElement('checkbox', 'selectallstudents', get_string('all_students', 'local_downloadcentercustom'));
+        $mform->addElement('checkbox', 'selectallstudents', get_string('all_students', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
         $mform->setDefault('selectallstudents', 0);
-        $mform->addHelpButton('selectedstudents', 'selectedstudents_help', 'local_downloadcentercustom');
+        $mform->addHelpButton('selectedstudents', 'selectedstudents_help', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         $mform->addElement('html', '<div class="alert alert-info" id="portfolio-selected-info" style="margin:10px 0;padding:8px 12px;font-size:0.9em;display:none;"></div>');
         $mform->addElement('html', '</div>'); // cierra student-selector-block
         $mform->addElement('html', '</div>'); // cierra portfolio-students-section
@@ -571,26 +571,26 @@ JS
         if (($candownloadassign || $candownloadquiz) && count($groups) >= 2) {
             // Nota "importante" (modo normal).
             $mform->addElement('html', '<div class="alert alert-info" id="nota-grupos-alert" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
-            $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
+            $mform->addElement('html', '<strong>' . get_string('note', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</strong>');
             $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
             if ($candownloadmaterials) {
-                $mform->addElement('html', '<li>' . get_string('infomessage_download', 'local_downloadcentercustom') . '</li>');
+                $mform->addElement('html', '<li>' . get_string('infomessage_download', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</li>');
             }
-            $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_downloadcentercustom') . '</li>');
+            $mform->addElement('html', '<li>' . get_string('infomessage_download_assignment', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</li>');
             $mform->addElement('html', '</ul>');
             $mform->addElement('html', '</div>');
             // Nota "importante" (modo portafolio).
             $mform->addElement('html', '<div class="alert alert-info dc-hidden" id="nota-portfolio-alert" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
-            $mform->addElement('html', '<strong>' . get_string('note', 'local_downloadcentercustom') . '</strong>');
+            $mform->addElement('html', '<strong>' . get_string('note', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</strong>');
             $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
-            $mform->addElement('html', '<li>' . get_string('infomessage_portfolio_assignment', 'local_downloadcentercustom', get_string('portfolio_sel_allmygroups', 'local_downloadcentercustom')) . '</li>');
-            $mform->addElement('html', '<li>' . get_string('infomessage_portfolio_student', 'local_downloadcentercustom', get_string('portfolio_sel_bystudent', 'local_downloadcentercustom')) . '</li>');
+            $mform->addElement('html', '<li>' . get_string('infomessage_portfolio_assignment', 'local_centro_de_descarga_de_portafolio_de_evidencias', get_string('portfolio_sel_allmygroups', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</li>');
+            $mform->addElement('html', '<li>' . get_string('infomessage_portfolio_student', 'local_centro_de_descarga_de_portafolio_de_evidencias', get_string('portfolio_sel_bystudent', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</li>');
             $mform->addElement('html', '</ul>');
             $mform->addElement('html', '</div>');
             $mform->addElement('html', '</div>'); // Cierra mode-panel-normal
         }
 
-        $this->add_action_buttons(true, get_string('createzip', 'local_downloadcentercustom'));
+        $this->add_action_buttons(true, get_string('createzip', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
         $mform->addElement('html', <<<JS
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -1034,32 +1034,32 @@ JS
      * @return string
      */
     private static function build_infomessage(string $mode, bool $materials, bool $assign, bool $quiz): string {
-        $and = get_string('list_and', 'local_downloadcentercustom');
+        $and = get_string('list_and', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         $items = [];
         if ($mode === 'portafolio') {
             if ($assign) {
-                $items[] = get_string('info_pitem_evidence', 'local_downloadcentercustom');
-                $items[] = get_string('info_pitem_feedback', 'local_downloadcentercustom');
+                $items[] = get_string('info_pitem_evidence', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+                $items[] = get_string('info_pitem_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias');
             }
             if ($quiz) {
-                $items[] = get_string('info_pitem_quizzes', 'local_downloadcentercustom');
+                $items[] = get_string('info_pitem_quizzes', 'local_centro_de_descarga_de_portafolio_de_evidencias');
             }
             if ($materials) {
-                $items[] = get_string('info_pitem_materials', 'local_downloadcentercustom');
+                $items[] = get_string('info_pitem_materials', 'local_centro_de_descarga_de_portafolio_de_evidencias');
             }
-            return get_string('infomessage_portfolio', 'local_downloadcentercustom', self::join_list($items, $and));
+            return get_string('infomessage_portfolio', 'local_centro_de_descarga_de_portafolio_de_evidencias', self::join_list($items, $and));
         }
         if ($materials) {
-            $items[] = get_string('info_item_materials', 'local_downloadcentercustom');
+            $items[] = get_string('info_item_materials', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         }
         if ($assign) {
-            $items[] = get_string('info_item_evidence', 'local_downloadcentercustom');
-            $items[] = get_string('info_item_feedback', 'local_downloadcentercustom');
+            $items[] = get_string('info_item_evidence', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+            $items[] = get_string('info_item_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         }
         if ($quiz) {
-            $items[] = get_string('info_item_quizzes', 'local_downloadcentercustom');
+            $items[] = get_string('info_item_quizzes', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         }
-        return get_string('infomessage_normal', 'local_downloadcentercustom', self::join_list($items, $and));
+        return get_string('infomessage_normal', 'local_centro_de_descarga_de_portafolio_de_evidencias', self::join_list($items, $and));
     }
 
     /**
@@ -1091,7 +1091,7 @@ JS
                 $allstudents = !empty($data['selectallstudents']);
                 $hassel = !empty($data['selectedstudents']);
                 if (!$allstudents && !$hassel) {
-                    $errors['selectedstudents'] = get_string('selectstudents_required', 'local_downloadcentercustom');
+                    $errors['selectedstudents'] = get_string('selectstudents_required', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 }
             }
             return $errors;
@@ -1105,7 +1105,7 @@ JS
         $usergroups = groups_get_user_groups($COURSE->id, $USER->id);
         $usergroupcount = count($usergroups[0] ?? []);
         if ($hastask && !$hasgroups && $usergroupcount >= 2) {
-            $errors['selectedgroups'] = get_string('selectgroup_required', 'local_downloadcentercustom');
+            $errors['selectedgroups'] = get_string('selectgroup_required', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         }
         return $errors;
     }

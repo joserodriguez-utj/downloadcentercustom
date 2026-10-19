@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_assign_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
 
     /**
      * Handles the mod type assign files.
@@ -39,7 +39,7 @@ trait local_downloadcentercustom_assign_trait {
         global $CFG, $DB, $USER;
         $context = $resource->context;
         // Portón: si no tiene permiso, no procesa nada de esta tarea.
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $context->get_course_context())) {
             return;
         }
         $fs = get_file_storage();
@@ -87,7 +87,7 @@ trait local_downloadcentercustom_assign_trait {
             if (!empty(trim($introcontent))) {
                 $introcontent = str_replace('@@PLUGINFILE@@', '.', $introcontent);
                 $introcontent = self::convert_content_to_html_doc(
-                    get_string('instructions', 'local_downloadcentercustom'),
+                    get_string('instructions', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
                     $introcontent
                 );
                 $filelist[$instruccionesdir . '/instrucciones.html'] = [$introcontent];
@@ -186,7 +186,7 @@ trait local_downloadcentercustom_assign_trait {
                     if ($areafiles) {
                         foreach ($areafiles as $file) {
                             $originalname = $file->get_filename();
-                            $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_downloadcentercustom');
+                            $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                             $newname = $fileprefix . ' - ' . $studentname . ' - ' . $originalname;
                             $filename = $fullname . $file->get_filepath() .
                                 self::shorten_filename($newname);
@@ -198,7 +198,7 @@ trait local_downloadcentercustom_assign_trait {
                     $onlinetext = $assignplugin->get_editor_text('onlinetext', $submission->id);
                     $onlinetext = str_replace('@@PLUGINFILE@@/', '', $onlinetext);
                     if (mb_strlen(trim($onlinetext)) > 0) {
-                        $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_downloadcentercustom');
+                        $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                         $htmlname = $fileprefix . ' - ' . $studentname . ' - ' . $assignplugin->get_name();
                         $onlinetext = self::convert_content_to_html_doc($htmlname, $onlinetext);
                         $filename = $fullname . '/' . self::shorten_filename($htmlname . '.html');
@@ -218,9 +218,9 @@ trait local_downloadcentercustom_assign_trait {
             if ($grade) {
                 if ($portfoliomode) {
                     // Portafolio: retroalimentación al nivel de la actividad.
-                    $fullname = $resdir . '/' . get_string('string_feedback_url', 'local_downloadcentercustom');
+                    $fullname = $resdir . '/' . get_string('string_feedback_url', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 } else {
-                    $fullname .= '/' . get_string('string_feedback_url', 'local_downloadcentercustom');
+                    $fullname .= '/' . get_string('string_feedback_url', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 }
 
                 foreach ($feedbackplugins as $feedbackplugin) {
@@ -259,13 +259,13 @@ trait local_downloadcentercustom_assign_trait {
                 }
 
                 // Generar HTML de rúbrica/retroalimentación por alumno.
-                $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_downloadcentercustom');
+                $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 $gradeval = $grade->grade ?? '';
                 if (is_numeric($gradeval) && (float)$gradeval >= 0) {
                     $gradeval = number_format((float)$gradeval, 1, '.', '');
                 } else {
                     // Moodle usa -1 como "sin calificar".
-                    $gradeval = get_string('string_no_grade', 'local_downloadcentercustom');
+                    $gradeval = get_string('string_no_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 }
                 if ($hasrubric) {
                     $rubrich = self::build_rubric_html(
@@ -280,7 +280,7 @@ trait local_downloadcentercustom_assign_trait {
                 } else {
                     $rubrich = self::build_feedback_html($studentname, $comments ?? '', $gradeval);
                 }
-                $htmlname = get_string('string_feedback', 'local_downloadcentercustom') . ' - ' . $studentname;
+                $htmlname = get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' - ' . $studentname;
                 $rubrich = self::convert_content_to_html_doc($htmlname, $rubrich);
                 $filename = $fullname . '/' . self::shorten_filename($htmlname . '.html');
                 $filelist[$filename] = [$rubrich];
@@ -334,13 +334,13 @@ trait local_downloadcentercustom_assign_trait {
         // Fila 1: encabezados de criterios.
         $criterianames = [];
         foreach ($rubriccriteria as $c) {
-            $criterianames[] = htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_downloadcentercustom', round($c->max_score, 2));
+            $criterianames[] = htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_centro_de_descarga_de_portafolio_de_evidencias', round($c->max_score, 2));
         }
-        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_downloadcentercustom') . '</td>';
+        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td>';
         foreach ($rubriccriteria as $c) {
-            $h .= '<td>' . htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_downloadcentercustom', round($c->max_score, 2)) . '</td>';
+            $h .= '<td>' . htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_centro_de_descarga_de_portafolio_de_evidencias', round($c->max_score, 2)) . '</td>';
         }
-        $h .= '<td>' . get_string('string_feedback', 'local_downloadcentercustom') . '</td><td>' . get_string('string_grade', 'local_downloadcentercustom') . '</td></tr>';
+        $h .= '<td>' . get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td></tr>';
 
         // Fila 2: puntuación y nivel.
         $h .= '<tr><td rowspan="2" style="vertical-align:top;font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
@@ -350,9 +350,9 @@ trait local_downloadcentercustom_assign_trait {
                 if ($f->criterionid == $cid) {
                     $score = isset($f->score) ? round($f->score, 2) : 0;
                     $level = $f->leveldef ?? '';
-                    $h .= '<td style="vertical-align:top;">' . get_string('string_points', 'local_downloadcentercustom') . $score;
+                    $h .= '<td style="vertical-align:top;">' . get_string('string_points', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $score;
                     if ($level) {
-                        $h .= '<br><em>' . get_string('string_level', 'local_downloadcentercustom') . htmlspecialchars($level) . '</em>';
+                        $h .= '<br><em>' . get_string('string_level', 'local_centro_de_descarga_de_portafolio_de_evidencias') . htmlspecialchars($level) . '</em>';
                     }
                     $h .= '</td>';
                     $found = true;
@@ -365,7 +365,7 @@ trait local_downloadcentercustom_assign_trait {
         }
         $fb = trim(strip_tags($feedbacktext ?? ''));
         if ($fb === '') {
-            $fb = get_string('string_no_feedback', 'local_downloadcentercustom');
+            $fb = get_string('string_no_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         } else {
             $fb = nl2br(htmlspecialchars($fb));
         }
@@ -384,9 +384,9 @@ trait local_downloadcentercustom_assign_trait {
                 }
             }
             if ($obs) {
-                $h .= '<td style="vertical-align:top;background:#fffde7;">' . get_string('string_observation', 'local_downloadcentercustom') . htmlspecialchars($obs) . '</td>';
+                $h .= '<td style="vertical-align:top;background:#fffde7;">' . get_string('string_observation', 'local_centro_de_descarga_de_portafolio_de_evidencias') . htmlspecialchars($obs) . '</td>';
             } else {
-                $h .= '<td style="vertical-align:top;color:#999;">' . get_string('string_no_comment', 'local_downloadcentercustom') . '</td>';
+                $h .= '<td style="vertical-align:top;color:#999;">' . get_string('string_no_comment', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td>';
             }
         }
         $h .= '</tr>';
@@ -406,7 +406,7 @@ trait local_downloadcentercustom_assign_trait {
     public static function build_feedback_html($studentname, $feedbacktext, $gradeval) {
         $fb = trim(strip_tags($feedbacktext ?? ''));
         $h = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">';
-        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_downloadcentercustom') . '</td><td>' . get_string('string_feedback', 'local_downloadcentercustom') . '</td><td>' . get_string('string_grade', 'local_downloadcentercustom') . '</td></tr>';
+        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td></tr>';
         $h .= '<tr>';
         $h .= '<td style="font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
         $h .= '<td>' . nl2br(htmlspecialchars($fb ?: '-')) . '</td>';

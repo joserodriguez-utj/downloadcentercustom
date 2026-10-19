@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Upgrade code for local_downloadcentercustom.
+ * Upgrade code for local_centro_de_descarga_de_portafolio_de_evidencias.
  *
- * @package   local_downloadcentercustom
+ * @package   local_centro_de_descarga_de_portafolio_de_evidencias
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $oldversion
  * @return bool
  */
-function xmldb_local_downloadcentercustom_upgrade($oldversion) {
+function xmldb_local_centro_de_descarga_de_portafolio_de_evidencias_upgrade($oldversion) {
     global $DB;
 
     if ($oldversion < 2026101601) {
@@ -37,7 +37,7 @@ function xmldb_local_downloadcentercustom_upgrade($oldversion) {
         // se revoca 'downloadnormal' de esos roles en el contexto de sistema
         // (el rol manager lo conserva). El archetype de db/access.php solo aplica
         // a instalaciones nuevas, por eso aquí se corrige lo ya existente.
-        $capability = 'local/downloadcentercustom:downloadnormal';
+        $capability = 'local/centro_de_descarga_de_portafolio_de_evidencias:downloadnormal';
         $systemcontext = \context_system::instance();
         foreach (['teacher', 'editingteacher'] as $shortname) {
             $role = $DB->get_record('role', ['shortname' => $shortname]);
@@ -46,7 +46,7 @@ function xmldb_local_downloadcentercustom_upgrade($oldversion) {
             }
         }
 
-        upgrade_plugin_savepoint(true, 2026101601, 'local', 'downloadcentercustom');
+        upgrade_plugin_savepoint(true, 2026101601, 'local', 'centro_de_descarga_de_portafolio_de_evidencias');
     }
 
     return true;

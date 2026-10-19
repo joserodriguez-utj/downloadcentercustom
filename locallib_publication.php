@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_publication_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_publication_trait {
 
         /**
      * Handles the mod type publication files.
@@ -40,7 +40,7 @@ trait local_downloadcentercustom_publication_trait {
         $userfields = \core_user\fields::for_userpic();
         $context = $resource->context;
         // Portón: si no tiene permiso, no procesa nada de esta publicación.
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $context->get_course_context())) {
             return;
         }
         $fs = get_file_storage();

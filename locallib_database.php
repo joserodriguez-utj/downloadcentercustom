@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,14 +17,14 @@
 /**
  * Trait con la lógica de descarga de actividad Base de Datos (data).
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @modified      2026 José Luis Rodriguez Escobedo (jose.rodriguez@utj.edu.mx)
  *               Universidad Tecnológica de Jalisco — joserodriguez-utj
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_database_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
 
     /**
      * Handle Database (data) module.
@@ -39,7 +39,7 @@ trait local_downloadcentercustom_database_trait {
         global $CFG, $DB;
         $context = $resource->context;
 
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $context->get_course_context())) {
             return;
         }
 
@@ -105,9 +105,9 @@ trait local_downloadcentercustom_database_trait {
             $html = $this->build_data_html($data, $cm, $fields, $userrecords, $user, $studentname);
             if ($html) {
                 $html = self::convert_content_to_html_doc(
-                    get_string('data_results', 'local_downloadcentercustom') . $studentname, $html);
+                    get_string('data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
                 $filename = $evidenciadir . '/' . self::shorten_filename(
-                    get_string('data_results', 'local_downloadcentercustom') . $studentname . '.html');
+                    get_string('data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
 
@@ -136,14 +136,14 @@ trait local_downloadcentercustom_database_trait {
         require_once($CFG->dirroot . '/rating/lib.php');
 
         // === MÉTODO DE CALIFICACIÓN ===
-        $gradingmethod = get_string('data_no_grade', 'local_downloadcentercustom');
+        $gradingmethod = get_string('data_no_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias');
 
         if ($data->assessed < 0) {
             $scale = $DB->get_record('scale', ['id' => abs($data->assessed)]);
             if ($scale) {
-                $gradingmethod = get_string('data_scale_custom', 'local_downloadcentercustom') . ': ' . s($scale->name);
+                $gradingmethod = get_string('data_scale_custom', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ': ' . s($scale->name);
             } else {
-                $gradingmethod = get_string('data_scale_custom', 'local_downloadcentercustom');
+                $gradingmethod = get_string('data_scale_custom', 'local_centro_de_descarga_de_portafolio_de_evidencias');
             }
         } else if ($data->assessed > 0) {
             $ratingmethods = [
@@ -154,7 +154,7 @@ trait local_downloadcentercustom_database_trait {
                 RATING_AGGREGATE_MINIMUM => get_string('aggregatemin', 'rating'),
                 RATING_AGGREGATE_SUM => get_string('aggregatesum', 'rating'),
             ];
-            $gradingmethod = $ratingmethods[$data->assessed] ?? get_string('data_rated', 'local_downloadcentercustom');
+            $gradingmethod = $ratingmethods[$data->assessed] ?? get_string('data_rated', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         }
 
         // === CALIFICACIÓN FINAL (desde el libro de calificaciones) ===
@@ -194,14 +194,14 @@ trait local_downloadcentercustom_database_trait {
         }
 
         // === CONSTRUIR HTML ===
-        $h = '<h2>' . get_string('data_data_results', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($data->name) . '</h2>';
+        $h = '<h2>' . get_string('data_data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname) . ' — ' . s($data->name) . '</h2>';
 
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
         $h .= '<tr style="background:#f2f2f2;">';
-        $h .= '<th>' . get_string('data_student', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('data_num_records', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('data_grading_method', 'local_downloadcentercustom') . '</th>';
-        $h .= '<th>' . get_string('data_final_grade', 'local_downloadcentercustom') . '</th>';
+        $h .= '<th>' . get_string('data_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('data_num_records', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('data_grading_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
+        $h .= '<th>' . get_string('data_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
         $h .= '</tr>';
 
         $h .= '<tr>';
@@ -214,9 +214,9 @@ trait local_downloadcentercustom_database_trait {
 
         // === DETALLE DE REGISTROS ===
         foreach ($userrecords as $index => $record) {
-            $recordtitle = get_string('data_record_title', 'local_downloadcentercustom') . ' #' . ($index + 1);
+            $recordtitle = get_string('data_record_title', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' #' . ($index + 1);
             $h .= '<h3>' . $recordtitle . '</h3>';
-            $h .= '<p><em>' . get_string('data_submitted', 'local_downloadcentercustom') . ': ' . userdate($record->timecreated) . '</em></p>';
+            $h .= '<p><em>' . get_string('data_submitted', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ': ' . userdate($record->timecreated) . '</em></p>';
 
             $contents = $DB->get_records('data_content', ['recordid' => $record->id], 'id ASC');
             $contentbyfield = [];
@@ -234,7 +234,7 @@ trait local_downloadcentercustom_database_trait {
                 if ($content) {
                     $h .= $this->format_data_content($field, $content, $record, $cm);
                 } else {
-                    $h .= '<em>' . get_string('data_empty', 'local_downloadcentercustom') . '</em>';
+                    $h .= '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
                 }
 
                 $h .= '</td>';
@@ -279,19 +279,19 @@ trait local_downloadcentercustom_database_trait {
             case 'picture':
                 $url = $this->get_data_file_url($cm, $record, $field, $content);
                 return $url ? '<img src="' . $url . '" style="max-width:300px;max-height:300px;" />' :
-                    '<em>' . get_string('data_empty', 'local_downloadcentercustom') . '</em>';
+                    '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
 
             case 'checkbox':
                 $values = explode('##', $value ?? '');
                 $values = array_filter(array_map('trim', $values));
                 return $values ? htmlspecialchars(implode(', ', $values)) :
-                    '<em>' . get_string('data_empty', 'local_downloadcentercustom') . '</em>';
+                    '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
 
             case 'multimenu':
                 $values = explode('##', $value ?? '');
                 $values = array_filter(array_map('trim', $values));
                 return $values ? htmlspecialchars(implode(', ', $values)) :
-                    '<em>' . get_string('data_empty', 'local_downloadcentercustom') . '</em>';
+                    '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
 
             case 'radiobutton':
             case 'menu':
@@ -354,9 +354,9 @@ trait local_downloadcentercustom_database_trait {
     private function get_data_file_link($cm, $record, $field, $content) {
         $url = $this->get_data_file_url($cm, $record, $field, $content);
         if (!$url) {
-            return '<em>' . get_string('data_empty', 'local_downloadcentercustom') . '</em>';
+            return '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
         }
-        return '<a href="' . $url . '" target="_blank">' . get_string('data_download_file', 'local_downloadcentercustom') . '</a>';
+        return '<a href="' . $url . '" target="_blank">' . get_string('data_download_file', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</a>';
     }
 
     /**

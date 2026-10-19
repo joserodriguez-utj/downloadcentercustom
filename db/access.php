@@ -1,5 +1,5 @@
 <?php
-// This file is part of local_downloadcentercustom for Moodle - http://moodle.org/
+// This file is part of local_centro_de_descarga_de_portafolio_de_evidencias for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /**
  * Download center plugin
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -28,7 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-    'local/downloadcentercustom:view' => [
+    'local/centro_de_descarga_de_portafolio_de_evidencias:view' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
@@ -37,23 +37,14 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
-    'local/downloadcentercustom:downloadMaterials' => [
+    'local/centro_de_descarga_de_portafolio_de_evidencias:downloadMaterials' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
             'manager' => CAP_ALLOW,
         ],
     ],
-    'local/downloadcentercustom:downloadAssignments' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_COURSE,
-        'archetypes' => [
-            'teacher' => CAP_ALLOW,
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW,
-        ],
-    ],
-    'local/downloadcentercustom:downloadQuiz' => [
+    'local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
@@ -62,7 +53,16 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
-    'local/downloadcentercustom:downloadnormal' => [
+    'local/centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+    'local/centro_de_descarga_de_portafolio_de_evidencias:downloadnormal' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [
@@ -71,7 +71,7 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
-    'local/downloadcentercustom:downloadportfolio' => [
+    'local/centro_de_descarga_de_portafolio_de_evidencias:downloadportfolio' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => [

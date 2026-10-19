@@ -17,7 +17,7 @@
 /**
  * Trait con la lógica de descarga de actividades H5P.
  *
- * @package       local_downloadcentercustom
+ * @package       local_centro_de_descarga_de_portafolio_de_evidencias
  * @author        Simeon Naydenov (moniNaydenov@gmail.com)
  * @copyright     2020 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license       http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,7 +27,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_h5p_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_h5p_trait {
 
     /**
      * Handle H5P module.
@@ -43,7 +43,7 @@ trait local_downloadcentercustom_h5p_trait {
         global $CFG, $DB;
         $context = $resource->context;
 
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $context->get_course_context())) {
             return;
         }
         
@@ -86,8 +86,8 @@ trait local_downloadcentercustom_h5p_trait {
             $studentname = fullname($user);
             $html = $this->build_h5p_html($h5p, $cm, $user, $studentname);
             if ($html) {
-                $html = self::convert_content_to_html_doc(get_string('h5p_filename', 'local_downloadcentercustom') . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('h5p_filename', 'local_downloadcentercustom') . $studentname . '.html');
+                $html = self::convert_content_to_html_doc(get_string('h5p_filename', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
+                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('h5p_filename', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -131,14 +131,14 @@ trait local_downloadcentercustom_h5p_trait {
             }
         }
         $finalgradedisplay = ($finalgrade === '')
-            ? get_string('string_no_grade', 'local_downloadcentercustom')
+            ? get_string('string_no_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias')
             : $finalgrade;
 
-        $h = '<h2>' . get_string('h5p_title', 'local_downloadcentercustom') . s($studentname) . '</h2>';
+        $h = '<h2>' . get_string('h5p_title', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname) . '</h2>';
 
         $attemptcount = count($attempts);
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">';
-        $h .= '<tr style="background:#f2f2f2;">'.'<th>'. get_string('h5p_sharp', 'local_downloadcentercustom') .'</th>' . '<th>' . get_string('h5p_date', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_max_score', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('h5p_duration', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('quiz_grade_method', 'local_downloadcentercustom') . '</th>' . '<th>' . get_string('string_grade', 'local_downloadcentercustom') . '</th>' . '</tr>';
+        $h .= '<tr style="background:#f2f2f2;">'.'<th>'. get_string('h5p_sharp', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</th>' . '<th>' . get_string('h5p_date', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('h5p_score', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('h5p_max_score', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('h5p_duration', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('string_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '</tr>';
         $row = 0;
         foreach ($attempts as $attempt) {
             $row++;
@@ -158,11 +158,11 @@ trait local_downloadcentercustom_h5p_trait {
 
         // Detalle de respuestas por intento.
         foreach ($attempts as $attempt) {
-            $h .= '<h3>' . get_string('h5p_attempt', 'local_downloadcentercustom') . $attempt->get_attempt() . '</h3>';
+            $h .= '<h3>' . get_string('h5p_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $attempt->get_attempt() . '</h3>';
 
             $results = $attempt->get_results();
             if (empty($results)) {
-                $h .= '<p><em>' . get_string('h5p_no_answer', 'local_downloadcentercustom') . '</em></p>';
+                $h .= '<p><em>' . get_string('h5p_no_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em></p>';
                 continue;
             }
 
@@ -204,7 +204,7 @@ trait local_downloadcentercustom_h5p_trait {
 
             // Los resultados tipo "compound" no se pueden detallar: mostrar al menos el puntaje.
             if (!$printed) {
-                $h .= '<p>' . get_string('string_points', 'local_downloadcentercustom')
+                $h .= '<p>' . get_string('string_points', 'local_centro_de_descarga_de_portafolio_de_evidencias')
                     . $attempt->get_rawscore() . ' / ' . $attempt->get_maxscore() . '</p>';
             }
         }

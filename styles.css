@@ -1,34 +1,34 @@
-.path-local-downloadcentercustom .mform .card.block  .row.fitem .col-md-3.col-form-label,
-.path-local-downloadcentercustom .mform  #id_downloadoptionscontainer .row.fitem .col-md-3.col-form-label,
-.path-local-downloadcentercustom form fieldset > div > div.fitem.femptylabel {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .card.block  .row.fitem .col-md-3.col-form-label,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform  #id_downloadoptionscontainer .row.fitem .col-md-3.col-form-label,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form fieldset > div > div.fitem.femptylabel {
     display: none;
 }
 
-.path-local-downloadcentercustom form .warningmessage {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .warningmessage {
     font-size: 1.2em;
     font-weight: bold;
     margin-bottom: 10px;
 }
-.path-local-downloadcentercustom .include_setting,
-.path-local-downloadcentercustom .grouped_settings .normal_setting {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .include_setting,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .grouped_settings .normal_setting {
     display: inline-block;
 }
 
-.path-local-downloadcentercustom .mform .grouped_settings {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .grouped_settings {
     overflow: hidden;
 }
 
-.path-local-downloadcentercustom .mform .block {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .block {
     padding-top: 5px;
     padding-left: 1rem;
 }
 
 
-.path-local-downloadcentercustom .core_progress_display_if_slow {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .core_progress_display_if_slow {
     width: 400px;
 }
 
-.path-local-downloadcentercustom #mform2 #fitem_id_submitbutton {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #mform2 #fitem_id_submitbutton {
     background: none;
     border: 0;
     margin: 0;
@@ -36,13 +36,13 @@
 }
 
 
-.path-local-downloadcentercustom form .itemtitle {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle {
     font-weight: normal;
 }
 
-.path-local-downloadcentercustom form .block .fitem label .sectiontitle,
-.path-local-downloadcentercustom form .block .fitem .fitemtitle label .sectiontitle,
-.path-local-downloadcentercustom form .itemtitle span {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .block .fitem label .sectiontitle,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .block .fitem .fitemtitle label .sectiontitle,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle span {
     max-width: 95%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -50,43 +50,43 @@
     white-space: nowrap;
 }
 
-.path-local-downloadcentercustom form .block .fitem label .sectiontitlebadge {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .block .fitem label .sectiontitlebadge {
     position: relative;
     top: -0.2rem;
 }
-.path-local-downloadcentercustom form .itemtitle span,
-.path-local-downloadcentercustom form .block .fitem label .sectiontitle {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle span,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .block .fitem label .sectiontitle {
     vertical-align: text-bottom;
 }
 
-.path-local-downloadcentercustom form .activityicon {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form .activityicon {
     width: 16px;
     height: 16px;
     margin-top: -7px;
 }
 
-.path-local-downloadcentercustom form #mod_select_links .activityicon {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form #mod_select_links .activityicon {
     margin-top: 0;
     margin-right: 0.5rem;
 }
 
 
-.path-local-downloadcentercustom .mform .grouped_settings .fitem div.fitemtitle {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .grouped_settings .fitem div.fitemtitle {
     padding-top: 0;
 }
 
-.path-local-downloadcentercustom #mod_select_links {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #mod_select_links {
     overflow: hidden;
 }
 
 /* boost fixes */
 
-.path-local-downloadcentercustom #region-main .card-body .card.block .col-md-3 {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card-body .card.block .col-md-3 {
     display: none;
 }
 
 
-.path-local-downloadcentercustom #region-main .card-body .card.block {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card-body .card.block {
     margin-bottom: 0.5rem;
 }
 
@@ -96,34 +96,34 @@
    el plugin compatible con 5.1 (sin modo oscuro) y 5.3 (claro/oscuro), siguiendo
    la práctica del core de no fijar colores. El fallback cubre temas que no
    definan la variable. */
-.path-local-downloadcentercustom #region-main .card.block {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card.block {
     background-color: var(--bs-tertiary-bg, #f5f5f5);
 }
 
-.path-local-downloadcentercustom #region-main .card.block.subsection {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card.block.subsection {
     background-color: var(--bs-card-bg, #fff);
 }
 
-.path-local-downloadcentercustom #region-main .card.block.grouped_settings {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card.block.grouped_settings {
     margin-bottom: 1rem !important;
     background-color: var(--bs-card-bg, #fff);
 }
 
-.path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card.block .row.fitem:first-child {
     margin: 10px 0 !important;
 }
 
-.path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child label {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card.block .row.fitem:first-child label {
     font-weight: bold;
     margin-bottom: 0 !important;
     padding-top: 0.7rem;
 }
 
-.path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child input[type="checkbox"] {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card.block .row.fitem:first-child input[type="checkbox"] {
     margin-top: 0.75rem !important;
 }
 
-.path-local-downloadcentercustom #region-main .card.block .row.fitem {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card.block .row.fitem {
     margin-left: 1rem !important;
     margin: 10px 0 !important;
 }
@@ -131,7 +131,7 @@
 /* Sección "Filtrar por grupos": mismo look de tarjeta (borde/radio/fondo) que "Opciones de descarga".
    Nota: es un <fieldset>, no un .card, así que NO hereda --bs-card-bg (definida solo en .card);
    se usa --bs-white, que sí está en :root y el tema remapea en oscuro (#fff -> #343a40). */
-.path-local-downloadcentercustom #id_groupfilter {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #id_groupfilter {
     border: 1px solid var(--bs-border-color, rgba(0, 0, 0, 0.175));
     border-radius: 8px;
     background-color: var(--bs-white, #fff);
@@ -141,74 +141,74 @@
     overflow: hidden;
 }
 
-.path-local-downloadcentercustom #id_groupfilter > .d-flex {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #id_groupfilter > .d-flex {
     margin-bottom: 0.75rem;
     padding-left: 1rem;
 }
 
 /* delete first empty row used in hack :) */
-.path-local-downloadcentercustom #region-main .card-body .mform .warningmessage + .fitem {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .card-body .mform .warningmessage + .fitem {
     display: none;
 }
 
 
 /* boost fixes end */
 
-.path-local-downloadcentercustom .mform .row label {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .row label {
     width: 100%;
 }
 
-.path-local-downloadcentercustom .mform #id_downloadoptionscontainer .row label {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform #id_downloadoptionscontainer .row label {
     width: auto;
 }
 
-.path-local-downloadcentercustom .mform .row.downloadcenter_selector label {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .row.downloadcenter_selector label {
     margin-right: 10px;
     width: auto;
 }
 
-.path-local-downloadcentercustom .mform .row.downloadcenter_selector {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .row.downloadcenter_selector {
     margin-top: 0 !important; /* stylelint-disable-line declaration-no-important */
     margin-bottom: 0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
-.path-local-downloadcentercustom #region-main .mform #id_downloadoptionscontainer .row.fitem.row .col-md-9.checkbox,
-.path-local-downloadcentercustom #region-main .mform .card.block.grouped_settings .row.fitem.row .col-md-9,
-.path-local-downloadcentercustom #region-main .mform .card.block .row.fitem.row .col-md-9.checkbox {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .mform #id_downloadoptionscontainer .row.fitem.row .col-md-9.checkbox,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .mform .card.block.grouped_settings .row.fitem.row .col-md-9,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main .mform .card.block .row.fitem.row .col-md-9.checkbox {
     max-width: 100%;
     flex: 0 0 100%;
 }
 
 @media (min-width: 1475px) {
-    .path-local-downloadcentercustom form .fitemtitle {
+    .path-local-centro_de_descarga_de_portafolio_de_evidencias form .fitemtitle {
         float: none;
     }
 
-    .path-local-downloadcentercustom form .itemtitle span {
+    .path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle span {
         max-width: 95%;
     }
 }
 
 @media (max-width: 1475px) {
-    .path-local-downloadcentercustom form .fitemtitle {
+    .path-local-centro_de_descarga_de_portafolio_de_evidencias form .fitemtitle {
         float: none;
     }
 
-    .path-local-downloadcentercustom form .itemtitle span {
+    .path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle span {
         max-width: 90%;
     }
 
 }
 
 @media (max-width: 1229px) {
-    .path-local-downloadcentercustom form .itemtitle span {
+    .path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle span {
         max-width: 85%;
     }
 }
 
 
 @media (max-width: 499px) {
-    .path-local-downloadcentercustom form .itemtitle span {
+    .path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle span {
         max-width: 78%;
     }
 
@@ -216,19 +216,19 @@
 }
 
 @media (max-width: 319px) {
-    .path-local-downloadcentercustom form .itemtitle span {
+    .path-local-centro_de_descarga_de_portafolio_de_evidencias form .itemtitle span {
         max-width: 100px;
     }
 
 
 }
 
-.path-local-downloadcentercustom form #id_downloadoptionscontainer {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form #id_downloadoptionscontainer {
     padding-left: 1rem;
     padding-right: 1rem;
 }
 
-.path-local-downloadcentercustom #region-main #downloadcenter-search-clear {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main #downloadcenter-search-clear {
     z-index: 10;
     width: 2.8rem;
     margin-left: -2.8rem;
@@ -236,96 +236,96 @@
     border-radius: 0;
 }
 
-.path-local-downloadcentercustom .form-autocomplete-suggestions {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .form-autocomplete-suggestions {
     max-height: 200px !important;
     border: 1px solid var(--bs-border-color, #ced4da) !important;
     border-radius: 4px !important;
 }
 
-.path-local-downloadcentercustom [role="listbox"] { /* [role="option"] Contains  selecter groups on Groups*/
+.path-local-centro_de_descarga_de_portafolio_de_evidencias [role="listbox"] { /* [role="option"] Contains  selecter groups on Groups*/
     padding: 6px 12px !important;
     font-size: 0.95rem !important;
     width: 260px;
 }
 
-.path-local-downloadcentercustom .form-autocomplete-suggestions li[aria-selected="true"] {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .form-autocomplete-suggestions li[aria-selected="true"] {
     background-color: #0d6efd !important;
     color: #fff !important;
     font-weight: 700 !important;
 }
 
-.path-local-downloadcentercustom .mform .fitem:has(#id_selectedgroups) {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .fitem:has(#id_selectedgroups) {
     margin-bottom: 1rem !important;
 }
 
-.path-local-downloadcentercustom #fgroup_id_buttonar {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #fgroup_id_buttonar {
     margin-top: 100px !important;
 }
 
-.path-local-downloadcentercustom #fgroup_id_buttonar .felement input[type="submit"] {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #fgroup_id_buttonar .felement input[type="submit"] {
     margin-right: 24px !important;
 }
 
-.path-local-downloadcentercustom #downloadcenter-bytype,
-.path-local-downloadcentercustom #mod_select_links,
-.path-local-downloadcentercustom .grouped_settings .downloadcenter_selector .col-md-9 .font-weight-bold.ml-3.text-nowrap {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #downloadcenter-bytype,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #mod_select_links,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .grouped_settings .downloadcenter_selector .col-md-9 .font-weight-bold.ml-3.text-nowrap {
     display: none !important;
 }
 
-.path-local-downloadcentercustom #opciones-container .fitem:not(.downloadcenter_selector) {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #opciones-container .fitem:not(.downloadcenter_selector) {
     min-width: 120px !important;
     flex: 0 0 auto !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-.path-local-downloadcentercustom #opciones-container .fitem.mb-3 {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #opciones-container .fitem.mb-3 {
     margin-bottom: 0 !important;
 }
 
-.path-local-downloadcentercustom #opciones-title {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #opciones-title {
     margin-bottom: 18px !important;
 }
 
-.path-local-downloadcentercustom #region-main #opciones-container .downloadcenter_selector {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main #opciones-container .downloadcenter_selector {
     margin: 10px 0 8px !important;
     padding-left: 14px !important;
 }
 
-.path-local-downloadcentercustom #region-main #opciones-container .downloadcenter_selector > .col-md-9 {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #region-main #opciones-container .downloadcenter_selector > .col-md-9 {
     padding-left: 0 !important;
 }
 
-.path-local-downloadcentercustom #opciones-container > div[style*="display:flex"] {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #opciones-container > div[style*="display:flex"] {
     row-gap: 4px !important;
     column-gap: 4px !important;
     margin-left: 0.75rem !important;
 }
 
-.path-local-downloadcentercustom .card.block .fitem {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .card.block .fitem {
     padding-left: 2rem !important;
     margin-bottom: 6px !important;
     text-align: left !important;
 }
 
-.path-local-downloadcentercustom .card.block .fitem:first-child {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .card.block .fitem:first-child {
     padding-left: 0 !important;
     margin-bottom: 10px !important;
 }
 
-.path-local-downloadcentercustom .card.block .fitem .itemtitle {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .card.block .fitem .itemtitle {
     text-align: left !important;
     display: block !important;
 }
 
-.path-local-downloadcentercustom .alert.alert-danger {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .alert.alert-danger {
     width: 46.57rem !important;
     max-width: none !important;
     margin-left: .98rem;
 }
 
 /* Modo de descarga: se mueve con moverOpciones() al inicio del card. */
-.path-local-downloadcentercustom .dc-hidden {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .dc-hidden {
     display: none !important;
 }
 
@@ -333,34 +333,34 @@
    que modfilter.js inserta de forma asíncrona (y la lista de tipos). Se usa :has()
    para no depender del momento en que se crea. IMPORTANTE: no ocultar la tarjeta
    contenedora porque moverOpciones() mueve ahí todo el panel de opciones. */
-.path-local-downloadcentercustom form.dc-portfolio-mode .downloadcenter_selector:has(#downloadcenter-all-included),
-.path-local-downloadcentercustom form.dc-portfolio-mode #mod_select_links {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form.dc-portfolio-mode .downloadcenter_selector:has(#downloadcenter-all-included),
+.path-local-centro_de_descarga_de_portafolio_de_evidencias form.dc-portfolio-mode #mod_select_links {
     display: none !important;
 }
 
-.path-local-downloadcentercustom #modo-selector {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #modo-selector {
     margin-top: 0 !important;
     margin-bottom: 18px !important;
 }
 
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector {
     margin: 10px 0 8px !important;
     padding-left: 14px !important;
 }
 
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector > .col-md-9 {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector > .col-md-9 {
     padding-left: 0 !important;
 }
 
 /* Radios de modo: una sola fila horizontal, alineados verticalmente al centro. */
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector > .col-md-9 {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .downloadcenter_selector > .col-md-9 {
     display: flex;
     align-items: center;
     gap: 4px;
     flex-wrap: nowrap;
 }
 
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 > .fitem {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .col-md-9 > .fitem {
     display: inline-flex !important;
     align-items: center !important;
     margin: 0 !important;
@@ -369,20 +369,20 @@
     flex: 0 0 auto !important;
 }
 
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 > .fitem .fitemtitle {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .col-md-9 > .fitem .fitemtitle {
     display: none !important;
 }
 
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 .felement {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .col-md-9 .felement {
     padding: 0 !important;
 }
 
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 .felement input[type="radio"] {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .col-md-9 .felement input[type="radio"] {
     margin: 0 8px 0 0 !important;
     position: static !important;
 }
 
-.path-local-downloadcentercustom :is(#modo-selector, #portfolio-mode-selector) .col-md-9 label {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias :is(#modo-selector, #portfolio-mode-selector) .col-md-9 label {
     font-weight: normal !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -391,23 +391,23 @@
 }
 
 /* Contenido a descargar: mismo margen izquierdo que el resto de titulos. */
-.path-local-downloadcentercustom #opciones-title {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #opciones-title {
     padding-left: 14px !important;
 }
 
 /* Desplegable "Opciones de descarga": header colapsable sobre el modo de descarga. */
-.path-local-downloadcentercustom #opciones-header {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #opciones-header {
     margin-bottom: 8px !important;
     padding-left: 1rem !important;
     /* padding: 0.5rem 0.5rem !important; */
 }
 
 /* Desplaza un poco a la derecha el label "Selecciona un grupo (?)". */
-.path-local-downloadcentercustom #id_selectedgroups_label {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #id_selectedgroups_label {
     margin-left: 1.25rem;
 }
 
 /* Desplaza un poco a la derecha el label "Selecciona estudiante(s) (?)". */
-.path-local-downloadcentercustom #id_selectedstudents_label {
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #id_selectedstudents_label {
     margin-left: 1.25rem;
 }

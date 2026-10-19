@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-trait local_downloadcentercustom_forum_trait {
+trait local_centro_de_descarga_de_portafolio_de_evidencias_forum_trait {
 
     /**
      * Handle Forum module.
@@ -40,7 +40,7 @@ trait local_downloadcentercustom_forum_trait {
         global $CFG, $DB;
         $context = $resource->context;
 
-        if (!has_capability('local/downloadcentercustom:downloadAssignments', $context->get_course_context())) {
+        if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $context->get_course_context())) {
             return;
         }
 
@@ -84,8 +84,8 @@ trait local_downloadcentercustom_forum_trait {
             $adjbasedir = $adjbase . '/Adjuntos';
             $html = $this->build_forum_html($forum, $cm, $user, $studentname, $adjbasedir, $filelist);
             if ($html) {
-                $html = self::convert_content_to_html_doc(get_string('forum_results', 'local_downloadcentercustom') . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('forum_results', 'local_downloadcentercustom')  . $studentname . '.html');
+                $html = self::convert_content_to_html_doc(get_string('forum_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
+                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('forum_results', 'local_centro_de_descarga_de_portafolio_de_evidencias')  . $studentname . '.html');
                 $filelist[$filename] = [$html];
             }
         }
@@ -233,15 +233,15 @@ trait local_downloadcentercustom_forum_trait {
             );
         }
 
-        $h = '<h2>' . get_string('forum_forum_results', 'local_downloadcentercustom') . s($studentname) . ' — ' . s($forum->name) . '</h2>';
+        $h = '<h2>' . get_string('forum_forum_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname) . ' — ' . s($forum->name) . '</h2>';
 
         // Tabla resumen.
         $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
-        $h .= '<tr style="background:#f2f2f2;"><th>' . get_string('forum_discussion', 'local_downloadcentercustom') . '</th><th>' . get_string('forum_participations', 'local_downloadcentercustom') .'</th><th>' . get_string('forum_last_post', 'local_downloadcentercustom') . '</th><th>' . get_string('forum_grade_method', 'local_downloadcentercustom') . '</th>';
+        $h .= '<tr style="background:#f2f2f2;"><th>' . get_string('forum_discussion', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th><th>' . get_string('forum_participations', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</th><th>' . get_string('forum_last_post', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th><th>' . get_string('forum_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
         if (!empty($forum->assessed)) {
-            $h .= '<th>' . get_string('forum_number_of_ratings', 'local_downloadcentercustom') .'</th>';
+            $h .= '<th>' . get_string('forum_number_of_ratings', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</th>';
         }
-        $h .= '<th>' . get_string('forum_final_grade', 'local_downloadcentercustom') .'</th></tr>';
+        $h .= '<th>' . get_string('forum_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</th></tr>';
 
         foreach ($posts as $post) {
             if (!isset($postsbydiscussion[$post->discussion])) {
@@ -256,7 +256,7 @@ trait local_downloadcentercustom_forum_trait {
             $owncount = count($discussionposts);
             $lastpost = end($discussionposts);
             $h .= '<tr>';
-            $h .= '<td><b>' . get_string('forum_discussion_topic', 'local_downloadcentercustom') .'</b> ' . s($discussion->name) . '</td>';
+            $h .= '<td><b>' . get_string('forum_discussion_topic', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</b> ' . s($discussion->name) . '</td>';
             $h .= '<td style="text-align:center;">' . $owncount . '</td>';
             $h .= '<td>' . s(userdate($lastpost->created, '%d de %B de %Y %H:%M')) . '</td>';
             if ($firstdiscussion) {
@@ -280,7 +280,7 @@ trait local_downloadcentercustom_forum_trait {
         // Detalle por discusión: cada respuesta del alumno con el contexto de lo que respondió.
         foreach ($postsbydiscussion as $discussionid => $discussionposts) {
             $discussion = $discussions[$discussionid];
-            $h .= '<h3><b>' . get_string('forum_discussion_topic', 'local_downloadcentercustom') . '</b> ' . s($discussion->name) . '</h3>';
+            $h .= '<h3><b>' . get_string('forum_discussion_topic', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . s($discussion->name) . '</h3>';
 
             foreach ($discussionposts as $post) {
                 // Nivel de indentación según la profundidad en el hilo.
@@ -304,10 +304,10 @@ trait local_downloadcentercustom_forum_trait {
 
                 // Respuesta del alumno.
                 $h .= '<div style="border:1px solid #198754;border-radius:4px;padding:8px;margin-bottom:12px;margin-left:' . $margin . 'px;">';
-                $h .= '<div><b>' . get_string('forum_autor', 'local_downloadcentercustom') . '</b> <span style="color:#198754;font-weight:bold;">' . s($studentname) . '</span></div>';
-                $h .= '<div><b>' . get_string('forum_date', 'local_downloadcentercustom') . '</b> ' . s(userdate($post->created, '%d de %B de %Y %H:%M')) . '</div>';
+                $h .= '<div><b>' . get_string('forum_autor', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> <span style="color:#198754;font-weight:bold;">' . s($studentname) . '</span></div>';
+                $h .= '<div><b>' . get_string('forum_date', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ' . s(userdate($post->created, '%d de %B de %Y %H:%M')) . '</div>';
                 if (!empty($post->subject)) {
-                    $h .= '<div><b>' . get_string('forum_subject', 'local_downloadcentercustom') .'</b> ' . s($post->subject) . '</div>';
+                    $h .= '<div><b>' . get_string('forum_subject', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</b> ' . s($post->subject) . '</div>';
                 }
                 if (!empty($post->message)) {
                     $h .= '<div>' . format_text($post->message, $post->messageformat) . '</div>';
@@ -317,13 +317,13 @@ trait local_downloadcentercustom_forum_trait {
                 if (!empty($post->attachment) && $contextid) {
                     $files = $fs->get_area_files($contextid, 'mod_forum', 'attachment', $post->id, 'filename', false);
                     if (!empty($files)) {
-                        $h .= '<div><b>' . get_string('forum_attachments', 'local_downloadcentercustom') . '</b> ';
+                        $h .= '<div><b>' . get_string('forum_attachments', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</b> ';
                         $links = [];
                         foreach ($files as $file) {
                             $fname = self::shorten_filename($file->get_filename());
                             $filelist[$adjbasedir] = null;
                             $filelist[$adjbasedir . '/' . $fname] = $file;
-                            $links[] = '<a href="' . get_string('forum_attachments_url', 'local_downloadcentercustom') . '/' . rawurlencode($fname) . '">' . s($file->get_filename()) . '</a>';                        }
+                            $links[] = '<a href="' . get_string('forum_attachments_url', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '/' . rawurlencode($fname) . '">' . s($file->get_filename()) . '</a>';                        }
                         $h .= implode(', ', $links);
                         $h .= '</div>';
                     }

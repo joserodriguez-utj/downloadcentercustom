@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_downloadcentercustom/searchbox
+    @template local_centro_de_descarga_de_portafolio_de_evidencias/searchbox
 
     Search box for the download center.
 
@@ -35,19 +35,19 @@
 }}
 <div>
     <div class="input-group">
-        <input type="text" id="downloadcenter-search-input" class="form-control" placeholder="{{#str}}search:hint,local_downloadcentercustom{{/str}}" aria-label="{{#str}}search:hint,local_downloadcentercustom{{/str}}">
+        <input type="text" id="downloadcenter-search-input" class="form-control" placeholder="{{#str}}search:hint,local_centro_de_descarga_de_portafolio_de_evidencias{{/str}}" aria-label="{{#str}}search:hint,local_centro_de_descarga_de_portafolio_de_evidencias{{/str}}">
         <a href="#" class="btn border-0 d-none" style="" id="downloadcenter-search-clear">{{#pix}}i/window_close{{/pix}}</a>
         <div class="input-group-append">
             <span class="input-group-text">{{#pix}}i/search{{/pix}}</span>
         </div>
     </div>
     <div class="d-none ml-1 mt-2" id="downloadcenter-search-results">
-        <strong>{{#str}}search:results,local_downloadcentercustom{{/str}}: <span id="downloadcenter-search-results-count"></span></strong>
+        <strong>{{#str}}search:results,local_centro_de_descarga_de_portafolio_de_evidencias{{/str}}: <span id="downloadcenter-search-results-count"></span></strong>
     </div>
 </div>
 
 {{#js}}
-    require(['local_downloadcentercustom/search'], function(search) {
+    require(['local_centro_de_descarga_de_portafolio_de_evidencias/search'], function(search) {
         search.init();
     });
 {{/js}}
