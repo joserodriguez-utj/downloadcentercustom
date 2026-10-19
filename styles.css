@@ -90,17 +90,23 @@
     margin-bottom: 0.5rem;
 }
 
+/* Fondos adaptables al modo claro/oscuro.
+   Moodle 5.3 (theme_boost) implementa el modo oscuro con [data-bs-theme="dark"]
+   en <html> y remapea las variables de Bootstrap (--bs-*). Usarlas aquí mantiene
+   el plugin compatible con 5.1 (sin modo oscuro) y 5.3 (claro/oscuro), siguiendo
+   la práctica del core de no fijar colores. El fallback cubre temas que no
+   definan la variable. */
 .path-local-downloadcentercustom #region-main .card.block {
-    background-color: #f5f5f5;
+    background-color: var(--bs-tertiary-bg, #f5f5f5);
 }
 
 .path-local-downloadcentercustom #region-main .card.block.subsection {
-    background-color: #fff;
+    background-color: var(--bs-card-bg, #fff);
 }
 
 .path-local-downloadcentercustom #region-main .card.block.grouped_settings {
     margin-bottom: 1rem !important;
-    background-color: #fff;
+    background-color: var(--bs-card-bg, #fff);
 }
 
 .path-local-downloadcentercustom #region-main .card.block .row.fitem:first-child {
@@ -122,11 +128,14 @@
     margin: 10px 0 !important;
 }
 
-/* Sección "Filtrar por grupos": mismo look de tarjeta (borde/radio/fondo) que "Opciones de descarga". */
+/* Sección "Filtrar por grupos": mismo look de tarjeta (borde/radio/fondo) que "Opciones de descarga".
+   Nota: es un <fieldset>, no un .card, así que NO hereda --bs-card-bg (definida solo en .card);
+   se usa --bs-white, que sí está en :root y el tema remapea en oscuro (#fff -> #343a40). */
 .path-local-downloadcentercustom #id_groupfilter {
-    border: 1px solid rgba(0, 0, 0, 0.175);
+    border: 1px solid var(--bs-border-color, rgba(0, 0, 0, 0.175));
     border-radius: 8px;
-    background-color: #fff;
+    background-color: var(--bs-white, #fff);
+    color: var(--bs-body-color);
     margin-bottom: 1rem;
     padding: 5px 1rem;;
     overflow: hidden;
@@ -229,7 +238,7 @@
 
 .path-local-downloadcentercustom .form-autocomplete-suggestions {
     max-height: 200px !important;
-    border: 1px solid #ced4da !important;
+    border: 1px solid var(--bs-border-color, #ced4da) !important;
     border-radius: 4px !important;
 }
 
