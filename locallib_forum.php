@@ -100,6 +100,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_forum_trait {
 
         $fs = get_file_storage();
         $contextid = \context_module::instance($cm->id)->id;
+        $context = \context::instance_by_id($contextid);
 
         // Discusiones del foro.
         $discussions = $DB->get_records('forum_discussions', ['forum' => $forum->id], 'id ASC');
@@ -297,7 +298,10 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_forum_trait {
                     $h .= '<div style="border:1px solid #ddd;background:#f5f5f5;border-radius:4px;padding:8px;margin-bottom:4px;margin-left:' . $parentmargin . 'px;">';
                     $h .= '<div><b>' . s($paname) . '</b> — ' . s(userdate($parent->created, '%d de %B de %Y %H:%M')) . '</div>';
                     if (!empty($parent->message)) {
-                        $h .= '<div>' . format_text($parent->message, $parent->messageformat) . '</div>';
+                        $parentmessage = file_rewrite_pluginfile_urls(
+                            $parent->message, 'pluginfile.php', $contextid, 'mod_forum', 'post', $parent->id
+                        );
+                        $h .= '<div>' . format_text($parentmessage, $parent->messageformat, ['context' => $context]) . '</div>';
                     }
                     $h .= '</div>';
                 }
@@ -310,7 +314,10 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_forum_trait {
                     $h .= '<div><b>' . get_string('forum_subject', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</b> ' . s($post->subject) . '</div>';
                 }
                 if (!empty($post->message)) {
-                    $h .= '<div>' . format_text($post->message, $post->messageformat) . '</div>';
+                    $postmessage = file_rewrite_pluginfile_urls(
+                        $post->message, 'pluginfile.php', $contextid, 'mod_forum', 'post', $post->id
+                    );
+                    $h .= '<div>' . format_text($postmessage, $post->messageformat, ['context' => $context]) . '</div>';
                 }
 
                 // Adjuntos del post del alumno.

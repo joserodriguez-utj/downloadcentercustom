@@ -1030,6 +1030,8 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             }
         }
 
+        $this->embed_html_resources($filelist);
+
         \core\session\manager::write_close();
 
         $zipname = sprintf('%s_%s.zip', format_string($this->course->shortname), userdate(time(), '%Y%m%d_%H%M'));
@@ -1127,6 +1129,9 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                 $students, $coursename, $pathlist, $addnumbering, $filelist, null, $fileprefix, $includefeedback
             );
         }
+
+        // Incluir archivos embebidos (audio/video/imágenes) en Recurso/ junto al HTML.
+        $this->embed_html_resources($filelist);
 
         // Eliminar carpetas que quedaron vacías (sin evidencias).
         $this->prune_empty_dirs($filelist);
@@ -1447,6 +1452,89 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         foreach ($filelist as $path => $file) {
             if ($file === null && !isset($keepdirs[$path])) {
                 unset($filelist[$path]);
+            }
+        }
+    }
+
+    /**
+     * Copies files referenced by pluginfile.php URLs inside generated HTML into a
+     * sibling "Recurso" folder and rewrites those URLs to relative paths.
+     *
+     * This makes embedded audio/video/images in exported evidence work offline.
+     *
+     * @param array $filelist
+     * @return void
+     */
+    private function embed_html_resources(&$filelist) {
+        $fs = get_file_storage();
+        $sourcemap = [];
+
+        foreach ($filelist as $path => $value) {
+            if (!is_array($value)) {
+                continue;
+            }
+            $html = reset($value);
+            if (!is_string($html) || strpos($html, 'pluginfile.php') === false) {
+                continue;
+            }
+
+            $dir = dirname($path);
+            $recursodir = ($dir === '.' || $dir === '') ? 'Recurso' : $dir . '/Recurso';
+            $usednames = [];
+            $changed = false;
+
+            $newhtml = preg_replace_callback(
+                '#https?://[^"\'\s<>]*?/pluginfile\.php/(\d+)/([A-Za-z0-9_]+)/([A-Za-z0-9_]+)/(\d+)/([^"\'\s<>?]+)#',
+                function ($matches) use ($fs, &$filelist, $recursodir, &$usednames, &$sourcemap, &$changed) {
+                    $contextid = (int) $matches[1];
+                    $component = $matches[2];
+                    $filearea = $matches[3];
+                    $itemid = (int) $matches[4];
+                    $filepathname = rawurldecode($matches[5]);
+                    $slash = strrpos($filepathname, '/');
+                    $filename = ($slash === false) ? $filepathname : substr($filepathname, $slash + 1);
+                    $filepath = ($slash === false) ? '/' : '/' . substr($filepathname, 0, $slash + 1);
+
+                    // Deduplicar: la misma fuente puede aparecer varias veces en el HTML.
+                    $sourcekey = $recursodir . '|' . $contextid . '|' . $component . '|' . $filearea . '|' .
+                        $itemid . '|' . $filepath . '|' . $filename;
+                    if (isset($sourcemap[$sourcekey])) {
+                        return 'Recurso/' . rawurlencode($sourcemap[$sourcekey]);
+                    }
+
+                    try {
+                        $file = $fs->get_file($contextid, $component, $filearea, $itemid, $filepath, $filename);
+                    } catch (\Exception $e) {
+                        return $matches[0];
+                    }
+                    if (!$file || $file->is_directory()) {
+                        return $matches[0];
+                    }
+
+                    $basename = self::shorten_filename(self::clean_filename_ascii($file->get_filename()));
+                    $info = pathinfo($basename);
+                    $extension = isset($info['extension']) ? '.' . $info['extension'] : '';
+                    $stem = isset($info['filename']) ? $info['filename'] : $basename;
+                    $name = $basename;
+                    $i = 1;
+                    while (isset($usednames[$name]) || isset($filelist[$recursodir . '/' . $name])) {
+                        $name = $stem . '_' . $i . $extension;
+                        $i++;
+                    }
+                    $usednames[$name] = true;
+                    $sourcemap[$sourcekey] = $name;
+
+                    $filelist[$recursodir] = null;
+                    $filelist[$recursodir . '/' . $name] = $file;
+                    $changed = true;
+
+                    return 'Recurso/' . rawurlencode($name);
+                },
+                $html
+            );
+
+            if ($changed) {
+                $filelist[$path] = [$newhtml];
             }
         }
     }

@@ -1,0 +1,8 @@
+# Script de empaquetado y ZIP generado (no versionar)
+crear_zip.sh
+*.zip
+
+# Basura de macOS / editores
+.DS_Store
+__MACOSX/
+Thumbs.db

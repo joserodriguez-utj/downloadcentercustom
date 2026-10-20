@@ -569,8 +569,12 @@ JS
         } 
 
         if (($candownloadassign || $candownloadquiz) && count($groups) >= 2) {
+            // Cerrar el fieldset de "Filtrar por grupos" para que las notas queden
+            // fuera de la card y se vean igual que la nota superior (sobre el fondo
+            // de la página, sin el fondo --bs-tertiary-bg de la card).
+            $mform->addElement('html', '</fieldset>');
             // Nota "importante" (modo normal).
-            $mform->addElement('html', '<div class="alert alert-info" id="nota-grupos-alert" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
+            $mform->addElement('html', '<div class="alert alert-info alert-block" id="nota-grupos-alert">');
             $mform->addElement('html', '<strong>' . get_string('note', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</strong>');
             $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
             if ($candownloadmaterials) {
@@ -580,7 +584,7 @@ JS
             $mform->addElement('html', '</ul>');
             $mform->addElement('html', '</div>');
             // Nota "importante" (modo portafolio).
-            $mform->addElement('html', '<div class="alert alert-info dc-hidden" id="nota-portfolio-alert" style="margin:10px 0;padding:8px 12px;font-size:0.9em;">');
+            $mform->addElement('html', '<div class="alert alert-info alert-block dc-hidden" id="nota-portfolio-alert">');
             $mform->addElement('html', '<strong>' . get_string('note', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</strong>');
             $mform->addElement('html', '<ul style="margin:4px 0 0 20px;padding:0;">');
             $mform->addElement('html', '<li>' . get_string('infomessage_portfolio_assignment', 'local_centro_de_descarga_de_portafolio_de_evidencias', get_string('portfolio_sel_allmygroups', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</li>');

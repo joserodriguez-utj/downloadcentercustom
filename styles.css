@@ -134,7 +134,7 @@
 .path-local-centro_de_descarga_de_portafolio_de_evidencias #id_groupfilter {
     border: 1px solid var(--bs-border-color, rgba(0, 0, 0, 0.175));
     border-radius: 8px;
-    background-color: var(--bs-white, #fff);
+    background-color: var(--bs-tertiary-bg, #f8f9fa);
     color: var(--bs-body-color);
     margin-bottom: 1rem;
     padding: 5px 1rem;;
@@ -156,6 +156,12 @@
 
 .path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .row label {
     width: 100%;
+}
+
+/* Los checkboxes solo se activan al pulsar el propio check o su texto; el
+   label no debe ocupar toda la fila (p. ej. "Todos los estudiantes"). */
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .form-check label {
+    width: auto;
 }
 
 .path-local-centro_de_descarga_de_portafolio_de_evidencias .mform #id_downloadoptionscontainer .row label {
@@ -410,4 +416,12 @@
 /* Desplaza un poco a la derecha el label "Selecciona estudiante(s) (?)". */
 .path-local-centro_de_descarga_de_portafolio_de_evidencias #id_selectedstudents_label {
     margin-left: 1.25rem;
+}
+
+/* local_boost_dark fuerza color gris oscuro a los descendientes de
+   .alert.alert-info (#495057); eso hacía que la nota inferior se viera más
+   opaca que la superior. Recuperamos el color del propio alert. */
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #nota-grupos-alert *,
+.path-local-centro_de_descarga_de_portafolio_de_evidencias #nota-portfolio-alert * {
+    color: inherit;
 }

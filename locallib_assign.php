@@ -229,6 +229,11 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
                     }
                     $component = $feedbackplugin->get_subtype() . '_' . $feedbackplugin->get_type();
                     $fileareas = $feedbackplugin->get_file_areas();
+                    // "Anotar PDF" (editpdf): exportar SOLO el PDF final anotado
+                    // ('download'); omitir 'combined' (entrega unificada sin anotaciones).
+                    if ($component === 'assignfeedback_editpdf') {
+                        $fileareas = array_intersect_key($fileareas, ['download' => true]);
+                    }
                     foreach ($fileareas as $filearea => $name) {
                         $areafiles = $fs->get_area_files(
                             $context->id,

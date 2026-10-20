@@ -99,11 +99,16 @@ if ($data = $downloadform->get_data()) {
     $event->trigger();
 
     $downloadcenter->parse_form_data($data);
+    // No imprimir mensajes de debugging antes de las cabeceras del ZIP (las
+    // corromperían). Los errores siguen yendo al log de Moodle.
+    $debugdisplay = $CFG->debugdisplay;
+    $CFG->debugdisplay = 0;
     if ($downloadcenter->get_download_mode() === 'portafolio') {
         $downloadcenter->create_portfolio_zip();
     } else {
         $hash = $downloadcenter->create_zip();
     }
+    $CFG->debugdisplay = $debugdisplay;
 } else if ($downloadform->is_cancelled()) {
     redirect(new moodle_url('/course/view.php', ['id' => $course->id]));
     die;
