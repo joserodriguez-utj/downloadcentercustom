@@ -65,6 +65,8 @@ $string['centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments'] = 
 $string['centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz'] = 'Download quiz';
 $string['centro_de_descarga_de_portafolio_de_evidencias:downloadnormal'] = 'Download in normal mode';
 $string['centro_de_descarga_de_portafolio_de_evidencias:downloadportfolio'] = 'Download in portfolio mode';
+$string['centro_de_descarga_de_portafolio_de_evidencias:gradebookreport'] = 'Gradebook report';
+$string['centro_de_descarga_de_portafolio_de_evidencias:miscellaneous'] = 'Miscellaneous';
 $string['privacy:null_reason'] = 'This plugin does not store or process any personal information. It presents an interface to download all course files which are manipulated from within the course.';
 $string['search:hint'] = 'Type to filter activities and resources...';
 $string['search:results'] = 'Search results';
@@ -271,3 +273,15 @@ $string['scorm_what_grade'] = 'Attempts grading';
 $string['scorm_final_grade'] = 'Final grade';
 
 // Portfolio strings.
+// Download certificate (PDF).
+$string['certificate_title'] = 'Download certificate';
+$string['certificate_filename'] = 'Download certificate';
+$string['certificate_user'] = 'User who downloaded';
+$string['certificate_url'] = 'URL';
+$string['certificate_course'] = 'Course';
+$string['certificate_date'] = 'Download date and time';
+$string['certificate_role'] = 'Role in the course';
+$string['certificate_timezone'] = 'Timezone';
+$string['gradebook_report'] = 'Gradebook report';
+$string['final_grade'] = 'Final grade';
+$string['siteadmin'] = 'Site administrator';

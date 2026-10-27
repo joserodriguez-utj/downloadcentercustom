@@ -1030,11 +1030,29 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             }
         }
 
+        // Certificación de descarga (PDF) a nivel de la carpeta del curso.
+        $certpdf = $this->build_download_certificate();
+        $certfilename = 'Certificación de descarga.pdf';
+        $filelist[$coursename . '/' . $certfilename] = [$certpdf];
+
+        // Reporte calificador (PDF, todos los usuarios) en la raíz del ZIP.
+        // Depende de la capability "Reporte calificador".
+        if (has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:gradebookreport',
+                \context_course::instance($this->course->id), $this->user)) {
+            $filelist['Reporte calificador.pdf'] = [$this->build_gradebook_export()];
+        }
+
+        // "Misceláneos": entregas de tareas de usuarios con rol != student.
+        if (has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous',
+                \context_course::instance($this->course->id), $this->user)) {
+            $this->append_miscellaneous_files($filelist, $coursename);
+        }
+
         $this->embed_html_resources($filelist);
 
         \core\session\manager::write_close();
 
-        $zipname = sprintf('%s_%s.zip', format_string($this->course->shortname), userdate(time(), '%Y%m%d_%H%M'));
+        $zipname = sprintf('%s_%s.zip', format_string($this->course->shortname), userdate(time(), '%Y%m%d_%H%M%S', 'America/Mexico_City'));
         $zipwriter = \core_files\archive_writer::get_stream_writer($zipname, \core_files\archive_writer::ZIP_WRITER);
 
         foreach ($filelist as $pathinzip => $file) {
@@ -1087,6 +1105,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         // Con un solo grupo (o ninguno) se mantiene la estructura plana:
         //   Curso/Estudiante/...
         $groupids = array_values(array_filter(array_map('intval', $this->selectedgroups)));
+        $certdirs = [];
         if (count($groupids) >= 2) {
             $groupfolder = [];
             $membergroup = [];
@@ -1120,14 +1139,37 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                     : get_string('no_group', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                 $groupdir = $coursename . '/' . $foldername;
                 $filelist[$groupdir] = null;
+                $certdirs[] = $groupdir;
                 $this->append_portfolio_students(
                     $groupstudents, $groupdir, $pathlist, $addnumbering, $filelist, null, $fileprefix, $includefeedback
                 );
             }
         } else {
+            $certdirs[] = $coursename;
             $this->append_portfolio_students(
                 $students, $coursename, $pathlist, $addnumbering, $filelist, null, $fileprefix, $includefeedback
             );
+        }
+
+        // Certificación de descarga (PDF) a nivel de la carpeta del alumno:
+        // Curso/Certificación de descarga.pdf  (o Curso/Grupo/Certificación...).
+        $certpdf = $this->build_download_certificate();
+        $certfilename = 'Certificación de descarga.pdf';
+        foreach (array_unique($certdirs) as $certdir) {
+            $filelist[$certdir . '/' . $certfilename] = [$certpdf];
+        }
+
+        // Reporte calificador (PDF, todos los usuarios) en la raíz del ZIP.
+        // Depende de la capability "Reporte calificador".
+        if (has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:gradebookreport',
+                \context_course::instance($this->course->id), $this->user)) {
+            $filelist['Reporte calificador.pdf'] = [$this->build_gradebook_export()];
+        }
+
+        // "Misceláneos": entregas de tareas de usuarios con rol != student.
+        if (has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous',
+                \context_course::instance($this->course->id), $this->user)) {
+            $this->append_miscellaneous_files($filelist, $coursename);
         }
 
         // Incluir archivos embebidos (audio/video/imágenes) en Recurso/ junto al HTML.
@@ -1138,7 +1180,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
 
         \core\session\manager::write_close();
 
-        $zipname = sprintf('%s_%s_portafolio.zip', format_string($this->course->shortname), userdate(time(), '%Y%m%d_%H%M'));
+        $zipname = sprintf('%s_%s_portafolio.zip', format_string($this->course->shortname), userdate(time(), '%Y%m%d_%H%M%S', 'America/Mexico_City'));
         $zipwriter = \core_files\archive_writer::get_stream_writer($zipname, \core_files\archive_writer::ZIP_WRITER);
 
         foreach ($filelist as $pathinzip => $file) {
@@ -1536,6 +1578,290 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             if ($changed) {
                 $filelist[$path] = [$newhtml];
             }
+        }
+    }
+
+    /**
+     * Builds the "Certificación de descarga" PDF for the portfolio ZIP.
+     *
+     * @return string Raw PDF content.
+     */
+    private function build_download_certificate(): string {
+        global $CFG;
+
+        require_once($CFG->libdir . '/pdflib.php');
+
+        $context = \context_course::instance($this->course->id);
+
+        $rolenames = [];
+        foreach (get_user_roles($context, $this->user->id, true) as $role) {
+            $rolenames[] = role_get_name($role, $context);
+        }
+        if (!$rolenames) {
+            // Sin rol en el curso: usar el rol a nivel de plataforma (sistema).
+            $systemcontext = \context_system::instance();
+            foreach (get_user_roles($systemcontext, $this->user->id, true) as $role) {
+                $rolenames[] = role_get_name($role, $systemcontext);
+            }
+        }
+        if (!$rolenames && is_siteadmin($this->user)) {
+            // Administrador del sitio (no tiene un rol asignado explícitamente).
+            $rolenames[] = get_string('siteadmin', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+        }
+        $rolestr = $rolenames ? implode(', ', array_unique($rolenames)) : '-';
+
+        $rows = [
+            get_string('certificate_user', 'local_centro_de_descarga_de_portafolio_de_evidencias') => fullname($this->user),
+            get_string('certificate_url', 'local_centro_de_descarga_de_portafolio_de_evidencias')
+                => $CFG->wwwroot . '/course/view.php?id=' . $this->course->id,
+            get_string('certificate_course', 'local_centro_de_descarga_de_portafolio_de_evidencias')
+                => format_string($this->course->fullname),
+            get_string('certificate_date', 'local_centro_de_descarga_de_portafolio_de_evidencias')
+                => userdate(time(), '%d/%m/%Y %H:%M:%S', 'America/Mexico_City') . ' (GMT-6)',
+            get_string('certificate_role', 'local_centro_de_descarga_de_portafolio_de_evidencias') => $rolestr,
+        ];
+
+        $html = '<h1 style="text-align:center;">' .
+            get_string('certificate_title', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</h1>';
+        $html .= '<table border="1" cellpadding="6" cellspacing="0" width="100%">';
+        foreach ($rows as $label => $value) {
+            $html .= '<tr><td width="35%"><b>' . s($label) . '</b></td><td>' . s($value) . '</td></tr>';
+        }
+        $html .= '</table>';
+
+        $pdf = new \pdf();
+        $pdf->SetTitle(get_string('certificate_title', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
+        $pdf->AddPage();
+        $pdf->writeHTML($html, true, false, true, false, '');
+        return $pdf->Output('certificacion.pdf', 'S');
+    }
+
+    /**
+     * Builds the gradebook export (XLSX) including all users (not only active).
+     *
+     * Replicates grade_export_xls::print_grades() but captures the output instead
+     * of sending it to the browser.
+     *
+     * @return string Raw XLSX content.
+     */
+    private function build_gradebook_export(): string {
+        global $CFG;
+
+        require_once($CFG->dirroot . '/grade/export/lib.php');
+        require_once($CFG->dirroot . '/grade/export/xls/grade_export_xls.php');
+        require_once($CFG->libdir . '/gradelib.php');
+        require_once($CFG->libdir . '/pdflib.php');
+
+        // graded_users_iterator lanza gradesneedregrading si el curso lo necesita.
+        if (grade_needs_regrade_final_grades($this->course->id)) {
+            grade_regrade_final_grades($this->course->id);
+        }
+
+        $formdata = new \stdClass();
+        $formdata->itemids = null; // Todos los ítems de calificación.
+        $formdata->decimals = 2;
+        $formdata->export_letters = false;
+        $formdata->export_feedback = false;
+        // Incluir a todos los usuarios (no excluir suspendidos).
+        $formdata->export_onlyactive = false;
+        $formdata->display = ['real' => GRADE_DISPLAY_TYPE_REAL];
+        $formdata->updatedgradesonly = false;
+
+        $export = new \grade_export_xls($this->course, 0, $formdata);
+
+        // Orden como el "Calificador": solo ítems calificables, sin "último
+        // descargado", y con la calificación final (ítem del curso) al final.
+        $columns = [];
+        $courseitem = null;
+        foreach ($export->columns as $itemid => $item) {
+            if ((int) $item->gradetype === GRADE_TYPE_NONE) {
+                continue;
+            }
+            if ($item->itemtype === 'course') {
+                $courseitem = $item;
+                continue;
+            }
+            $columns[$itemid] = $item;
+        }
+        if ($courseitem) {
+            $columns[$courseitem->id] = $courseitem;
+        }
+
+        $profilefields = \grade_helper::get_user_profile_fields($this->course->id, false);
+
+        $headers = [];
+        foreach ($profilefields as $field) {
+            $headers[] = $field->fullname;
+        }
+        foreach ($columns as $grade_item) {
+            foreach ($export->displaytype as $gradedisplayname => $gradedisplayconst) {
+                if ($grade_item->itemtype === 'course') {
+                    $headers[] = get_string('final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+                } else {
+                    $headers[] = $export->format_column_name($grade_item, false, $gradedisplayname);
+                }
+            }
+        }
+
+        $rows = [];
+        $gui = new \graded_users_iterator($this->course, $export->columns, 0);
+        $gui->require_active_enrolment($export->onlyactive);
+        $gui->allow_user_custom_fields(false);
+        $gui->init();
+        while ($userdata = $gui->next_user()) {
+            $user = $userdata->user;
+            $row = [];
+            foreach ($profilefields as $field) {
+                $row[] = \grade_helper::get_user_field_value($user, $field);
+            }
+            foreach ($columns as $itemid => $grade_item) {
+                $grade = $userdata->grades[$itemid] ?? null;
+                foreach ($export->displaytype as $gradedisplayconst) {
+                    $row[] = $export->format_grade($grade, $gradedisplayconst);
+                }
+            }
+            $rows[] = $row;
+        }
+        $gui->close();
+
+        // Quitar columnas sin datos (ID number, Institution, etc.). Se conserva
+        // siempre la última columna (calificación final).
+        $lastindex = count($headers) - 1;
+        $keep = [];
+        foreach ($headers as $i => $header) {
+            if ($i === $lastindex) {
+                $keep[$i] = true;
+                continue;
+            }
+            foreach ($rows as $row) {
+                if (isset($row[$i]) && trim((string) $row[$i]) !== '') {
+                    $keep[$i] = true;
+                    break;
+                }
+            }
+        }
+        $newheaders = [];
+        foreach ($headers as $i => $header) {
+            if (isset($keep[$i])) {
+                $newheaders[] = $header;
+            }
+        }
+        $newrows = [];
+        foreach ($rows as $row) {
+            $newrow = [];
+            foreach ($row as $i => $cell) {
+                if (isset($keep[$i])) {
+                    $newrow[] = $cell;
+                }
+            }
+            $newrows[] = $newrow;
+        }
+        $headers = $newheaders;
+        $rows = $newrows;
+
+        $pdf = new \pdf('L', 'mm', 'A3', true, 'UTF-8');
+        $pdf->SetTitle(get_string('gradebook_report', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
+        $pdf->setPrintHeader(false);
+        $pdf->SetFont('freesans', '', 6);
+        $pdf->AddPage();
+
+        $html = '<h2 style="text-align:center;">' .
+            get_string('gradebook_report', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ': ' .
+            s(format_string($this->course->fullname)) . '</h2>';
+        $html .= '<table border="1" cellpadding="2" cellspacing="0" style="font-size:6pt;">';
+        $html .= '<thead><tr>';
+        foreach ($headers as $header) {
+            $html .= '<th style="background-color:#e9ecef;font-weight:bold;">' . s($header) . '</th>';
+        }
+        $html .= '</tr></thead><tbody>';
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+            foreach ($row as $cell) {
+                $html .= '<td>' . s($cell) . '</td>';
+            }
+            $html .= '</tr>';
+        }
+        $html .= '</tbody></table>';
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+        return $pdf->Output('reporte_calificador.pdf', 'S');
+    }
+
+    /**
+     * Adds assignment submissions made by non-student users under
+     * Curso/Misceláneos/<Actividad>/<Usuario>/.
+     *
+     * @param array $filelist
+     * @param string $coursename
+     * @return void
+     */
+    private function append_miscellaneous_files(&$filelist, $coursename) {
+        global $DB;
+
+        $coursecontext = \context_course::instance($this->course->id);
+        $fs = get_file_storage();
+
+        $sql = "SELECT cm.id AS cmid, a.id AS assignid, a.name AS name
+                  FROM {course_modules} cm
+                  JOIN {modules} m ON m.id = cm.module AND m.name = 'assign'
+                  JOIN {assign} a ON a.id = cm.instance
+                 WHERE cm.course = :courseid AND cm.deletioninprogress = 0
+              ORDER BY a.name";
+        $assigns = $DB->get_records_sql($sql, ['courseid' => $this->course->id]);
+        if (!$assigns) {
+            return;
+        }
+
+        $miscdir = $coursename . '/Misceláneos';
+        $added = false;
+
+        foreach ($assigns as $assign) {
+            $cmcontext = \context_module::instance($assign->cmid);
+            $activityname = self::shorten_filename(self::clean_filename_ascii($assign->name));
+
+            $submissions = $DB->get_records('assign_submission', [
+                'assignment' => $assign->assignid,
+                'latest' => 1,
+            ]);
+            foreach ($submissions as $submission) {
+                if ($submission->status !== 'submitted') {
+                    continue;
+                }
+                $isstudent = false;
+                foreach (get_user_roles($coursecontext, $submission->userid, false) as $role) {
+                    if ($role->shortname === 'student') {
+                        $isstudent = true;
+                        break;
+                    }
+                }
+                if ($isstudent) {
+                    continue;
+                }
+                $user = $DB->get_record('user', ['id' => $submission->userid], '*', IGNORE_MISSING);
+                if (!$user || $user->deleted) {
+                    continue;
+                }
+                $username = self::shorten_filename(self::clean_filename_ascii(fullname($user)));
+
+                $files = $fs->get_area_files(
+                    $cmcontext->id, 'assignsubmission_file', 'submission_files', $submission->id,
+                    'itemid, filepath, filename', false
+                );
+                foreach ($files as $file) {
+                    if ($file->is_directory()) {
+                        continue;
+                    }
+                    $dir = $miscdir . '/' . $activityname . '/' . $username;
+                    $filelist[$dir] = null;
+                    $filename = $dir . '/' . self::shorten_filename(self::clean_filename_ascii($file->get_filename()));
+                    $filelist[$filename] = $file;
+                    $added = true;
+                }
+            }
+        }
+
+        if ($added) {
+            $filelist[$miscdir] = null;
         }
     }
 

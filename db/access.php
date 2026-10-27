@@ -80,4 +80,21 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+    'local/centro_de_descarga_de_portafolio_de_evidencias:gradebookreport' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+    'local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];

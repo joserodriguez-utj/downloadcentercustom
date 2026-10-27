@@ -65,6 +65,8 @@ $string['centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments'] = 
 $string['centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz'] = 'Descargar examenes';
 $string['centro_de_descarga_de_portafolio_de_evidencias:downloadnormal'] = 'Descargar en modo normal';
 $string['centro_de_descarga_de_portafolio_de_evidencias:downloadportfolio'] = 'Descargar en modo portafolio';
+$string['centro_de_descarga_de_portafolio_de_evidencias:gradebookreport'] = 'Reporte calificador';
+$string['centro_de_descarga_de_portafolio_de_evidencias:miscellaneous'] = 'Misceláneos';
 $string['privacy:null_reason'] = 'Este complemento no almacena ni procesa ninguna información personal. Ofrece una interfaz para descargar todos los archivos del curso que se gestionan desde dentro del curso.';
 $string['search:hint'] = 'Escribe para filtrar actividades y recursos...';
 $string['search:results'] = 'Resultados de la búsqueda';
@@ -272,3 +274,16 @@ $string['scorm_what_grade'] = 'Calificación de intentos';
 $string['scorm_final_grade'] = 'Calificación final';
 
 // Download mode strings.
+
+// Certificación de descarga (PDF).
+$string['certificate_title'] = 'Certificación de descarga';
+$string['certificate_filename'] = 'Certificación de descarga';
+$string['certificate_user'] = 'Usuario que descargó';
+$string['certificate_url'] = 'URL';
+$string['certificate_course'] = 'Curso';
+$string['certificate_date'] = 'Fecha y hora de descarga';
+$string['certificate_role'] = 'Rol en el curso';
+$string['certificate_timezone'] = 'Zona horaria';
+$string['gradebook_report'] = 'Reporte calificador';
+$string['final_grade'] = 'Calificación final';
+$string['siteadmin'] = 'Administrador de la plataforma';

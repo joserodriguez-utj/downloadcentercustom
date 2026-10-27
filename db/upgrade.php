@@ -49,5 +49,41 @@ function xmldb_local_centro_de_descarga_de_portafolio_de_evidencias_upgrade($old
         upgrade_plugin_savepoint(true, 2026101601, 'local', 'centro_de_descarga_de_portafolio_de_evidencias');
     }
 
+    if ($oldversion < 2026101800) {
+        // Nueva capability "Misceláneos" (reporte calificador en el ZIP).
+        // update_capabilities se encarga de crearla y aplicar los archetypes.
+        upgrade_plugin_savepoint(true, 2026101800, 'local', 'centro_de_descarga_de_portafolio_de_evidencias');
+    }
+
+    if ($oldversion < 2026101801) {
+        // Separación de capabilities:
+        //   - gradebookreport: Reporte calificador (archetypes en db/access.php).
+        //   - miscellaneous:   Misceláneos (entregas de tareas de no-students).
+        // update_capabilities crea gradebookreport con sus archetypes; aseguramos
+        // además el permiso de "miscellaneous" para el rol teacher.
+        $systemcontext = \context_system::instance();
+        $role = $DB->get_record('role', ['shortname' => 'teacher']);
+        if ($role && $DB->record_exists('capabilities', [
+                'component' => 'local_centro_de_descarga_de_portafolio_de_evidencias',
+                'name' => 'local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous'])) {
+            assign_capability('local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous',
+                CAP_ALLOW, $role->id, $systemcontext->id, true);
+        }
+        upgrade_plugin_savepoint(true, 2026101801, 'local', 'centro_de_descarga_de_portafolio_de_evidencias');
+    }
+
+    if ($oldversion < 2026101802) {
+        // Asegurar la capability "Misceláneos" para teacher/editingteacher/manager.
+        $systemcontext = \context_system::instance();
+        foreach (['teacher', 'editingteacher', 'manager'] as $shortname) {
+            $role = $DB->get_record('role', ['shortname' => $shortname]);
+            if ($role) {
+                assign_capability('local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous',
+                    CAP_ALLOW, $role->id, $systemcontext->id, true);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026101802, 'local', 'centro_de_descarga_de_portafolio_de_evidencias');
+    }
+
     return true;
 }
