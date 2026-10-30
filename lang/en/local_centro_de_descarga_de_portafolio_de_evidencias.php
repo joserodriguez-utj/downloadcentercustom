@@ -285,3 +285,11 @@ $string['certificate_timezone'] = 'Timezone';
 $string['gradebook_report'] = 'Gradebook report';
 $string['final_grade'] = 'Final grade';
 $string['siteadmin'] = 'Site administrator';
+
+$string['quiz_intento'] = 'Attempt';
+$string['quiz_summary'] = 'Summary';
+$string['quiz_general_data'] = 'Student general data';
+$string['pagination'] = 'Page {$a->page} of {$a->total}';
+
+$string['string_activity'] = 'Activity';
+$string['string_not_done_message'] = 'The student has not submitted any evidence for this activity. This document is generated automatically to record that the activity was expected but not delivered.';

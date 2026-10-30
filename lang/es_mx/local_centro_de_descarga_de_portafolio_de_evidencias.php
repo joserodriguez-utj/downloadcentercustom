@@ -287,3 +287,11 @@ $string['certificate_timezone'] = 'Zona horaria';
 $string['gradebook_report'] = 'Reporte calificador';
 $string['final_grade'] = 'Calificación final';
 $string['siteadmin'] = 'Administrador de la plataforma';
+
+$string['quiz_intento'] = 'Intento';
+$string['quiz_summary'] = 'Resumen';
+$string['quiz_general_data'] = 'Datos Generales del Estudiante';
+$string['pagination'] = 'Página {$a->page} de {$a->total}';
+
+$string['string_activity'] = 'Actividad';
+$string['string_not_done_message'] = 'El alumno no ha entregado ninguna evidencia para esta actividad. Este documento se genera automáticamente para dejar constancia de que la actividad era esperada pero no fue entregada.';

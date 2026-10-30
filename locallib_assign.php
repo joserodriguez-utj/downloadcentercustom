@@ -285,10 +285,11 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
                 } else {
                     $rubrich = self::build_feedback_html($studentname, $comments ?? '', $gradeval);
                 }
-                $htmlname = get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' - ' . $studentname;
-                $rubrich = self::convert_content_to_html_doc($htmlname, $rubrich);
-                $filename = $fullname . '/' . self::shorten_filename($htmlname . '.html');
-                $filelist[$filename] = [$rubrich];
+                $title = get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' - ' . $studentname;
+                $footerleft = $title;
+                $pdf = $this->build_pdf_document($title, $rubrich, 'P', 'A4', 9, $footerleft);
+                $filename= $fullname . '/' . self::shorten_filename($title . '.pdf');
+                $filelist[$filename] = [$pdf];
             }
         }
     }

@@ -1259,9 +1259,16 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
 
                     // Portafolio: si el alumno no generó ninguna evidencia, dejar constancia.
                     if ($this->portfolio_userid !== null && !$this->has_files_under($filelist, $resdir)) {
+                        // $notdone = get_string('string_not_done', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+                        // $html = self::convert_content_to_html_doc($notdone, '<p>' . $notdone . '</p>');
+                        // $filelist[$resdir . '/' . self::shorten_filename($notdone . '.html')] = [$html];
+
                         $notdone = get_string('string_not_done', 'local_centro_de_descarga_de_portafolio_de_evidencias');
-                        $html = self::convert_content_to_html_doc($notdone, '<p>' . $notdone . '</p>');
-                        $filelist[$resdir . '/' . self::shorten_filename($notdone . '.html')] = [$html];
+                        $body = $this->build_not_done_pdf_body($student, $res->name, $sectionname);
+                        $title = $notdone;
+                        $footerleft = $notdone . ' - ' . $studentname;
+                        $pdf = $this->build_pdf_document($title, $body, 'P', 'A4', 6.5, $footerleft);
+                        $filelist[$resdir . '/' . self::shorten_filename($notdone . '.pdf')] = [$pdf];
                     }
                 }
             }
@@ -1580,6 +1587,45 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             }
         }
     }
+
+
+    /** 
+     * Builds the HTML content of the "not done" PDF for a student and activity.
+     * 
+     * Used in portfolio mode whrn a student has no evidence for supported
+     * activity: instead of leaving an empty folder, a small PDF is generated
+     * so the reviewer can see the activity was expected but not delivered.
+     * 
+     * @param Object $student The student user record.
+     * @param string $activityname The display name  of the activity.
+     * @param string $sectiondir The section directory (used to derive context).
+     * @return string HTML frament ready for build:pdf_document(). 
+     * **/
+
+    private function build_not_done_pdf_body($student, $activityname, $sectiondir) {
+        $notdone = get_string('string_not_done', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+
+        // Estilos consistentes con build_quiz_pdf_body().
+        $th  = 'style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;text-align:left;font-size:8pt;"';
+        $td  = 'style="border:1px solid #adb5bd;padding:2px;vertical-align:top;font-size:8pt;"';
+        $hd  = 'style="background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;"';
+        $tbl = 'border="1" cellspacing="0" cellpadding="2" style="border-collapse:collapse;width:100%;font-size:8pt;"';
+
+        // 1) Datos del estudiante (arriba, mismo formato que quiz).
+        $h  = '<h2 ' . $hd . '>' . s($notdone) . '</h2>';
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . get_string('quiz_lastname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . s($student->lastname) . '</td>'
+            . '<th ' . $th . '>' . get_string('quiz_firstname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . s($student->firstname) . '</td>'
+            . '<th ' . $th . '>' . get_string('quiz_email', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . s($student->email) . '</td></tr>';
+        $h .= '</table>';
+
+        return $h;
+    }
+
 
     /**
      * Builds the "Certificación de descarga" PDF for the portfolio ZIP.
@@ -2059,6 +2105,40 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
      * @param string $additionalhead
      * @return string
      */
+    /**
+     * Construye un PDF con estilo de reporte (título, secciones y tablas).
+     *
+     * @param string $title
+     * @param string $bodyhtml Cuerpo HTML apto para TCPDF.
+     * @param string $orientation 'P' o 'L'.
+     * @param string $format 'A4', 'A3', ...
+     * @param int $fontsize
+     * @return string Bytes del PDF.
+     */
+    private function build_pdf_document($title, $bodyhtml, $orientation = 'P', $format = 'A4', $fontsize = 9, $footerleft = ''): string {
+        global $CFG;
+
+        require_once($CFG->libdir . '/pdflib.php');
+
+        $pdf = new \local_centro_de_descarga_de_portafolio_de_evidencias_pdf($orientation, 'mm', $format, true, 'UTF-8');
+        $pdf->footerleft = $footerleft;
+        $pdf->SetTitle($title);
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(true);
+        $pdf->SetMargins(10, 10, 10);
+        $pdf->SetAutoPageBreak(true, 14);
+        $pdf->SetFont('freesans', '', $fontsize);
+        $pdf->AddPage();
+
+        $html = '<h1 style="text-align:center;font-size:16pt;font-weight:bold;margin:0 0 2mm 0;">' . s($title) . '</h1>';
+        $html .= '<p style="text-align:center;font-size:9pt;color:#495057;margin:0 0 5mm 0;">' .
+            s(format_string($this->course->fullname)) . '</p>';
+        $html .= $bodyhtml;
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+        return $pdf->Output('report.pdf', 'S');
+    }
+
     public static function convert_content_to_html_doc($title, $content, $additionalhead = '') {
         return <<<HTML
 <!doctype html>
@@ -2118,5 +2198,30 @@ ul.indent {
 </body>
 CSS;
         return str_replace('</body>', $csscontent, $htmlcontent);
+    }
+}
+
+/**
+ * PDF con pie de página: izquierda (carrera + alumno), derecha (página).
+ */
+require_once($CFG->libdir . '/pdflib.php');
+
+class local_centro_de_descarga_de_portafolio_de_evidencias_pdf extends \pdf {
+    /** @var string Texto del pie izquierdo. */
+    public $footerleft = '';
+
+    /**
+     * Pie de página.
+     */
+    public function Footer() {
+        $this->SetY(-12);
+        $this->SetFont('freesans', '', 7);
+        $this->SetTextColor(73, 80, 87);
+        $this->Cell(0, 5, $this->footerleft, 0, 0, 'L');
+        $pagination = get_string('pagination', 'local_centro_de_descarga_de_portafolio_de_evidencias', [
+            'page' => $this->getAliasNumPage(),
+            'total' => $this->getAliasNbPages(),
+        ]);
+        $this->Cell(0, 5, $pagination, 0, 0, 'R');
     }
 }

@@ -93,11 +93,13 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
             if (empty($attempts)) {
                 continue;
             }
-            $html = $this->build_quiz_html($quiz, $cm, $user, $studentname, $attempts, $grademethod);
-            if ($html) {
-                $html = self::convert_content_to_html_doc(get_string('quiz_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename(get_string('quiz_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
-                $filelist[$filename] = [$html];
+            $title = get_string('quiz_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname;
+            $body = $this->build_quiz_pdf_body($quiz, $cm, $user, $studentname, $attempts, $grademethod);
+            if ($body) {
+                $footerleft = $title;
+                $pdf = $this->build_pdf_document($title, $body, 'P', 'A4', 6.5, $footerleft);
+                $filename = $evidenciadir . '/' . self::shorten_filename($title . '.pdf');
+                $filelist[$filename] = [$pdf];
             }
         }
     }
@@ -125,7 +127,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
     /**
      * Build HTML table with quiz results for one student.
      */
-    private function build_quiz_html($quiz, $cm, $user, $studentname, $attempts, $grademethod) {
+    private function build_quiz_pdf_body($quiz, $cm, $user, $studentname, $attempts, $grademethod) {
         global $DB, $CFG;
 
         require_once($CFG->libdir . '/gradelib.php');
@@ -140,26 +142,15 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
                 $finalgrade = round($grade->finalgrade, 2);
             }
         }
-
-        // Fallback: si no hay calificación en el libro de calificaciones, calcularla de los intentos.
         if ($finalgrade === '') {
             $grades = array_column($attempts, 'sumgrades');
             if ($grades) {
                 switch ($grademethod) {
-                    case QUIZ_GRADEHIGHEST:
-                        $finalgrade = round(max($grades), 2);
-                        break;
-                    case QUIZ_GRADEAVERAGE:
-                        $finalgrade = round(array_sum($grades) / count($grades), 2);
-                        break;
-                    case QUIZ_ATTEMPTFIRST:
-                        $finalgrade = round(reset($grades), 2);
-                        break;
-                    case QUIZ_ATTEMPTLAST:
-                        $finalgrade = round(end($grades), 2);
-                        break;
-                    default:
-                        $finalgrade = round(reset($grades), 2);
+                    case QUIZ_GRADEHIGHEST: $finalgrade = round(max($grades), 2); break;
+                    case QUIZ_GRADEAVERAGE: $finalgrade = round(array_sum($grades) / count($grades), 2); break;
+                    case QUIZ_ATTEMPTFIRST: $finalgrade = round(reset($grades), 2); break;
+                    case QUIZ_ATTEMPTLAST: $finalgrade = round(end($grades), 2); break;
+                    default: $finalgrade = round(reset($grades), 2);
                 }
             }
         }
@@ -169,62 +160,87 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
             QUIZ_GRADEAVERAGE => get_string('quiz_grade_average', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
             QUIZ_ATTEMPTFIRST => get_string('quiz_attempt_first', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
             QUIZ_ATTEMPTLAST => get_string('quiz_attempt_last', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
-        ]; //get_string('')
+        ];
         $grademethodstr = $methodnames[$grademethod] ?? '';
 
         $slots = $DB->get_records('quiz_slots', ['quizid' => $quiz->id], 'slot ASC');
 
-        $h = '<table border="1" cellspacing="0" cellpadding="3" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;">';
-        $h .= '<tr>';
-        $h .= '<th>' . get_string('quiz_lastname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_firstname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_email', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_status', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('quiz_time_start', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_time_end', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' . '<th>' . get_string('quiz_duration', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $qnum = 0;
-        foreach ($slots as $slot) {
-            $qnum++;
-            $h .= '<th>' . get_string('quiz_question', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $qnum . '</th>';
-            $h .= '<th>' . get_string('quiz_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $qnum . '</th>';
-            $h .= '<th>' . get_string('quiz_correct_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $qnum . '</th>';
-        }
-        $h .= '<th>'. get_string('quiz_grade_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias') .'</th>' . '<th>' . get_string('quiz_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>' .'<th>' . get_string('quiz_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '</tr>';
+        $th = 'style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;text-align:left;font-size:6.5pt;"';
+        $td = 'style="border:1px solid #adb5bd;padding:2px;vertical-align:top;"';
+        $hd = 'style="background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;"';
+        $tbl = 'border="1" cellspacing="0" cellpadding="2" style="border-collapse:collapse;width:100%;font-size:6.5pt;"';
 
-        $numattempts = count($attempts);
+        // Datos generales.
+        $h = '<h2 ' . $hd . '>' . get_string('quiz_general_data', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</h2>';
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<tr nobr="true"><th ' . $th . '>' . get_string('quiz_lastname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . s($user->lastname) . '</td>'
+            . '<th ' . $th . '>' . get_string('quiz_firstname', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . s($user->firstname) . '</td>'
+            . '<th ' . $th . '>' . get_string('quiz_email', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . s($user->email) . '</td></tr>';
+        $h .= '</table>';
+
         $attemptindex = 0;
         foreach ($attempts as $attempt) {
+            $attemptindex++;
             $quba = \question_engine::load_questions_usage_by_activity($attempt->uniqueid);
 
-            $h .= '<tr>';
-            $h .= '<td>' . s($user->lastname) . '</td>';
-            $h .= '<td>' . s($user->firstname) . '</td>';
-            $h .= '<td>' . s($user->email) . '</td>';
-            $h .= '<td>' . s(get_string('state' . $attempt->state, 'quiz')) . '</td>';
-            $h .= '<td>' . s(userdate($attempt->timestart, '%d de %B de %Y %H:%M')) . '</td>';
-            $h .= '<td>' . s(userdate($attempt->timefinish, '%d de %B de %Y %H:%M')) . '</td>';
-            $h .= '<td>' . s(format_time($attempt->timefinish - $attempt->timestart)) . '</td>';
+            $attemptstyle = $hd;
+            if ($attemptindex > 1) {
+                // Cada intento empieza en una página nueva.
+                $attemptstyle = 'style="background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;page-break-before:always;"';
+            }
+            $h .= '<h2 ' . $attemptstyle . '>' . get_string('quiz_intento', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' ' . $attemptindex . '</h2>';
 
+            $h .= '<table ' . $tbl . '>';
+            $h .= '<tr nobr="true">'
+                . '<th ' . $th . '>' . get_string('quiz_status', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '<td ' . $td . '>' . s(get_string('state' . $attempt->state, 'quiz')) . '</td>'
+                . '<th ' . $th . '>' . get_string('quiz_time_start', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '<td ' . $td . '>' . s(userdate($attempt->timestart, '%d/%m/%Y %H:%M')) . '</td>'
+                . '<th ' . $th . '>' . get_string('quiz_time_end', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '<td ' . $td . '>' . s(userdate($attempt->timefinish, '%d/%m/%Y %H:%M')) . '</td>'
+                . '<th ' . $th . '>' . get_string('quiz_duration', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '<td ' . $td . '>' . s(format_time($attempt->timefinish - $attempt->timestart)) . '</td>'
+                . '<th ' . $th . '>' . get_string('quiz_grade_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '<td ' . $td . '>' . round($attempt->sumgrades, 2) . '</td>'
+                . '</tr>';
+            $h .= '</table>';
+
+            $h .= '<table ' . $tbl . '>';
+            $h .= '<thead><tr nobr="true">'
+                . '<th ' . $th . ' style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;width:5%;">#</th>'
+                . '<th ' . $th . ' style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;width:37%;">' . get_string('quiz_question', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '<th ' . $th . ' style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;width:29%;">' . get_string('quiz_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '<th ' . $th . ' style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;width:29%;">' . get_string('quiz_correct_answer', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+                . '</tr></thead><tbody>';
+
+            $qnum = 0;
             foreach ($slots as $slot) {
+                $qnum++;
                 $qa = $quba->get_question_attempt($slot->slot);
                 $question = $qa->get_question();
-
-                $h .= '<td>' . $this->quiz_question_cell($qa, $question) . '</td>';
-                $h .= '<td>' . $this->quiz_clean_text($qa->get_response_summary()) . '</td>';
-                $h .= '<td>' . $this->quiz_clean_text($this->quiz_correct_answer($qa, $question)) . '</td>';
+                $h .= '<tr nobr="true">';
+                $h .= '<td ' . $td . ' style="border:1px solid #adb5bd;padding:4px;text-align:center;">' . $qnum . '</td>';
+                $h .= '<td ' . $td . '>' . $this->quiz_question_cell($qa, $question) . '</td>';
+                $h .= '<td ' . $td . '>' . $this->quiz_clean_text($qa->get_response_summary()) . '</td>';
+                $h .= '<td ' . $td . '>' . $this->quiz_clean_text($this->quiz_correct_answer($qa, $question)) . '</td>';
+                $h .= '</tr>';
             }
-
-            $h .= '<td style="text-align:center;">' . round($attempt->sumgrades, 2) . '</td>';
-
-            // Método de calificación y calificación final se muestran una sola vez,
-            // combinadas en las celdas que abarcan todos los intentos.
-            if ($attemptindex === 0) {
-                $h .= '<td style="text-align:center;vertical-align:middle;" rowspan="' . $numattempts . '">' . s($grademethodstr) . '</td>';
-                $h .= '<td style="text-align:center;vertical-align:middle;" rowspan="' . $numattempts . '">' . ($finalgrade !== '' ? $finalgrade : '') . '</td>';
-            }
-
-            $h .= '</tr>';
-            $attemptindex++;
+            $h .= '</tbody></table>';
         }
 
+        $h .= '<h2 ' . $hd . '>' . get_string('quiz_summary', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</h2>';
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . get_string('quiz_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . s($grademethodstr) . '</td>'
+            . '<th ' . $th . '>' . get_string('quiz_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>'
+            . '<td ' . $td . '>' . ($finalgrade !== '' ? $finalgrade : '') . '</td>'
+            . '</tr>';
         $h .= '</table>';
+
         return $h;
     }
 

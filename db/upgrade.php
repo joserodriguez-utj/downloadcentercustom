@@ -74,12 +74,18 @@ function xmldb_local_centro_de_descarga_de_portafolio_de_evidencias_upgrade($old
 
     if ($oldversion < 2026101802) {
         // Asegurar la capability "Misceláneos" para teacher/editingteacher/manager.
+        // Solo si la capability ya existe (update_capabilities puede ejecutarse
+        // después de este upgrade; el guard evita el coding_exception).
+        $capability = 'local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous';
         $systemcontext = \context_system::instance();
-        foreach (['teacher', 'editingteacher', 'manager'] as $shortname) {
-            $role = $DB->get_record('role', ['shortname' => $shortname]);
-            if ($role) {
-                assign_capability('local/centro_de_descarga_de_portafolio_de_evidencias:miscellaneous',
-                    CAP_ALLOW, $role->id, $systemcontext->id, true);
+        if ($DB->record_exists('capabilities', [
+                'component' => 'local_centro_de_descarga_de_portafolio_de_evidencias',
+                'name' => $capability])) {
+            foreach (['teacher', 'editingteacher', 'manager'] as $shortname) {
+                $role = $DB->get_record('role', ['shortname' => $shortname]);
+                if ($role) {
+                    assign_capability($capability, CAP_ALLOW, $role->id, $systemcontext->id, true);
+                }
             }
         }
         upgrade_plugin_savepoint(true, 2026101802, 'local', 'centro_de_descarga_de_portafolio_de_evidencias');

@@ -158,10 +158,17 @@
     width: 100%;
 }
 
-/* Los checkboxes solo se activan al pulsar el propio check o su texto; el
-   label no debe ocupar toda la fila (p. ej. "Todos los estudiantes"). */
-.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .form-check label {
+/* "Todos los estudiantes/grupos": solo el texto o el check activan la casilla
+   (el label no ocupa toda la fila). */
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .form-check label[for="id_selectallstudents"],
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .form-check label[for="id_selectallgroups"] {
     width: auto;
+}
+
+/* Títulos de sección (item_topic_0, item_topic_1, ...): ancho completo para
+   que no se trunquen. El sufijo numérico varía, por eso se usa el prefijo. */
+.path-local-centro_de_descarga_de_portafolio_de_evidencias .mform .form-check label[for^="id_item_topic_"] {
+    width: 100%;
 }
 
 .path-local-centro_de_descarga_de_portafolio_de_evidencias .mform #id_downloadoptionscontainer .row label {

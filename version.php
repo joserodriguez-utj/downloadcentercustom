@@ -31,7 +31,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026101802;
+$plugin->version   = 2026101803;
 $plugin->requires  = 2025100600;
 $plugin->component = 'local_centro_de_descarga_de_portafolio_de_evidencias';
 $plugin->maturity  = MATURITY_STABLE;
