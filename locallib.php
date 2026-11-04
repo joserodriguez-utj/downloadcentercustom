@@ -1279,7 +1279,9 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                     }
 
                     // Portafolio: si el alumno no generó ninguna evidencia, dejar constancia.
-                    if ($this->portfolio_userid !== null && !$this->has_files_under($filelist, $resdir)) {
+                    // Solo la evidencia cuenta: instrucciones/retroalimentación no
+                    // deben impedir el aviso de "Sin realizar".
+                    if ($this->portfolio_userid !== null && !$this->has_files_under($filelist, $resdir . '/Evidencias')) {
                         // $notdone = get_string('string_not_done', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                         // $html = self::convert_content_to_html_doc($notdone, '<p>' . $notdone . '</p>');
                         // $filelist[$resdir . '/' . self::shorten_filename($notdone . '.html')] = [$html];
@@ -1351,7 +1353,23 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             return '';
         }
 
-        $h = '<p><strong>' . s(get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . ':</strong> ' . s(fullname($student)) . '</p>';
+        // Datos generales del estudiante (mismo patron que los demas reportes).
+        $hd  = 'style="background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;"';
+        $th  = 'style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;text-align:left;font-size:8pt;"';
+        $td  = 'style="border:1px solid #adb5bd;padding:2px;vertical-align:top;font-size:8pt;"';
+        $tblh = 'border="1" cellspacing="0" cellpadding="2" style="border-collapse:collapse;width:100%;font-size:8pt;"';
+
+        $h  = '<h2 ' . $hd . '>' . s(get_string('quiz_general_data', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</h2>';
+        $h .= '<table ' . $tblh . '>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('quiz_lastname', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($student->lastname) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('quiz_firstname', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($student->firstname) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('quiz_email', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($student->email) . '</td>'
+            . '</tr>';
+        $h .= '</table>';
 
         $h .= '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:7pt;">';
         $h .= '<tr>';
@@ -1372,7 +1390,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                 if ($row['name'] === trim($this->course->fullname)) {
                     continue;
                 }
-                $h .= '<tr><td colspan="' . count($headers) . '" style="background:#e8e8e8;font-weight:bold;">'
+                $h .= '<tr nobr="true"><td colspan="' . count($headers) . '" style="background:#e8e8e8;font-weight:bold;">'
                     . s($row['name']) . '</td></tr>';
                 continue;
             }
@@ -1387,7 +1405,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                 $itemstyle = 'font-weight:bold;background:#f7f7f7;';
             }
             $nametext = s($row['itemtype']) . ': ' . s($row['name']);
-            $h .= '<tr>'
+            $h .= '<tr nobr="true">'
                 . '<td style="' . $itemstyle . '">' . $nametext . '</td>'
                 . '<td style="' . $itemstyle . 'text-align:center;">' . s($row['grade']) . '</td>'
                 . '<td style="' . $itemstyle . 'text-align:center;">' . s($row['max']) . '</td>'
@@ -2363,7 +2381,16 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         }
 
         $pdf = new \local_centro_de_descarga_de_portafolio_de_evidencias_pdf($orientation, 'mm', $format, true, 'UTF-8');
-        $pdf->footerleft = $footerleft;
+        $footer = trim((string) $footerleft);
+        if ($this->pdfactivityname !== '') {
+            $activity = format_string($this->pdfactivityname);
+            if ($footer === '') {
+                $footer = $activity;
+            } else if (mb_stripos($footer, $activity) === false) {
+                $footer .= ' - ' . $activity;
+            }
+        }
+        $pdf->footerleft = $footer;
         $pdf->SetTitle($title);
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(true);
@@ -2464,11 +2491,25 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_pdf extends \pdf {
         $this->SetY(-12);
         $this->SetFont('helvetica', '', 7);
         $this->SetTextColor(73, 80, 87);
-        $this->Cell(0, 5, $this->footerleft, 0, 0, 'L');
+
         $pagination = get_string('pagination', 'local_centro_de_descarga_de_portafolio_de_evidencias', [
             'page' => $this->getAliasNumPage(),
             'total' => $this->getAliasNbPages(),
         ]);
-        $this->Cell(0, 5, $pagination, 0, 0, 'R');
+
+        $margins = $this->getMargins();
+        $rightwidth = $this->GetStringWidth($pagination) + 4;
+        $leftwidth = $this->getPageWidth() - $margins['left'] - $margins['right'] - $rightwidth;
+
+        $left = (string) $this->footerleft;
+        if ($left !== '' && $this->GetStringWidth($left) > $leftwidth) {
+            while ($left !== '' && $this->GetStringWidth($left . '...') > $leftwidth) {
+                $left = mb_substr($left, 0, mb_strlen($left) - 1);
+            }
+            $left = rtrim($left) . '...';
+        }
+
+        $this->Cell($leftwidth, 5, $left, 0, 0, 'L');
+        $this->Cell($rightwidth, 5, $pagination, 0, 0, 'R');
     }
 }

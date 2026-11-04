@@ -80,6 +80,13 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
         $includeresources = $this->downloadoptions['includeresources'] ?? true;
         $onlytasks = $this->downloadoptions['onlytasks'] ?? false;
 
+        if ($this->portfolio_userid !== null) {
+            // Portafolio: solo evidencias del alumno (sin instrucciones ni
+            // recursos del curso, que no son evidencia).
+            $includeinstructions = false;
+            $includeresources = false;
+        }
+
         // instrucciones/ - contenido HTML + archivos del area intro.
         if ($includeinstructions) {
             $instruccionesdir = $resdir . '/Instrucciones';

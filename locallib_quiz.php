@@ -97,7 +97,17 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
             $title = get_string('quiz_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname;
             $body = $this->build_quiz_pdf_body($quiz, $cm, $user, $studentname, $attempts, $grademethod);
             if ($body) {
-                $footerleft = $title;
+                $methodnames = [
+                    QUIZ_GRADEHIGHEST => get_string('quiz_grade_highest', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+                    QUIZ_GRADEAVERAGE => get_string('quiz_grade_average', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+                    QUIZ_ATTEMPTFIRST => get_string('quiz_attempt_first', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+                    QUIZ_ATTEMPTLAST => get_string('quiz_attempt_last', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
+                ];
+                $methodstr = $methodnames[$grademethod] ?? '';
+                $activity = format_string($this->pdfactivityname);
+                $footerleft = $title
+                    . ($activity !== '' ? ' - ' . $activity : '')
+                    . ($methodstr !== '' ? ' (' . $methodstr . ')' : '');
                 $pdf = $this->build_pdf_document($title, $body, 'P', 'A4', 6.5, $footerleft);
                 $filename = $evidenciadir . '/' . self::shorten_filename($title . '.pdf');
                 $filelist[$filename] = [$pdf];
