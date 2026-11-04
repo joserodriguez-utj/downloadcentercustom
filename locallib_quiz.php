@@ -40,6 +40,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
      */
 
     private function handle_quiz($resource, $resdir, &$filelist, $groupid = null) {
+        $this->pdfactivityname = $resource->name;
         global $CFG, $DB;
         $context = $resource->context;
         if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadQuiz', $context->get_course_context())) {
@@ -165,8 +166,8 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
 
         $slots = $DB->get_records('quiz_slots', ['quizid' => $quiz->id], 'slot ASC');
 
-        $th = 'style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;text-align:left;font-size:6.5pt;"';
-        $td = 'style="border:1px solid #adb5bd;padding:2px;vertical-align:top;"';
+        $th = 'valign="middle" style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;text-align:left;vertical-align:middle;font-size:6.5pt;"';
+        $td = 'valign="middle" style="border:1px solid #adb5bd;padding:2px;vertical-align:middle;"';
         $hd = 'style="background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;"';
         $tbl = 'border="1" cellspacing="0" cellpadding="2" style="border-collapse:collapse;width:100%;font-size:6.5pt;"';
 
@@ -222,10 +223,10 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_quiz_trait {
                 $qa = $quba->get_question_attempt($slot->slot);
                 $question = $qa->get_question();
                 $h .= '<tr nobr="true">';
-                $h .= '<td ' . $td . ' style="border:1px solid #adb5bd;padding:4px;text-align:center;">' . $qnum . '</td>';
-                $h .= '<td ' . $td . '>' . $this->quiz_question_cell($qa, $question) . '</td>';
-                $h .= '<td ' . $td . '>' . $this->quiz_clean_text($qa->get_response_summary()) . '</td>';
-                $h .= '<td ' . $td . '>' . $this->quiz_clean_text($this->quiz_correct_answer($qa, $question)) . '</td>';
+                $h .= '<td ' . $td . ' style="border:1px solid #adb5bd;padding:2px;text-align:center;width:5%;">' . $qnum . '</td>';
+                $h .= '<td ' . $td . ' style="border:1px solid #adb5bd;padding:2px;width:37%;">' . $this->quiz_question_cell($qa, $question) . '</td>';
+                $h .= '<td ' . $td . ' style="border:1px solid #adb5bd;padding:2px;width:29%;">' . $this->quiz_clean_text($qa->get_response_summary()) . '</td>';
+                $h .= '<td ' . $td . ' style="border:1px solid #adb5bd;padding:2px;width:29%;">' . $this->quiz_clean_text($this->quiz_correct_answer($qa, $question)) . '</td>';
                 $h .= '</tr>';
             }
             $h .= '</tbody></table>';

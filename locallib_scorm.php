@@ -39,6 +39,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait {
      * @return void
      */
     private function handle_scorm($resource, $resdir, &$filelist, $groupid = null) {
+        $this->pdfactivityname = $resource->name;
         global $CFG, $DB;
 
         if (!has_capability('local/centro_de_descarga_de_portafolio_de_evidencias:downloadAssignments', $resource->context->get_course_context())) {
@@ -80,26 +81,28 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait {
 
         foreach ($users as $user) {
             $studentname = fullname($user);
-            $html = $this->build_scorm_html($scorm, $user, $studentname);
-            if ($html) {
-                $html = self::convert_content_to_html_doc(
-                    get_string('scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename(
-                    get_string('scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
-                $filelist[$filename] = [$html];
+            $body = $this->build_scorm_pdf_body($scorm, $user, $studentname);
+            if ($body) {
+                $title = get_string('scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname;
+                $pdf = $this->build_pdf_document($title, $body, 'P', 'A4', 8, $title);
+                $filename = $evidenciadir . '/' . self::shorten_filename($title . '.pdf');
+                $filelist[$filename] = [$pdf];
             }
         }
     }
 
     /**
-     * Build HTML table with SCORM attempts/results for one student.
+     * Builds the HTML body for the SCORM PDF (one per student).
      *
-     * @param object $scorm The SCORM instance.
-     * @param object $user The student user.
-     * @param string $studentname Full name of the student.
-     * @return string HTML content (empty if the student has no attempts).
+     * Same information as the previous HTML version, but styled for TCPDF:
+     * smaller fonts, consistent header rows, and the student info at the top.
+     *
+     * @param object $scorm
+     * @param object $user
+     * @param string $studentname
+     * @return string
      */
-    private function build_scorm_html($scorm, $user, $studentname) {
+    private function build_scorm_pdf_body($scorm, $user, $studentname) {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/mod/scorm/locallib.php');
@@ -123,7 +126,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait {
             }
         }
 
-        // Método de calificación y método de calificación de intentos.
+        // Métodos y máximo puntaje.
         $grademethods = scorm_get_grade_method_array();
         $grademethodstr = $grademethods[$scorm->grademethod] ?? '';
         $whatgrades = scorm_get_what_grade_array();
@@ -138,37 +141,64 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait {
                 $finalgrade = round($grade->finalgrade, 2);
             }
         }
-
-        // Fallback: cálculo de la calificación del propio módulo SCORM.
         if ($finalgrade === '') {
             $calc = scorm_grade_user($scorm, $user->id);
             if ($calc !== null && $calc !== '') {
                 $finalgrade = round((float)$calc, 2);
             }
         }
+        $finalgradedisplay = ($finalgrade === '') ? '-' : $finalgrade;
 
-        $h = '<h2>' . get_string('scorm_scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname)
-            . ' — ' . s($scorm->name) . '</h2>';
-        $h .= '<p><strong>' . get_string('scorm_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ':</strong> '
-            . s($grademethodstr)
-            . ' &nbsp;|&nbsp; <strong>' . get_string('scorm_what_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ':</strong> '
-            . s($whatgradestr)
-            . ' &nbsp;|&nbsp; <strong>' . get_string('scorm_max_score', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ':</strong> '
-            . s($scorm->maxgrade) . '</p>';
+        // Estilos.
+        $th  = 'style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;text-align:left;font-size:8pt;"';
+        $td  = 'style="border:1px solid #adb5bd;padding:2px;vertical-align:top;font-size:8pt;"';
+        $hd  = 'style="background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;"';
+        $tbl = 'border="1" cellspacing="0" cellpadding="2" style="border-collapse:collapse;width:100%;font-size:8pt;"';
 
-        $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
-        $h .= '<tr style="background:#f2f2f2;">';
-        $h .= '<th>' . get_string('scorm_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('scorm_status', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('scorm_score', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('scorm_time', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('scorm_start', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('scorm_finish', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('scorm_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('scorm_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '</tr>';
+        // 1) Datos generales del alumno.
+        $h  = '<h2 ' . $hd . '>' . s(get_string('scorm_scorm_results', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . s($studentname) . '</h2>';
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('quiz_lastname', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($user->lastname) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('quiz_firstname', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($user->firstname) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('quiz_email', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($user->email) . '</td>'
+            . '</tr>';
+        $h .= '</table>';
 
+        // 2) Resumen de la configuración del SCORM.
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('scorm_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($grademethodstr) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('scorm_what_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($whatgradestr) . '</td>'
+            . '</tr>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('scorm_max_score', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($scorm->maxgrade) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('scorm_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($finalgradedisplay) . '</td>'
+            . '</tr>';
+        $h .= '</table>';
+
+        // 3) Intentos.
+        $h .= '<h2 ' . $hd . '>' . s(get_string('scorm_attempts', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</h2>';
         $numattempts = count($attempts);
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<thead><tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('scorm_attempt', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<th ' . $th . '>' . s(get_string('scorm_status', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<th ' . $th . '>' . s(get_string('scorm_score', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<th ' . $th . '>' . s(get_string('scorm_time', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<th ' . $th . '>' . s(get_string('scorm_start', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<th ' . $th . '>' . s(get_string('scorm_finish', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<th ' . $th . '>' . s(get_string('scorm_grade_method', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<th ' . $th . '>' . s(get_string('scorm_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '</tr></thead><tbody>';
+
         $row = 0;
         foreach ($attempts as $attemptnum) {
             $status = '-';
@@ -192,7 +222,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait {
                 }
             }
 
-            $h .= '<tr>';
+            $h .= '<tr nobr="true">';
             $h .= '<td style="text-align:center;">' . ((int)$attemptnum) . '</td>';
             $h .= '<td style="text-align:center;">' . s($this->scorm_status_label($status)) . '</td>';
             $h .= '<td style="text-align:center;">' . s($score) . '</td>';
@@ -200,13 +230,13 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait {
             $h .= '<td style="text-align:center;">' . s($start) . '</td>';
             $h .= '<td style="text-align:center;">' . s($finish) . '</td>';
             if ($row === 0) {
-                $h .= '<td style="text-align:center;vertical-align:middle;" rowspan="' . $numattempts . '">' . s($grademethodstr) . '</td>';
-                $h .= '<td style="text-align:center;vertical-align:middle;" rowspan="' . $numattempts . '">' . ($finalgrade !== '' ? $finalgrade : '-') . '</td>';
+                $h .= '<td rowspan="' . $numattempts . '" style="text-align:center;vertical-align:middle;">' . s($grademethodstr) . '</td>';
+                $h .= '<td rowspan="' . $numattempts . '" style="text-align:center;vertical-align:middle;">' . s($finalgradedisplay) . '</td>';
             }
             $h .= '</tr>';
             $row++;
         }
-        $h .= '</table>';
+        $h .= '</tbody></table>';
 
         return $h;
     }

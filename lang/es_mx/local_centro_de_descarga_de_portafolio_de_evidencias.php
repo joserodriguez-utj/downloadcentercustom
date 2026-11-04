@@ -163,6 +163,7 @@ $string['forum_discussion_topic'] = 'Tema de discución:';
 $string['forum_autor'] = 'Autor: ';
 $string['forum_date'] = 'Fecha: ';
 $string['forum_subject'] = 'Asunto: ';
+$string['forum_embedded_media'] = 'Audio/video adjunto:';
 $string['forum_attachments'] = 'Adjuntos: ';
 $string['forum_attachments_url'] = 'Adjuntos';
 
@@ -197,6 +198,10 @@ $string['workshop_content'] = 'Contenido de la entrega';
 $string['workshop_feedback'] = 'Retroalimentación';
 
 // Locallib portfolio grade report strings
+$string['feedback_results'] = 'Resultados de la encuesta - ';
+$string['feedback_responses'] = 'Respuestas';
+$string['feedback_last_response'] = 'Última respuesta';
+$string['feedback_response'] = 'Respuesta';
 $string['string_grade_report'] = 'Reporte de calificaciones';
 $string['string_grade_report_item'] = 'Elemento de calificación';
 $string['string_grade_report_grade'] = 'Calificación';
@@ -234,6 +239,7 @@ $string['workshop_comments'] = 'Comentarios';
 $string['workshop_assessment_date'] = 'Fecha de evaluación';
 
 // Database (data) strings.
+$string['data_recorded'] = 'Registrado';
 $string['data_results'] = 'Resultados de la base de datos - ';
 $string['data_data_results'] = 'Resultados de la base de datos: ';
 $string['data_student'] = 'Estudiante';
@@ -255,6 +261,7 @@ $string['data_rated'] = 'Calificación de registros';
 // Locallib_scorm strings
 $string['scorm_results'] = 'Resultados - ';
 $string['scorm_scorm_results'] = 'Resultados del paquete SCORM: ';
+$string['scorm_attempts'] = 'Intentos';
 $string['scorm_attempt'] = 'Intento #';
 $string['scorm_status'] = 'Estado';
 $string['scorm_status_passed'] = 'Aprobado';
@@ -295,3 +302,18 @@ $string['pagination'] = 'Página {$a->page} de {$a->total}';
 
 $string['string_activity'] = 'Actividad';
 $string['string_not_done_message'] = 'El alumno no ha entregado ninguna evidencia para esta actividad. Este documento se genera automáticamente para dejar constancia de que la actividad era esperada pero no fue entregada.';
+$string['h5p_attempts_summary'] = 'Resumen de intentos';
+$string['h5p_embedded_link'] = 'Contenido embebido (ábrelo en el navegador):';
+
+$string['glossary_results'] = 'Resultados del glosario - ';
+$string['glossary_entries_count'] = 'Número de entradas';
+$string['glossary_author'] = 'Autor';
+$string['glossary_created'] = 'Creado';
+$string['glossary_category'] = 'Categoría';
+$string['glossary_definition'] = 'Definición';
+
+$string['etherpadlite_results'] = 'Resultados del Etherpad - ';
+
+$string['lightboxgallery_results'] = 'Resultados de la galería - ';
+$string['lightboxgallery_images_count'] = 'Número de imágenes';
+$string['lightboxgallery_image'] = 'Imagen';

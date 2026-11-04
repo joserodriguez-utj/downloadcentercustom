@@ -162,6 +162,7 @@ $string['forum_discussion_topic'] = 'Discussion topic:';
 $string['forum_autor'] = 'Author: ';
 $string['forum_date'] = 'Date: ';
 $string['forum_subject'] = 'Subject: ';
+$string['forum_embedded_media'] = 'Attached audio/video:';
 $string['forum_attachments'] = 'Attachments: ';
 $string['forum_attachments_url'] = 'Attachments';
 
@@ -196,6 +197,10 @@ $string['workshop_content'] = 'Submission content';
 $string['workshop_feedback'] = 'Feedback';
 
 // Locallib portfolio grade report strings
+$string['feedback_results'] = 'Feedback results - ';
+$string['feedback_responses'] = 'Responses';
+$string['feedback_last_response'] = 'Last response';
+$string['feedback_response'] = 'Response';
 $string['string_grade_report'] = 'Grade report';
 $string['string_grade_report_item'] = 'Grade item';
 $string['string_grade_report_grade'] = 'Grade';
@@ -233,6 +238,7 @@ $string['workshop_comments'] = 'Comments';
 $string['workshop_assessment_date'] = 'Fecha de evaluación';
 
 // Database (data) strings.
+$string['data_recorded'] = 'Recorded';
 $string['data_results'] = 'Database results - ';
 $string['data_data_results'] = 'Database results: ';
 $string['data_student'] = 'Student';
@@ -254,6 +260,7 @@ $string['data_rated'] = 'Record rating';
 // Locallib_scorm strings
 $string['scorm_results'] = 'Results - ';
 $string['scorm_scorm_results'] = 'SCORM package results: ';
+$string['scorm_attempts'] = 'Attempts';
 $string['scorm_attempt'] = 'Attempt #';
 $string['scorm_status'] = 'Status';
 $string['scorm_status_passed'] = 'Passed';
@@ -293,3 +300,22 @@ $string['pagination'] = 'Page {$a->page} of {$a->total}';
 
 $string['string_activity'] = 'Activity';
 $string['string_not_done_message'] = 'The student has not submitted any evidence for this activity. This document is generated automatically to record that the activity was expected but not delivered.';
+$string['h5p_attempts_summary'] = 'Attempts summary';
+$string['h5p_embedded_link'] = 'Embedded content (open in browser):';
+
+$string['glossary_results'] = 'Glossary results - ';
+$string['glossary_entries_count'] = 'Number of entries';
+$string['glossary_author'] = 'Author';
+$string['glossary_created'] = 'Created';
+$string['glossary_category'] = 'Category';
+$string['glossary_definition'] = 'Definition';
+
+$string['etherpadlite_results'] = 'Etherpad results - ';
+
+$string['lightboxgallery_results'] = 'Lightbox gallery results - ';
+$string['lightboxgallery_images_count'] = 'Number of images';
+$string['lightboxgallery_image'] = 'Image';
+
+$string['lightboxgallery_results'] = 'Resultados de la galería - ';
+$string['lightboxgallery_images_count'] = 'Número de imágenes';
+$string['lightboxgallery_image'] = 'Imagen';

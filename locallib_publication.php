@@ -36,6 +36,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_publication_trait {
      */
 
         private function handle_publication($resource, $resdir, &$filelist, $groupid = null) {
+        $this->pdfactivityname = $resource->name;
         global $DB, $USER, $CFG;
         $userfields = \core_user\fields::for_userpic();
         $context = $resource->context;

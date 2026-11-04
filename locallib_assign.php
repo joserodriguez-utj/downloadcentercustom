@@ -36,6 +36,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
      */
 
     private function handle_assign($resource, $resdir, &$filelist, $groupid = null, $fileprefix = '', $includefeedback = true) {
+        $this->pdfactivityname = $resource->name;
         global $CFG, $DB, $USER;
         $context = $resource->context;
         // Portón: si no tiene permiso, no procesa nada de esta tarea.
@@ -86,11 +87,9 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
             $introcontent = $resource->resource->intro;
             if (!empty(trim($introcontent))) {
                 $introcontent = str_replace('@@PLUGINFILE@@', '.', $introcontent);
-                $introcontent = self::convert_content_to_html_doc(
-                    get_string('instructions', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
-                    $introcontent
-                );
-                $filelist[$instruccionesdir . '/instrucciones.html'] = [$introcontent];
+                $title = get_string('instructions', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+                $pdf = $this->build_pdf_document($title, $introcontent, 'P', 'A4', 9, $title);
+                $filelist[$instruccionesdir . '/instrucciones.pdf'] = [$pdf];
             }
             $introfiles = $fs->get_area_files($context->id, 'mod_assign', 'intro', 0, 'id', false);
             foreach ($introfiles as $file) {
@@ -200,9 +199,9 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
                     if (mb_strlen(trim($onlinetext)) > 0) {
                         $studentname = $user ? fullname($user) : get_string('string_unknown', 'local_centro_de_descarga_de_portafolio_de_evidencias');
                         $htmlname = $fileprefix . ' - ' . $studentname . ' - ' . $assignplugin->get_name();
-                        $onlinetext = self::convert_content_to_html_doc($htmlname, $onlinetext);
-                        $filename = $fullname . '/' . self::shorten_filename($htmlname . '.html');
-                        $filelist[$filename] = [$onlinetext];
+                        $pdf = $this->build_pdf_document($htmlname, $onlinetext, 'P', 'A4', 9, $htmlname);
+                        $filename = $fullname . '/' . self::shorten_filename($htmlname . '.pdf');
+                        $filelist[$filename] = [$pdf];
                     }
                 }
             }
@@ -287,7 +286,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
                 }
                 $title = get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' - ' . $studentname;
                 $footerleft = $title;
-                $pdf = $this->build_pdf_document($title, $rubrich, 'P', 'A4', 9, $footerleft);
+                $pdf = $this->build_pdf_document($title, $rubrich, 'L', 'A4', 6.5, $footerleft);
                 $filename= $fullname . '/' . self::shorten_filename($title . '.pdf');
                 $filelist[$filename] = [$pdf];
             }
@@ -335,18 +334,27 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
         $fillingsrs->close();
 
         // Construir tabla HTML.
-        $h = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">';
+        $h = '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:6.5pt;">';
+
+        // Anchos: alumno, criterios, retroalimentación y calificación.
+        $ncrit = count($rubriccriteria);
+        $studentwidth = 9;
+        $feedbackwidth = 16;
+        $gradewidth = 6;
+        $critwidth = $ncrit > 0 ? max(4, (100 - $studentwidth - $feedbackwidth - $gradewidth) / $ncrit) : 0;
 
         // Fila 1: encabezados de criterios.
         $criterianames = [];
         foreach ($rubriccriteria as $c) {
             $criterianames[] = htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_centro_de_descarga_de_portafolio_de_evidencias', round($c->max_score, 2));
         }
-        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td>';
+        $th = 'background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;font-size:6.5pt;';
+        $h .= '<tr><td style="' . $th . 'width:' . $studentwidth . '%;">' . get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td>';
         foreach ($rubriccriteria as $c) {
-            $h .= '<td>' . htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_centro_de_descarga_de_portafolio_de_evidencias', round($c->max_score, 2)) . '</td>';
+            $h .= '<td style="' . $th . 'width:' . round($critwidth, 2) . '%;">' . htmlspecialchars($c->description) . '<br>' . get_string('string_max', 'local_centro_de_descarga_de_portafolio_de_evidencias', round($c->max_score, 2)) . '</td>';
         }
-        $h .= '<td>' . get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td></tr>';
+        $h .= '<td style="' . $th . 'width:' . $feedbackwidth . '%;">' . get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td>';
+        $h .= '<td style="' . $th . 'width:' . $gradewidth . '%;">' . get_string('string_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td></tr>';
 
         // Fila 2: puntuación y nivel.
         $h .= '<tr><td rowspan="2" style="vertical-align:top;font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
@@ -411,8 +419,8 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_assign_trait {
      */
     public static function build_feedback_html($studentname, $feedbacktext, $gradeval) {
         $fb = trim(strip_tags($feedbacktext ?? ''));
-        $h = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">';
-        $h .= '<tr style="background:#f2f2f2;font-weight:bold;"><td>' . get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td></tr>';
+        $h = '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:6.5pt;">';
+        $h .= '<tr><td style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;font-size:6.5pt;">' . get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td><td>' . get_string('string_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</td></tr>';
         $h .= '<tr>';
         $h .= '<td style="font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
         $h .= '<td>' . nl2br(htmlspecialchars($fb ?: '-')) . '</td>';

@@ -36,6 +36,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
      * @return void
      */
     private function handle_data($resource, $resdir, &$filelist, $groupid = null) {
+        $this->pdfactivityname = $resource->name;
         global $CFG, $DB;
         $context = $resource->context;
 
@@ -102,16 +103,16 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
                 continue;
             }
             $studentname = fullname($user);
-            $html = $this->build_data_html($data, $cm, $fields, $userrecords, $user, $studentname);
-            if ($html) {
-                $html = self::convert_content_to_html_doc(
-                    get_string('data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname, $html);
-                $filename = $evidenciadir . '/' . self::shorten_filename(
-                    get_string('data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname . '.html');
-                $filelist[$filename] = [$html];
+
+            $body = $this->build_data_pdf_body($data, $cm, $fields, $userrecords, $user, $studentname, $evidenciadir, $filelist);
+            if ($body) {
+                $title = get_string('data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . $studentname;
+                $pdf = $this->build_pdf_document($title, $body, 'P', 'A4', 8, $title);
+                $filename = $evidenciadir . '/' . self::shorten_filename($title . '.pdf');
+                $filelist[$filename] = [$pdf];
             }
 
-            // Archivos adjuntos de los campos de tipo archivo e imagen.
+            // Archivos adjuntos de los campos de tipo archivo e imagen (sin cambios).
             foreach ($userrecords as $record) {
                 $this->get_data_attachments($context, $data, $fields, $record, $user, $evidenciadir, $filelist);
             }
@@ -119,67 +120,71 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
     }
 
     /**
-     * Build HTML for a database records of a user.
+     * Builds the HTML body for the database activity PDF (one per student).
      *
-     * @param object $data The database activity.
-     * @param object $cm The course module.
-     * @param array $fields The fields of the database.
-     * @param array $userrecords Array of records of the user.
-     * @param object $user The user who created the records.
-     * @param string $studentname Full name of the user.
-     * @return string HTML content.
+     * Same information as the previous HTML version, but styled for TCPDF:
+     * smaller fonts, tables with consistent th/td, page break between records,
+     * and pictures embedded in the "Recurso" folder next to the PDF.
+     *
+     * @param object $data
+     * @param object $cm
+     * @param array $fields
+     * @param array $userrecords
+     * @param object $user
+     * @param string $studentname
+     * @param string $evidenciadir
+     * @param array $filelist
+     * @return string
      */
-    private function build_data_html($data, $cm, $fields, $userrecords, $user, $studentname) {
+    private function build_data_pdf_body($data, $cm, $fields, $userrecords, $user, $studentname, $evidenciadir, array &$filelist) {
         global $DB, $CFG;
 
         require_once($CFG->libdir . '/gradelib.php');
+        require_once($CFG->libdir . '/filelib.php');
         require_once($CFG->dirroot . '/rating/lib.php');
+
+        $context = \context_module::instance($cm->id);
+        $contextid = $context->id;
+        $mediadir = $evidenciadir . '/Recurso';
 
         // === MÉTODO DE CALIFICACIÓN ===
         $gradingmethod = get_string('data_no_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias');
-
         if ($data->assessed < 0) {
             $scale = $DB->get_record('scale', ['id' => abs($data->assessed)]);
-            if ($scale) {
-                $gradingmethod = get_string('data_scale_custom', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ': ' . s($scale->name);
-            } else {
-                $gradingmethod = get_string('data_scale_custom', 'local_centro_de_descarga_de_portafolio_de_evidencias');
-            }
+            $gradingmethod = get_string('data_scale_custom', 'local_centro_de_descarga_de_portafolio_de_evidencias')
+                . ($scale ? ': ' . s($scale->name) : '');
         } else if ($data->assessed > 0) {
             $ratingmethods = [
-                RATING_AGGREGATE_NONE => get_string('aggregatenone', 'rating'),
-                RATING_AGGREGATE_AVERAGE => get_string('aggregateavg', 'rating'),
-                RATING_AGGREGATE_COUNT => get_string('aggregatecount', 'rating'),
-                RATING_AGGREGATE_MAXIMUM => get_string('aggregatemax', 'rating'),
-                RATING_AGGREGATE_MINIMUM => get_string('aggregatemin', 'rating'),
-                RATING_AGGREGATE_SUM => get_string('aggregatesum', 'rating'),
+                RATING_AGGREGATE_NONE     => get_string('aggregatenone', 'rating'),
+                RATING_AGGREGATE_AVERAGE  => get_string('aggregateavg', 'rating'),
+                RATING_AGGREGATE_COUNT    => get_string('aggregatecount', 'rating'),
+                RATING_AGGREGATE_MAXIMUM  => get_string('aggregatemax', 'rating'),
+                RATING_AGGREGATE_MINIMUM  => get_string('aggregatemin', 'rating'),
+                RATING_AGGREGATE_SUM      => get_string('aggregatesum', 'rating'),
             ];
             $gradingmethod = $ratingmethods[$data->assessed] ?? get_string('data_rated', 'local_centro_de_descarga_de_portafolio_de_evidencias');
         }
 
-        // === CALIFICACIÓN FINAL (desde el libro de calificaciones) ===
+        // === CALIFICACIÓN FINAL ===
         $finalgrade = '';
         $gradeitem = $DB->get_record('grade_items', [
             'itemtype' => 'mod',
             'itemmodule' => 'data',
             'iteminstance' => $data->id,
-            'itemnumber' => 0
+            'itemnumber' => 0,
         ]);
         if ($gradeitem) {
             $grade = $DB->get_record('grade_grades', [
                 'itemid' => $gradeitem->id,
-                'userid' => $user->id
+                'userid' => $user->id,
             ]);
             if ($grade && isset($grade->finalgrade) && $grade->finalgrade !== null) {
                 $finalgrade = round($grade->finalgrade, 2);
             }
         }
-
-        // === FALLBACK: Si no hay calificación en grade_grades, buscar en ratings ===
         if ($finalgrade === '' && $data->assessed != 0) {
-            // Obtener el promedio de ratings del usuario.
             $avgRating = $DB->get_record_sql(
-                "SELECT AVG(r.rating) as avg_rating
+                "SELECT AVG(r.rating) AS avg_rating
                 FROM {rating} r
                 JOIN {data_records} dr ON dr.id = r.itemid
                 WHERE r.component = 'mod_data'
@@ -192,31 +197,58 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
                 $finalgrade = round($avgRating->avg_rating, 2);
             }
         }
+        $finalgradedisplay = ($finalgrade === '') ? '-' : $finalgrade;
 
-        // === CONSTRUIR HTML ===
-        $h = '<h2>' . get_string('data_data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias') . s($studentname) . ' — ' . s($data->name) . '</h2>';
+        // Estilos.
+        $th  = 'style="background-color:#dbe4f0;font-weight:bold;border:1px solid #8a99b0;padding:2px;text-align:left;font-size:8pt;"';
+        $td  = 'style="border:1px solid #adb5bd;padding:2px;vertical-align:top;font-size:8pt;"';
+        $hd  = 'style="background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;"';
+        $tbl = 'border="1" cellspacing="0" cellpadding="2" style="border-collapse:collapse;width:100%;font-size:8pt;"';
 
-        $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
-        $h .= '<tr style="background:#f2f2f2;">';
-        $h .= '<th>' . get_string('data_student', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('data_num_records', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('data_grading_method', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '<th>' . get_string('data_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</th>';
-        $h .= '</tr>';
-
-        $h .= '<tr>';
-        $h .= '<td style="font-weight:bold;">' . htmlspecialchars($studentname) . '</td>';
-        $h .= '<td style="text-align:center;">' . count($userrecords) . '</td>';
-        $h .= '<td style="text-align:center;">' . s($gradingmethod) . '</td>';
-        $h .= '<td style="text-align:center;">' . ($finalgrade !== '' ? $finalgrade : '-') . '</td>';
-        $h .= '</tr>';
+        // 1) Datos generales del alumno.
+        $h  = '<h2 ' . $hd . '>' . s(get_string('data_data_results', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . s($studentname) . '</h2>';
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('quiz_lastname', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($user->lastname) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('quiz_firstname', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($user->firstname) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('quiz_email', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($user->email) . '</td>'
+            . '</tr>';
         $h .= '</table>';
 
-        // === DETALLE DE REGISTROS ===
-        foreach ($userrecords as $index => $record) {
-            $recordtitle = get_string('data_record_title', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' #' . ($index + 1);
-            $h .= '<h3>' . $recordtitle . '</h3>';
-            $h .= '<p><em>' . get_string('data_submitted', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ': ' . userdate($record->timecreated) . '</em></p>';
+        // 2) Resumen.
+        $h .= '<table ' . $tbl . '>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('data_num_records', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . count($userrecords) . '</td>'
+            . '<th ' . $th . '>' . s(get_string('data_grading_method', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($gradingmethod) . '</td>'
+            . '</tr>';
+        $h .= '<tr nobr="true">'
+            . '<th ' . $th . '>' . s(get_string('data_final_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'
+            . '<td ' . $td . '>' . s($finalgradedisplay) . '</td>'
+            . '<th ' . $th . '></th>'
+            . '<td ' . $td . '></td>'
+            . '</tr>';
+        $h .= '</table>';
+
+        // 3) Detalle de registros (una página por registro a partir del 2º).
+        $firstrecord = true;
+        $index = 0;
+        foreach ($userrecords as $record) {
+            $index++;
+            $break = $firstrecord ? '' : 'page-break-before:always;';
+            $firstrecord = false;
+
+            $h .= '<h2 style="' . $break . 'background-color:#e9ecef;border:1px solid #adb5bd;padding:5px;font-size:10pt;font-weight:bold;margin-top:10px;">'
+                . s(get_string('data_record_title', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . ' #' . $index
+                . '</h2>';
+            $h .= '<p style="font-size:8pt;margin:0 0 2mm 0;"><em>'
+                . s(get_string('data_submitted', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . ': '
+                . s(userdate($record->timecreated))
+                . '</em></p>';
 
             $contents = $DB->get_records('data_content', ['recordid' => $record->id], 'id ASC');
             $contentbyfield = [];
@@ -224,17 +256,17 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
                 $contentbyfield[$content->fieldid] = $content;
             }
 
-            $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;margin-bottom:15px;">';
+            $h .= '<table ' . $tbl . '>';
             foreach ($fields as $field) {
-                $h .= '<tr>';
-                $h .= '<td style="font-weight:bold;background:#f2f2f2;width:20%;">' . htmlspecialchars($field->name) . '</td>';
-                $h .= '<td>';
+                $h .= '<tr nobr="true">';
+                $h .= '<th ' . $th . ' style="width:20%;">' . s($field->name) . '</th>';
+                $h .= '<td ' . $td . '>';
 
                 $content = $contentbyfield[$field->id] ?? null;
                 if ($content) {
-                    $h .= $this->format_data_content($field, $content, $record, $cm);
+                    $h .= $this->format_data_content_pdf($field, $content, $record, $cm, $context, $mediadir, $filelist);
                 } else {
-                    $h .= '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
+                    $h .= '<em>' . s(get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</em>';
                 }
 
                 $h .= '</td>';
@@ -247,23 +279,42 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
     }
 
     /**
-     * Format the content of a database field.
+     * Formats the content of a database field for TCPDF.
      *
-     * @param object $field The field definition.
-     * @param object $content The content of the field.
-     * @param object $record The record entry.
-     * @param object $cm The course module.
-     * @return string Formatted content.
-     */
-    private function format_data_content($field, $content, $record, $cm) {
+     * Differences with the HTML version:
+     *  - Pictures are copied to "Recurso/" and linked relatively.
+     *  - Files are copied to "Recurso/" and linked relatively.
+     *  - Textarea goes through format_text with context and clean_pluginfile_leftovers.
+     *
+     * @param object $field
+     * @param object $content
+     * @param object $record
+     * @param object $cm
+     * @param object $context
+     * @param string $mediadir
+     * @param array $filelist
+     * @return string
+    */
+    private function format_data_content_pdf($field, $content, $record, $cm, $context, $mediadir, array &$filelist) {
         $value = $content->content;
+        $empty = '<em>' . s(get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</em>';
 
         switch ($field->type) {
             case 'text':
-                return nl2br(htmlspecialchars($value ?? ''));
+                return nl2br(s($value ?? ''));
 
             case 'textarea':
-                return format_text($value, $content->content1 ?? FORMAT_HTML);
+                $value = file_rewrite_pluginfile_urls(
+                    $value ?? '',
+                    'pluginfile.php',
+                    $context->id,
+                    'mod_data',
+                    'content',
+                    $content->id
+                );
+                $this->add_embedded_files_from_html($value, $mediadir, $filelist);
+                $value = $this->clean_pluginfile_leftovers($value);
+                return format_text($value, $content->content1 ?? FORMAT_HTML, ['context' => $context]);
 
             case 'url':
                 $url = $value;
@@ -271,49 +322,86 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
                 if (!preg_match('~^https?://~i', $url)) {
                     $url = 'http://' . $url;
                 }
-                return '<a href="' . htmlspecialchars($url) . '" target="_blank">' . htmlspecialchars($text) . '</a>';
+                return '<a href="' . s($url) . '">' . s($text) . '</a>';
 
             case 'file':
-                return $this->get_data_file_link($cm, $record, $field, $content);
+                $file = $this->copy_data_file_to_recurso($context, $content, $mediadir, $filelist);
+                if (!$file) {
+                    return $empty;
+                }
+                return '<a href="Recurso/' . rawurlencode($file) . '">'
+                    . s(get_string('data_download_file', 'local_centro_de_descarga_de_portafolio_de_evidencias'))
+                    . '</a>';
 
             case 'picture':
-                $url = $this->get_data_file_url($cm, $record, $field, $content);
-                return $url ? '<img src="' . $url . '" style="max-width:300px;max-height:300px;" />' :
-                    '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
+                $file = $this->copy_data_file_to_recurso($context, $content, $mediadir, $filelist);
+                if (!$file) {
+                    return $empty;
+                }
+                // En PDF, TCPDF puede renderizar imágenes con <img>.
+                return '<img src="Recurso/' . s($file) . '" style="max-width:300px;max-height:300px;" />';
 
             case 'checkbox':
-                $values = explode('##', $value ?? '');
-                $values = array_filter(array_map('trim', $values));
-                return $values ? htmlspecialchars(implode(', ', $values)) :
-                    '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
-
             case 'multimenu':
-                $values = explode('##', $value ?? '');
-                $values = array_filter(array_map('trim', $values));
-                return $values ? htmlspecialchars(implode(', ', $values)) :
-                    '<em>' . get_string('data_empty', 'local_centro_de_descarga_de_portafolio_de_evidencias') . '</em>';
+                $values = array_filter(array_map('trim', explode('##', $value ?? '')));
+                return $values ? s(implode(', ', $values)) : $empty;
 
             case 'radiobutton':
             case 'menu':
-                return htmlspecialchars($value ?? '');
-
             case 'number':
-                return htmlspecialchars($value ?? '');
+                return s($value ?? '');
 
             case 'date':
                 if (!empty($value) && is_numeric($value)) {
-                    return userdate((int)$value, get_string('strftimedatetime', 'langconfig'));
+                    return s(userdate((int)$value, get_string('strftimedatetime', 'langconfig')));
                 }
-                return htmlspecialchars($value ?? '');
+                return s($value ?? '');
 
             case 'latlong':
                 $lat = $content->content;
                 $long = $content->content1 ?? '';
-                return sprintf('Lat: %s, Long: %s', htmlspecialchars($lat), htmlspecialchars($long));
+                return s(sprintf('Lat: %s, Long: %s', $lat, $long));
+
+            case 'jsignature':
+                // No es representable como texto: mostrar constancia.
+                return '<em>' . s(get_string('data_recorded', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</em>';
 
             default:
-                return htmlspecialchars($value ?? '');
+                return s($value ?? '');
         }
+    }
+
+    /**
+     * Copies a data field file (file or picture) to the "Recurso" folder.
+     *
+     * @param object $context
+     * @param object $content
+     * @param string $mediadir
+     * @param array $filelist
+     * @return string|null The filename inside "Recurso/" or null if not found.
+     */
+    private function copy_data_file_to_recurso($context, $content, $mediadir, array &$filelist) {
+        $fs = get_file_storage();
+        $files = $fs->get_area_files($context->id, 'mod_data', 'content', $content->id, 'filename', false);
+        foreach ($files as $file) {
+            if ($file->is_directory() || $file->get_filesize() == 0) {
+                continue;
+            }
+            $basename = self::shorten_filename(self::clean_filename_ascii($file->get_filename()));
+            $info = pathinfo($basename);
+            $extension = isset($info['extension']) ? '.' . $info['extension'] : '';
+            $stem = isset($info['filename']) ? $info['filename'] : $basename;
+            $name = $basename;
+            $i = 1;
+            while (isset($filelist[$mediadir . '/' . $name])) {
+                $name = $stem . '_' . $i . $extension;
+                $i++;
+            }
+            $filelist[$mediadir] = null;
+            $filelist[$mediadir . '/' . $name] = $file;
+            return $name;
+        }
+        return null;
     }
 
     /**
@@ -327,7 +415,8 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
      */
     private function get_data_file_url($cm, $record, $field, $content) {
         $fs = get_file_storage();
-        $file = $fs->get_file($cm->context->id, 'mod_data', 'content', $content->id, '/', $content->content);
+        $cmcontext = \context_module::instance($cm->id);
+        $file = $fs->get_file($cmcontext->id, 'mod_data', 'content', $content->id, '/', $content->content);
         if (!$file) {
             return '';
         }

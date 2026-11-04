@@ -38,6 +38,7 @@ require_once(__DIR__ . '/locallib_glossary.php');
 require_once(__DIR__ . '/locallib_lightboxgallery.php');
 require_once(__DIR__ . '/locallib_etherpadlite.php');
 require_once(__DIR__ . '/locallib_scorm.php');
+require_once(__DIR__ . '/locallib_feedback.php');
 
 class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
     use local_centro_de_descarga_de_portafolio_de_evidencias_lesson_trait;
@@ -53,6 +54,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
     use local_centro_de_descarga_de_portafolio_de_evidencias_etherpadlite_trait;
     use local_centro_de_descarga_de_portafolio_de_evidencias_database_trait;
     use local_centro_de_descarga_de_portafolio_de_evidencias_scorm_trait;
+    use local_centro_de_descarga_de_portafolio_de_evidencias_feedback_trait;
 
     /**
      * @var mixed|object
@@ -99,6 +101,16 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
      */
     private $filehashes = [];
     /**
+     * Cache en memoria de PDFs ya generados (clave = hash del contenido).
+     * @var array
+     */
+    private $pdfcache = [];
+    /**
+     * Nombre de la actividad para la segunda línea del encabezado del PDF.
+     * @var string
+     */
+    private $pdfactivityname = '';
+    /**
      * @var array
      */
     private $availableresources = [
@@ -121,6 +133,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         'label',
         'data',
         'scorm',
+        'feedback',
     ];
     /**
      * @var array
@@ -745,10 +758,10 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                     $materialitems = [];
                     foreach ($sectionresources as $res) {
                         $res->name = html_entity_decode($res->name);
-                        if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
+                        if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm', 'feedback'])) {
                             continue;
                         }
-                        if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
+                        if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm', 'feedback'])) {
                             $assignitems[] = $res;
                         } else {
                             $materialitems[] = $res;
@@ -777,6 +790,8 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                             $this->handle_data($res, $resdir, $filelist, $groupid);
                         } else if ($res->modname == 'scorm') {
                             $this->handle_scorm($res, $resdir, $filelist, $groupid);
+                        } else if ($res->modname == 'feedback') {
+                            $this->handle_feedback($res, $resdir, $filelist, $groupid);
                         } else {
                             $this->handle_publication($res, $resdir, $filelist, $groupid);
                         }
@@ -895,10 +910,10 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                 $materialitems = [];
                 foreach ($sectionresources as $res) {
                     $res->name = html_entity_decode($res->name);
-                    if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
+                    if ($onlytasks && !$solomateriales && !in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm', 'feedback'])) {
                         continue;
                     }
-                    if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
+                    if (in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm', 'feedback'])) {
                         $assignitems[] = $res;
                     } else {
                         $materialitems[] = $res;
@@ -925,6 +940,8 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                         $this->handle_data($res, $resdir, $filelist);
                     } else if ($res->modname == 'scorm') {
                         $this->handle_scorm($res, $resdir, $filelist);
+                    } else if ($res->modname == 'feedback') {
+                        $this->handle_feedback($res, $resdir, $filelist);
                     } else {
                         $this->handle_publication($res, $resdir, $filelist);
                     }
@@ -1031,6 +1048,8 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         }
 
         // Certificación de descarga (PDF) a nivel de la carpeta del curso.
+        $this->pdfactivityname = '';
+        $this->pdfactivityname = '';
         $certpdf = $this->build_download_certificate();
         $certfilename = 'Certificación de descarga.pdf';
         $filelist[$coursename . '/' . $certfilename] = [$certpdf];
@@ -1226,7 +1245,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                 $sectionsubdir = '';
                 foreach ($sectionresources as $res) {
                     $res->name = html_entity_decode($res->name);
-                    if (!in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm'])) {
+                    if (!in_array($res->modname, ['assign', 'publication', 'quiz', 'h5pactivity', 'forum', 'lesson', 'workshop', 'data', 'scorm', 'feedback'])) {
                         continue;
                     }
                     if ($sectionsubdir === '') {
@@ -1253,6 +1272,8 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                         $this->handle_data($res, $resdir, $filelist, $gid);
                     } else if ($res->modname == 'scorm') {
                         $this->handle_scorm($res, $resdir, $filelist, $gid);
+                    } else if ($res->modname == 'feedback') {
+                        $this->handle_feedback($res, $resdir, $filelist, $gid);
                     } else {
                         $this->handle_publication($res, $resdir, $filelist, $gid);
                     }
@@ -1264,6 +1285,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                         // $filelist[$resdir . '/' . self::shorten_filename($notdone . '.html')] = [$html];
 
                         $notdone = get_string('string_not_done', 'local_centro_de_descarga_de_portafolio_de_evidencias');
+                        $this->pdfactivityname = $res->name;
                         $body = $this->build_not_done_pdf_body($student, $res->name, $sectionname);
                         $title = $notdone;
                         $footerleft = $notdone . ' - ' . $studentname;
@@ -1279,8 +1301,9 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             $reporthtml = $this->build_grade_report_html($student);
             if ($reporthtml !== '') {
                 $reportname = get_string('string_grade_report', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ' - ' . $studentname;
-                $doc = self::convert_content_to_html_doc($reportname, $reporthtml);
-                $filelist[$studentdir . '/' . self::shorten_filename($reportname . '.html')] = [$doc];
+                $this->pdfactivityname = '';
+                $pdf = $this->build_pdf_document($reportname, $reporthtml, 'P', 'A4', 7, $reportname);
+                $filelist[$studentdir . '/' . self::shorten_filename($reportname . '.pdf')] = [$pdf];
             }
         }
     }
@@ -1328,12 +1351,10 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             return '';
         }
 
-        $h = '<h2>' . s(get_string('string_grade_report', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</h2>';
-        $h .= '<p><strong>' . s(get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . ':</strong> ' . s(fullname($student)) . '</p>';
-        $h .= '<p><strong>' . s(get_string('course', 'core')) . ':</strong> ' . s($this->course->fullname) . '</p>';
+        $h = '<p><strong>' . s(get_string('string_student', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . ':</strong> ' . s(fullname($student)) . '</p>';
 
-        $h .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">';
-        $h .= '<tr style="background:#f2f2f2;">';
+        $h .= '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:7pt;">';
+        $h .= '<tr>';
         $headers = [
             get_string('string_grade_report_item', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
             get_string('string_grade_report_grade', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
@@ -1341,7 +1362,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
             get_string('string_grade_report_feedback', 'local_centro_de_descarga_de_portafolio_de_evidencias'),
         ];
         foreach ($headers as $head) {
-            $h .= '<th style="text-align:left;">' . s($head) . '</th>';
+            $h .= '<th style="background-color:#dbe4f0;border:1px solid #8a99b0;padding:2px;text-align:left;font-size:7pt;">' . s($head) . '</th>';
         }
         $h .= '</tr>';
 
@@ -1514,6 +1535,49 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
      * @param array $filelist
      * @return void
      */
+    /**
+     * Agrega al ZIP los archivos referenciados con pluginfile.php en un HTML
+     * (audio/video/imágenes embebidos) bajo $dir.
+     *
+     * @param string $html
+     * @param string $dir
+     * @param array $filelist
+     * @return void
+     */
+    protected function add_embedded_files_from_html(string $html, string $dir, array &$filelist): void {
+        if (strpos($html, 'pluginfile.php') === false) {
+            return;
+        }
+        global $DB;
+        $fs = get_file_storage();
+        if (!preg_match_all(
+                '#https?://[^"\'\s<>]*?/pluginfile\.php/(\d+)/([A-Za-z0-9_]+)/([A-Za-z0-9_]+)/(\d+)/([^"\'\s<>?]+)#',
+                $html, $matches, PREG_SET_ORDER)) {
+            return;
+        }
+        foreach ($matches as $m) {
+            $contextid = (int) $m[1];
+            $component = $m[2];
+            $filearea = $m[3];
+            $itemid = (int) $m[4];
+            $filepathname = rawurldecode($m[5]);
+            $slash = strrpos($filepathname, '/');
+            $filename = ($slash === false) ? $filepathname : substr($filepathname, $slash + 1);
+            $filepath = ($slash === false) ? '/' : '/' . substr($filepathname, 0, $slash + 1);
+            try {
+                $file = $fs->get_file($contextid, $component, $filearea, $itemid, $filepath, $filename);
+            } catch (\Exception $e) {
+                continue;
+            }
+            if (!$file || $file->is_directory()) {
+                continue;
+            }
+            $name = self::shorten_filename(self::clean_filename_ascii($file->get_filename()));
+            $filelist[$dir] = null;
+            $filelist[$dir . '/' . $name] = $file;
+        }
+    }
+
     private function embed_html_resources(&$filelist) {
         $fs = get_file_storage();
         $sourcemap = [];
@@ -1690,6 +1754,43 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
      *
      * @return string Raw XLSX content.
      */
+    /**
+     * Devuelve los IDs de usuario a incluir en el Reporte calificador según el
+     * filtro del formulario (alumno(s) y/o grupo(s)). Devuelve null si no hay
+     * filtro (es decir, todos los usuarios).
+     *
+     * @return int[]|null
+     */
+    private function get_gradebook_user_filter(): ?array {
+        if ($this->portfolio_userid !== null) {
+            return [(int) $this->portfolio_userid];
+        }
+
+        $ids = null;
+        if (!empty($this->selectedgroups)) {
+            $members = [];
+            foreach ($this->selectedgroups as $gid) {
+                foreach ((array) groups_get_members((int) $gid, 'u.id') as $member) {
+                    $members[(int) $member->id] = true;
+                }
+            }
+            $ids = array_keys($members);
+            if (empty($ids)) {
+                return [];
+            }
+        }
+
+        if (!empty($this->selectedusers)) {
+            $selected = array_values(array_unique(array_map('intval', $this->selectedusers)));
+            if ($ids !== null) {
+                $selected = array_values(array_intersect($selected, $ids));
+            }
+            return $selected;
+        }
+
+        return $ids;
+    }
+
     private function build_gradebook_export(): string {
         global $CFG;
 
@@ -1750,12 +1851,17 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         }
 
         $rows = [];
+        $filterids = $this->get_gradebook_user_filter();
+        $allowed = $filterids === null ? null : array_flip($filterids);
         $gui = new \graded_users_iterator($this->course, $export->columns, 0);
         $gui->require_active_enrolment($export->onlyactive);
         $gui->allow_user_custom_fields(false);
         $gui->init();
         while ($userdata = $gui->next_user()) {
             $user = $userdata->user;
+            if ($allowed !== null && !isset($allowed[(int) $user->id])) {
+                continue;
+            }
             $row = [];
             foreach ($profilefields as $field) {
                 $row[] = \grade_helper::get_user_field_value($user, $field);
@@ -1808,28 +1914,44 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         $pdf = new \pdf('L', 'mm', 'A3', true, 'UTF-8');
         $pdf->SetTitle(get_string('gradebook_report', 'local_centro_de_descarga_de_portafolio_de_evidencias'));
         $pdf->setPrintHeader(false);
-        $pdf->SetFont('freesans', '', 6);
+        $pdf->SetFont('helvetica', '', 6);
         $pdf->AddPage();
 
-        $html = '<h2 style="text-align:center;">' .
+        $title = '<h2 style="text-align:center;">' .
             get_string('gradebook_report', 'local_centro_de_descarga_de_portafolio_de_evidencias') . ': ' .
             s(format_string($this->course->fullname)) . '</h2>';
-        $html .= '<table border="1" cellpadding="2" cellspacing="0" style="font-size:6pt;">';
-        $html .= '<thead><tr>';
-        foreach ($headers as $header) {
-            $html .= '<th style="background-color:#e9ecef;font-weight:bold;">' . s($header) . '</th>';
-        }
-        $html .= '</tr></thead><tbody>';
-        foreach ($rows as $row) {
-            $html .= '<tr>';
-            foreach ($row as $cell) {
-                $html .= '<td>' . s($cell) . '</td>';
-            }
-            $html .= '</tr>';
-        }
-        $html .= '</tbody></table>';
 
-        $pdf->writeHTML($html, true, false, true, false, '');
+        $thead = '<table border="1" cellpadding="2" cellspacing="0" style="font-size:6pt;">';
+        $thead .= '<thead><tr>';
+        foreach ($headers as $header) {
+            $thead .= '<th style="background-color:#e9ecef;font-weight:bold;">' . s($header) . '</th>';
+        }
+        $thead .= '</tr></thead>';
+
+        // Paginar manualmente: una tabla completa por página evita que TCPDF
+        // parta una fila (y estire la anterior hasta el borde de la hoja).
+        // Se usa un bloque fijo conservador para garantizar que siempre quepa.
+        $rowsperpage = 8;
+        $chunks = array_chunk($rows, $rowsperpage);
+        if (!$chunks) {
+            $chunks = [[]];
+        }
+        foreach ($chunks as $index => $chunk) {
+            if ($index > 0) {
+                $pdf->AddPage();
+            }
+            $html = ($index === 0 ? $title : '') . $thead . '<tbody>';
+            foreach ($chunk as $row) {
+                $html .= '<tr>';
+                foreach ($row as $cell) {
+                    $html .= '<td>' . s($cell) . '</td>';
+                }
+                $html .= '</tr>';
+            }
+            $html .= '</tbody></table>';
+            $pdf->writeHTML($html, true, false, true, false, '');
+        }
+
         return $pdf->Output('reporte_calificador.pdf', 'S');
     }
 
@@ -2115,10 +2237,130 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
      * @param int $fontsize
      * @return string Bytes del PDF.
      */
+    /**
+     * TCPDF ignora vertical-align en tablas HTML. Para aproximar el centrado
+     * vertical, rellena con <br> las celdas más cortas de cada fila hasta
+     * alinear su contenido al centro de la fila.
+     *
+     * @param \pdf $pdf Documento (con la fuente del cuerpo ya establecida).
+     * @param string $html Cuerpo HTML.
+     * @param float $defaultfontsize Tamaño de fuente por defecto.
+     * @return string
+     */
+    private function pdf_center_table_cells($pdf, string $html, float $defaultfontsize): string {
+        if (stripos($html, '<tr') === false) {
+            return $html;
+        }
+
+        $margins = $pdf->getMargins();
+        $usable = $pdf->getPageWidth() - $margins['left'] - $margins['right'];
+
+        $result = preg_replace_callback('#(<tr\b[^>]*>)(.*?)(</tr>)#is', function ($row) use ($pdf, $usable, $defaultfontsize) {
+            $open = $row[1];
+            $inner = $row[2];
+            $close = $row[3];
+
+            if (!preg_match_all('#<(td|th)\b([^>]*)>(.*?)</\1>#is', $inner, $matches,
+                    PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+                return $row[0];
+            }
+
+            $cells = [];
+            $explicitpct = 0.0;
+            $implicit = 0;
+            foreach ($matches as $m) {
+                $attrs = $m[2][0];
+                if (preg_match('/\b(?:colspan|rowspan)\s*=/i', $attrs)) {
+                    return $row[0];
+                }
+                $pct = null;
+                if (preg_match('/width\s*:\s*([0-9.]+)\s*%/i', $attrs, $wm)) {
+                    $pct = (float) $wm[1];
+                    $explicitpct += $pct;
+                } else {
+                    $implicit++;
+                }
+                $fontsize = $defaultfontsize;
+                if (preg_match('/font-size\s*:\s*([0-9.]+)\s*pt/i', $attrs, $fm)) {
+                    $fontsize = (float) $fm[1];
+                }
+                $cells[] = [
+                    'tag' => $m[1][0],
+                    'attrs' => $attrs,
+                    'content' => $m[3][0],
+                    'start' => $m[0][1],
+                    'length' => strlen($m[0][0]),
+                    'pct' => $pct,
+                    'fontsize' => $fontsize,
+                ];
+            }
+
+            $remaining = max(0.0, 100.0 - $explicitpct) / max(1, $implicit);
+            foreach ($cells as &$cell) {
+                $pct = $cell['pct'] ?? $remaining;
+                $cell['width'] = max(1.0, $usable * $pct / 100.0);
+                $raw = preg_replace('#<br\s*/?>#i', "\n", $cell['content']);
+                $text = trim(preg_replace('/\s+/u', ' ', strip_tags($raw)));
+                $cell['text'] = $text;
+                if ($text === '') {
+                    $cell['approx'] = 1;
+                    continue;
+                }
+                $charsperline = max(1.0, $cell['width'] / (0.1764 * max(1.0, $cell['fontsize'])));
+                $cell['approx'] = max(1, (int) ceil(mb_strlen($text) / $charsperline));
+            }
+            unset($cell);
+
+            $approxs = array_column($cells, 'approx');
+            $maxapprox = max($approxs);
+            if ($maxapprox <= 1 || $maxapprox === min($approxs)) {
+                return $row[0];
+            }
+
+            foreach ($cells as &$cell) {
+                if ($cell['text'] === '') {
+                    $cell['lines'] = 1;
+                    continue;
+                }
+                $pdf->SetFont('helvetica', '', $cell['fontsize']);
+                $cell['lines'] = max(1, (int) $pdf->getNumLines($cell['text'], $cell['width']));
+            }
+            unset($cell);
+
+            $maxlines = 1;
+            foreach ($cells as $cell) {
+                $maxlines = max($maxlines, $cell['lines']);
+            }
+
+            $rebuilt = '';
+            $cursor = 0;
+            foreach ($cells as $cell) {
+                $rebuilt .= substr($inner, $cursor, $cell['start'] - $cursor);
+                $pad = intdiv($maxlines - $cell['lines'], 2);
+                $rebuilt .= '<' . $cell['tag'] . $cell['attrs'] . '>'
+                    . ($pad > 0 ? str_repeat('<br>', $pad) : '')
+                    . $cell['content']
+                    . '</' . $cell['tag'] . '>';
+                $cursor = $cell['start'] + $cell['length'];
+            }
+            $rebuilt .= substr($inner, $cursor);
+
+            return $open . $rebuilt . $close;
+        }, $html);
+
+        $pdf->SetFont('helvetica', '', $defaultfontsize);
+        return $result;
+    }
+
     private function build_pdf_document($title, $bodyhtml, $orientation = 'P', $format = 'A4', $fontsize = 9, $footerleft = ''): string {
         global $CFG;
 
         require_once($CFG->libdir . '/pdflib.php');
+
+        $cachekey = md5(implode('|', [$title, $bodyhtml, $orientation, $format, $fontsize, $footerleft, $this->pdfactivityname]));
+        if (isset($this->pdfcache[$cachekey])) {
+            return $this->pdfcache[$cachekey];
+        }
 
         $pdf = new \local_centro_de_descarga_de_portafolio_de_evidencias_pdf($orientation, 'mm', $format, true, 'UTF-8');
         $pdf->footerleft = $footerleft;
@@ -2127,16 +2369,21 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
         $pdf->setPrintFooter(true);
         $pdf->SetMargins(10, 10, 10);
         $pdf->SetAutoPageBreak(true, 14);
-        $pdf->SetFont('freesans', '', $fontsize);
+        $pdf->SetFont('helvetica', '', $fontsize);
         $pdf->AddPage();
 
         $html = '<h1 style="text-align:center;font-size:16pt;font-weight:bold;margin:0 0 2mm 0;">' . s($title) . '</h1>';
-        $html .= '<p style="text-align:center;font-size:9pt;color:#495057;margin:0 0 5mm 0;">' .
-            s(format_string($this->course->fullname)) . '</p>';
+        $subtitle = s(format_string($this->course->fullname));
+        if ($this->pdfactivityname !== '') {
+            $subtitle .= ' - ' . s(format_string($this->pdfactivityname));
+        }
+        $html .= '<p style="text-align:center;font-size:9pt;color:#495057;margin:0 0 5mm 0;">' . $subtitle . '</p>';
+        $bodyhtml = $this->pdf_center_table_cells($pdf, $bodyhtml, (float) $fontsize);
         $html .= $bodyhtml;
 
         $pdf->writeHTML($html, true, false, true, false, '');
-        return $pdf->Output('report.pdf', 'S');
+        $this->pdfcache[$cachekey] = $pdf->Output('report.pdf', 'S');
+        return $this->pdfcache[$cachekey];
     }
 
     public static function convert_content_to_html_doc($title, $content, $additionalhead = '') {
@@ -2215,7 +2462,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_pdf extends \pdf {
      */
     public function Footer() {
         $this->SetY(-12);
-        $this->SetFont('freesans', '', 7);
+        $this->SetFont('helvetica', '', 7);
         $this->SetTextColor(73, 80, 87);
         $this->Cell(0, 5, $this->footerleft, 0, 0, 'L');
         $pagination = get_string('pagination', 'local_centro_de_descarga_de_portafolio_de_evidencias', [

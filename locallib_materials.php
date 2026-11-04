@@ -39,6 +39,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_materials_trait {
      */
 
     private function handle_resource($resource, $resdir, &$filelist, $basedir) {
+        $this->pdfactivityname = $resource->name;
         $fs = get_file_storage();
         $filesrealnames = $this->downloadoptions['filesrealnames'] ?? false;
         $addnumbering = $this->downloadoptions['addnumbering'] ?? false;
