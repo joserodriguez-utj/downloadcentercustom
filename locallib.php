@@ -1562,7 +1562,7 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
      * @param array $filelist
      * @return void
      */
-    protected function add_embedded_files_from_html(string $html, string $dir, array &$filelist): void {
+    protected function add_embedded_files_from_html(string $html, string $dir, array &$filelist, ?int $ownerid = null): void {
         if (strpos($html, 'pluginfile.php') === false) {
             return;
         }
@@ -1588,6 +1588,10 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                 continue;
             }
             if (!$file || $file->is_directory()) {
+                continue;
+            }
+            // Evita incluir archivos de otros usuarios (IDOR via pluginfile).
+            if ($ownerid !== null && $file->get_userid() && (int) $file->get_userid() !== $ownerid) {
                 continue;
             }
             $name = self::shorten_filename(self::clean_filename_ascii($file->get_filename()));
@@ -2165,8 +2169,15 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
                 $this->selectedgroups = [];
             }
         } else if (count($usergroupids) >= 2) {
-            // 2+ grupos: usa la selección del formulario; si no hay, todos sus grupos.
-            $this->selectedgroups = !empty($data['selectedgroups']) ? $data['selectedgroups'] : $usergroupids;
+            // 2+ grupos: solo se permiten los grupos del propio docente.
+            $allowed = array_map('intval', (array) $usergroupids);
+            if (!empty($data['selectedgroups'])) {
+                $requested = array_map('intval', (array) $data['selectedgroups']);
+                $requested = array_values(array_intersect($requested, $allowed));
+                $this->selectedgroups = $requested ?: $allowed;
+            } else {
+                $this->selectedgroups = $allowed;
+            }
         } else {
             // 0 o 1 grupo: el docente ve todo el curso (sin restringir por grupo), para
             // contemplar cursos donde los alumnos van sin grupo y solo existe un grupo

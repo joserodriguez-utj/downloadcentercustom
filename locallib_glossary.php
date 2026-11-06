@@ -200,7 +200,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_glossary_trait {
                 $entry->definition, 'pluginfile.php', $contextid, 'mod_glossary', 'entry', $entry->id
             );
             if ($filelist !== null && $mediadir !== '') {
-                $this->add_embedded_files_from_html($definition, $mediadir, $filelist);
+                $this->add_embedded_files_from_html($definition, $mediadir, $filelist, (int) $entry->userid);
             }
             $definition = $this->clean_pluginfile_leftovers($definition);
             $h .= '<tr><th ' . $th . '>' . s(get_string('glossary_definition', 'local_centro_de_descarga_de_portafolio_de_evidencias')) . '</th>'

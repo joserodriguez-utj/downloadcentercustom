@@ -250,7 +250,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_workshop_trait {
             $content = file_rewrite_pluginfile_urls(
                 $content, 'pluginfile.php', $contextid, 'mod_workshop', 'submission_content', $submission->id
             );
-            $this->add_embedded_files_from_html($content, $mediadir, $filelist);
+            $this->add_embedded_files_from_html($content, $mediadir, $filelist, (int) $user->id);
             $content = $this->clean_pluginfile_leftovers($content);
             $h .= '<div style="border:1px solid #adb5bd;padding:4px;font-size:8pt;">';
             $h .= format_text($content, $submission->contentformat ?? FORMAT_HTML, ['context' => $context]);

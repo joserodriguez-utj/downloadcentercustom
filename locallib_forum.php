@@ -344,7 +344,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_forum_trait {
                         $parentmessage = file_rewrite_pluginfile_urls(
                             $parent->message, 'pluginfile.php', $contextid, 'mod_forum', 'post', $parent->id
                         );
-                        $this->add_embedded_files_from_html($parentmessage, $adjbasedir, $filelist);
+                        $this->add_embedded_files_from_html($parentmessage, $adjbasedir, $filelist, (int) $user->id);
                         $parentmessage = $this->clean_pluginfile_leftovers($parentmessage);
                         $h .= '<br>' . format_text($parentmessage, $parent->messageformat, ['context' => $context]);
                     }
@@ -366,7 +366,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_forum_trait {
                     $postmessage = file_rewrite_pluginfile_urls(
                         $post->message, 'pluginfile.php', $contextid, 'mod_forum', 'post', $post->id
                     );
-                    $this->add_embedded_files_from_html($postmessage, $adjbasedir, $filelist);
+                    $this->add_embedded_files_from_html($postmessage, $adjbasedir, $filelist, (int) $user->id);
                     $postmessage = $this->clean_pluginfile_leftovers($postmessage);
                     $h .= '<br>' . format_text($postmessage, $post->messageformat, ['context' => $context]);
                 }

@@ -312,7 +312,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_database_trait {
                     'content',
                     $content->id
                 );
-                $this->add_embedded_files_from_html($value, $mediadir, $filelist);
+                $this->add_embedded_files_from_html($value, $mediadir, $filelist, (int) $record->userid);
                 $value = $this->clean_pluginfile_leftovers($value);
                 return format_text($value, $content->content1 ?? FORMAT_HTML, ['context' => $context]);
 
