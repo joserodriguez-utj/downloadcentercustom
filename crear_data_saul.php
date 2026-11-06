@@ -1,4 +1,7 @@
 <?php
+if (PHP_SAPI !== 'cli') {
+    exit;
+}
 define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/testing/generator/lib.php');

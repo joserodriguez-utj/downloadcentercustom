@@ -2229,7 +2229,14 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
 
     public static function shorten_filename($filename, $maxlength = 100) {
         $filename = (string)$filename;
-        $filename = str_replace('/', '_', $filename);
+        // Evita ZIP-slip: separadores, ".." y caracteres de control.
+        $filename = str_replace(['/', '\\'], '_', $filename);
+        $filename = preg_replace('/[\x00-\x1F\x7F]/u', '', $filename);
+        $filename = str_replace('..', '_', $filename);
+        $filename = trim($filename);
+        if ($filename === '' || $filename === '.' || $filename === '_') {
+            $filename = 'archivo';
+        }
         if (mb_strlen($filename) <= $maxlength) {
             return $filename;
         }

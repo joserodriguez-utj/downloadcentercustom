@@ -112,11 +112,17 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_materials_trait {
     //URLs
 
     private function handle_url($resource, $resdir, &$filelist) {
-        $url = $resource->resource->externalurl;
-        $name = $resource->name;
-        $content = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . $name . '</title></head><body>';
-        $content .= '<h1>' . $name . '</h1>';
-        $content .= '<p><a href="' . $url . '" target="_blank">' . $url . '</a></p>';
+        $url = (string) $resource->resource->externalurl;
+        $name = (string) $resource->name;
+        // Solo enlaces http(s); cualquier otro esquema se muestra como texto.
+        $islink = (bool) preg_match('~^https?://~i', $url);
+        $content = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . s($name) . '</title></head><body>';
+        $content .= '<h1>' . s($name) . '</h1>';
+        if ($islink) {
+            $content .= '<p><a href="' . s($url) . '" target="_blank" rel="noopener noreferrer">' . s($url) . '</a></p>';
+        } else {
+            $content .= '<p>' . s($url) . '</p>';
+        }
         $content .= '</body></html>';
         $filename = $resdir . '/' . self::shorten_filename(clean_filename($name)) . '.html';
         $filelist[$filename] = [$content];
@@ -141,6 +147,7 @@ trait local_centro_de_descarga_de_portafolio_de_evidencias_materials_trait {
         $fs = get_file_storage();
         if (!empty($content)) {
             $content = str_replace('@@PLUGINFILE@@', get_string('files', 'local_centro_de_descarga_de_portafolio_de_evidencias'), $content);
+            $content = format_text($content, $label->introformat ?? FORMAT_HTML, ['context' => $context]);
             $content = self::convert_content_to_html_doc($name, $content);
             $filename = $resdir . '/' . self::shorten_filename(self::clean_filename_ascii($name)) . '.html';
             $filelist[$filename] = [$content];
