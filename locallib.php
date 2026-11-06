@@ -2414,13 +2414,15 @@ class local_centro_de_descarga_de_portafolio_de_evidencias_factory {
     }
 
     public static function convert_content_to_html_doc($title, $content, $additionalhead = '') {
+        $escapetitle = s($title);
+        $escapehead = s($additionalhead);
         return <<<HTML
 <!doctype html>
 <html>
 <head>
-    <title>$title</title>
+    <title>{$escapetitle}</title>
     <meta charset="utf-8">
-    $additionalhead
+    {$escapehead}
 </head>
 <body>
 $content

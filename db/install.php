@@ -46,9 +46,15 @@ function xmldb_local_centro_de_descarga_de_portafolio_de_evidencias_install() {
         return true;
     }
 
+    // Nombre completo de capability: <tipo>/<plugin>:<shortname>
+    // (para local_centro_... es local/centro_...:<shortname>).
+    [$newtype, $newplugin] = explode('_', $newcomponent, 2);
+    $newprefix = $newtype . '/' . $newplugin . ':';
+
     foreach ($oldcaps as $oldcap) {
-        $newcap = 'local/' . $newcomponent . ':' . $oldcap->name;
-        $grants = $DB->get_records('role_capabilities', ['capability' => $oldcap->capability]);
+        $shortname = substr($oldcap->name, strpos($oldcap->name, ':') + 1);
+        $newcap = $newprefix . $shortname;
+        $grants = $DB->get_records('role_capabilities', ['capability' => $oldcap->name]);
         foreach ($grants as $grant) {
             $exists = $DB->record_exists('role_capabilities', [
                 'roleid' => $grant->roleid,
@@ -66,7 +72,7 @@ function xmldb_local_centro_de_descarga_de_portafolio_de_evidencias_install() {
                 ]);
             }
         }
-        $DB->delete_records('role_capabilities', ['capability' => $oldcap->capability]);
+        $DB->delete_records('role_capabilities', ['capability' => $oldcap->name]);
     }
 
     // Limpiar las capabilities del componente anterior una vez migradas.
